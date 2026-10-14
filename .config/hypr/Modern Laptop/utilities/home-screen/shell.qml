@@ -1,0 +1,1152 @@
+import QtQuick
+import QtQuick.Effects
+import QtQuick.Shapes
+import Quickshell
+import Quickshell.Io
+import Quickshell.Hyprland
+import Quickshell.Wayland
+import Quickshell.Widgets
+import Quickshell.Services.Mpris
+import Quickshell.Services.Pipewire
+import Quickshell.Services.Notifications
+
+ShellRoot {
+    id: root
+
+    readonly property string sans: "CodeNewRoman Nerd Font Propo"
+    readonly property string home: Quickshell.env("HOME")
+    readonly property bool portrait: win.screen ? win.screen.height > win.screen.width : false
+    readonly property real u: unitFor(win.screen)
+    // Portrait screens stack the tiles two per row, so their column is wider.
+    readonly property real sysW: portrait ? 352 : 330
+
+    // One layout unit per screen; portrait is sized against a 760-wide, two-tile layout instead of the 1600-wide row.
+    function unitFor(s) {
+        if (!s) return 1
+        const v = s.height > s.width
+            ? Math.min(s.width / 760, s.height / 1350)
+            : Math.min(s.width / 1600, s.height / 900)
+        return Math.max(0.6, v)
+    }
+
+    // The shell stays resident and hidden; shown/t drive every entrance and exit.
+    property bool shown: false
+    property bool closing: false
+    property real t: 0
+    property var walls: ({})
+    property var targetScreen: null
+    property bool wallReady: false
+    property string pendingCmd: ""
+    property bool startWaited: false
+    property color accent: "#8fd3ff"
+    property string bgHex: "#101418"
+    readonly property color glass: Qt.rgba(Qt.color(bgHex).r, Qt.color(bgHex).g, Qt.color(bgHex).b, 0.5)
+    readonly property color popupBg: Qt.rgba(Qt.color(bgHex).r, Qt.color(bgHex).g, Qt.color(bgHex).b, 0.86)
+
+    // System state
+    property real cpu: 0
+    property real prevTotal: 0
+    property real prevIdle: 0
+    property real memTotal: 1
+    property real memAvail: 1
+    property real uptime: 0
+    property string kernel: ""
+    property string host: ""
+    property string os: ""
+    property string cpuModel: ""
+    property real cpuTemp: 0
+    property bool hasBattery: false
+    property int batPct: 0
+    property string batState: ""
+    property bool hasGpu: false
+    property string gpuName: ""
+    property real gpuUtil: 0
+    property real gpuMemUsed: 0
+    property real gpuMemTotal: 1
+    property real gpuTemp: 0
+
+    // Notifications: this shell is the notification daemon, so it stays resident from login.
+    property bool dnd: false
+    property var popups: []
+    property var arrived: ({})
+    readonly property var notifs: server.trackedNotifications.values.slice().reverse()
+    readonly property int notifCount: notifs.length
+
+    // Calendar
+    property int calY: new Date().getFullYear()
+    property int calM: new Date().getMonth()
+    readonly property var cells: {
+        const first = new Date(calY, calM, 1)
+        const offset = (first.getDay() + 6) % 7
+        const days = new Date(calY, calM + 1, 0).getDate()
+        const out = []
+        for (let i = 0; i < 42; i++) {
+            const d = i - offset + 1
+            out.push(d >= 1 && d <= days ? d : 0)
+        }
+        return out
+    }
+
+    // Media and audio
+    readonly property var player: {
+        const list = Mpris.players.values
+        return list.find(p => p.isPlaying) ?? list[0] ?? null
+    }
+    readonly property var sink: Pipewire.defaultAudioSink
+    readonly property real volume: sink && sink.audio ? sink.audio.volume : 0
+    readonly property bool muted: sink && sink.audio ? sink.audio.muted : false
+
+    function seg(delay) {
+        return Math.max(0, Math.min(1, (t - delay) / (1 - delay)))
+    }
+
+    function animateTo(target) {
+        tween.stop()
+        tween.from = t
+        tween.to = target
+        tween.duration = target === 1 ? 1200 : 450
+        tween.easing.type = target === 1 ? Easing.OutCubic : Easing.InOutCubic
+        tween.start()
+    }
+
+    // Waits for the wallpaper so its first blur render doesn't land mid-animation.
+    function tryStart() {
+        if (shown && !closing && (wallReady || startWaited)) animateTo(1)
+    }
+
+    // Each monitor shows its own wallpaper; "*" is the wal one used when awww reports nothing for it.
+    function wallFor(name) {
+        return walls[name] ?? walls["*"] ?? ""
+    }
+
+    function show() {
+        startTimer.stop()
+        watchdog.stop()
+        closing = false
+        if (shown) {
+            animateTo(1)
+            return
+        }
+        t = 0
+        popups = []
+        const now = new Date()
+        calY = now.getFullYear()
+        calM = now.getMonth()
+        // Frozen for this open so moving the cursor to another monitor never drags the window along.
+        targetScreen = Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+        shown = true
+        wallReady = false
+        startWaited = false
+        walPath.running = true
+        walColors.running = true
+        stats.running = true
+        startTimer.restart()
+        waitTimer.restart()
+        Qt.callLater(() => stage.forceActiveFocus())
+    }
+
+    function close() {
+        if (!shown || closing) return
+        closing = true
+        startTimer.stop()
+        waitTimer.stop()
+        watchdog.restart()
+        if (t < 0.001) finish()
+        else animateTo(0)
+    }
+
+    function toggle() {
+        if (shown && !closing) close()
+        else show()
+    }
+
+    // Unmapping (rather than exiting) hands focus and the pointer straight back to the desktop.
+    function finish() {
+        watchdog.stop()
+        startTimer.stop()
+        waitTimer.stop()
+        tween.stop()
+        shown = false
+        closing = false
+        t = 0
+        walls = ({})
+        if (pendingCmd !== "") launchTimer.restart()
+    }
+
+    // Gives the compositor a moment to unmap the surface before the command (e.g. hyprlock) starts.
+    Timer {
+        id: launchTimer
+        interval: 120
+        onTriggered: {
+            const c = root.pendingCmd
+            root.pendingCmd = ""
+            if (c !== "") Quickshell.execDetached(["sh", "-c", c])
+        }
+    }
+
+    function run(cmd) {
+        pendingCmd = cmd
+        close()
+    }
+
+    function received(n) {
+        n.tracked = true
+        arrived[n.id] = Date.now()
+        n.closed.connect(() => {
+            hidePopup(n)
+            delete arrived[n.id]
+        })
+        if (shown || (dnd && n.urgency !== NotificationUrgency.Critical)) {
+            if (n.transient) n.expire()
+            return
+        }
+        popups = [n].concat(popups.filter(p => p !== n)).slice(0, 5)
+        // Picks up the palette of a wallpaper applied since the last notification.
+        walColors.running = true
+    }
+
+    function hidePopup(n) {
+        popups = popups.filter(p => p !== n)
+    }
+
+    function expirePopup(n) {
+        if (n.transient) n.expire()
+        else hidePopup(n)
+    }
+
+    function clearAll() {
+        for (const n of server.trackedNotifications.values.slice()) n.dismiss()
+        popups = []
+    }
+
+    function iconFor(n) {
+        if (n.image !== "") return n.image
+        if (n.appIcon !== "") {
+            if (n.appIcon.startsWith("/")) return "file://" + encodeURI(n.appIcon)
+            const p = Quickshell.iconPath(n.appIcon, true)
+            if (p !== "") return p
+        }
+        return n.desktopEntry !== "" ? Quickshell.iconPath(n.desktopEntry, true) : ""
+    }
+
+    function ago(n) {
+        const s = Math.max(0, (clock.date.getTime() - (arrived[n.id] ?? Date.now())) / 1000)
+        if (s < 60) return "now"
+        if (s < 3600) return Math.floor(s / 60) + "m ago"
+        if (s < 86400) return Math.floor(s / 3600) + "h ago"
+        return Math.floor(s / 86400) + "d ago"
+    }
+
+    function setVolume(v) {
+        if (!sink || !sink.audio) return
+        sink.audio.volume = Math.max(0, Math.min(1, v))
+        // Moving the volume while muted would otherwise change nothing audible.
+        if (v > 0 && sink.audio.muted) sink.audio.muted = false
+    }
+
+    function fmtTime(s) {
+        s = Math.max(0, Math.floor(s))
+        return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0")
+    }
+
+    function fmtUptime(s) {
+        const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60)
+        return (d > 0 ? d + "d " : "") + h + "h " + m + "m"
+    }
+
+    function shiftMonth(step) {
+        const d = new Date(calY, calM + step, 1)
+        calY = d.getFullYear()
+        calM = d.getMonth()
+        monthFlip.restart()
+    }
+
+    function parseStats(text) {
+        for (const l of text.split("\n")) {
+            if (l.startsWith("cpu ")) {
+                const f = l.trim().split(/\s+/).slice(1).map(Number)
+                const idle = f[3] + f[4]
+                const total = f.reduce((a, b) => a + b, 0)
+                if (prevTotal > 0 && total > prevTotal) cpu = 1 - (idle - prevIdle) / (total - prevTotal)
+                prevTotal = total
+                prevIdle = idle
+            } else if (l.startsWith("MemTotal:")) memTotal = parseInt(l.split(/\s+/)[1])
+            else if (l.startsWith("MemAvailable:")) memAvail = parseInt(l.split(/\s+/)[1])
+            else if (l.startsWith("UP ")) uptime = parseFloat(l.slice(3))
+            else if (l.startsWith("KERN ")) kernel = l.slice(5)
+            else if (l.startsWith("HOST ")) host = l.slice(5)
+            else if (l.startsWith("OS ")) os = l.slice(3)
+            else if (l.startsWith("CPUM ")) cpuModel = l.slice(5).replace(/\(R\)|\(TM\)|CPU /g, "").replace(/\s+/g, " ")
+            else if (l.startsWith("CPUT ")) cpuTemp = parseInt(l.slice(5)) / 1000
+            else if (l.startsWith("BAT ")) {
+                const p = l.slice(4).split("|")
+                hasBattery = true
+                batPct = parseInt(p[0])
+                batState = p[1]
+            } else if (l.startsWith("GPU ")) {
+                const p = l.slice(4).split(",").map(s => s.trim())
+                hasGpu = true
+                gpuName = p[0].replace("NVIDIA GeForce ", "")
+                gpuUtil = parseFloat(p[1]) / 100
+                gpuMemUsed = parseFloat(p[2])
+                gpuMemTotal = parseFloat(p[3])
+                gpuTemp = parseFloat(p[4])
+            }
+        }
+    }
+
+    NumberAnimation { id: tween; target: root; property: "t"; onFinished: if (root.closing) root.finish() }
+    // One frame at t=0 is drawn before the entrance starts, so it never skips.
+    Timer { id: startTimer; interval: 30; onTriggered: root.tryStart() }
+    Timer { id: waitTimer; interval: 450; onTriggered: { root.startWaited = true; root.tryStart() } }
+    // Last resort: a close that stalls must never leave the full-screen surface grabbing input.
+    Timer { id: watchdog; interval: 1200; onTriggered: if (root.closing) root.finish() }
+
+    SystemClock { id: clock; precision: SystemClock.Minutes; enabled: root.shown }
+    PwObjectTracker { objects: [Pipewire.defaultAudioSink] }
+
+    IpcHandler {
+        target: "home"
+        function toggle(): void { root.toggle() }
+        function open(): void { root.show() }
+        function close(): void { root.close() }
+        function clearNotifications(): void { root.clearAll() }
+        function toggleDnd(): void { root.dnd = !root.dnd }
+    }
+
+    // Same source hyprlock's $wallpaper comes from, so both always match the last applied wallpaper.
+    Process {
+        id: walPath
+        running: true
+        command: [Quickshell.shellPath("home-wall.sh")]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (!root.shown) return
+                const m = {}
+                for (const line of text.split("\n")) {
+                    const i = line.indexOf("\t")
+                    if (i > 0) m[line.slice(0, i)] = "file://" + encodeURI(line.slice(i + 1).trim())
+                }
+                root.walls = m
+            }
+        }
+    }
+
+    Process {
+        id: walColors
+        running: true
+        command: ["cat", root.home + "/.cache/wal/colors.json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const j = JSON.parse(text)
+                    root.accent = j.colors.color9
+                    root.bgHex = j.special.background
+                } catch (e) {}
+            }
+        }
+    }
+
+    Process {
+        id: stats
+        command: [Quickshell.shellPath("home-stats.sh")]
+        stdout: StdioCollector { onStreamFinished: root.parseStats(text) }
+    }
+    Timer {
+        interval: 2000
+        running: root.shown
+        repeat: true
+        onTriggered: if (!stats.running) stats.running = true
+    }
+
+    NotificationServer {
+        id: server
+        keepOnReload: true
+        actionsSupported: true
+        bodySupported: true
+        bodyMarkupSupported: true
+        imageSupported: true
+        persistenceSupported: true
+        onNotification: n => root.received(n)
+    }
+
+    NotificationPopups { shell: root }
+
+    Timer {
+        interval: 1000
+        running: root.shown && root.player !== null && root.player.isPlaying
+        repeat: true
+        onTriggered: root.player.positionChanged()
+    }
+
+    // ---------- Reusable pieces ----------
+
+    component Glass: Item {
+        id: g
+        property string title: ""
+        property real delay: 0
+        default property alias content: body.data
+        readonly property real p: root.seg(delay)
+
+        opacity: p
+        scale: 0.94 + 0.06 * p
+        transform: Translate { y: (1 - g.p) * 44 * root.u }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 10 * root.u
+            color: root.glass
+        }
+
+        Text {
+            x: 24 * root.u
+            y: 18 * root.u
+            text: g.title
+            font.family: root.sans
+            font.pixelSize: 13 * root.u
+            color: "#80ffffff"
+        }
+
+        Item {
+            id: body
+            anchors.fill: parent
+            anchors.margins: 24 * root.u
+            anchors.topMargin: 48 * root.u
+        }
+    }
+
+    component IconButton: Item {
+        id: ib
+        property string glyph: ""
+        property color tint: "#ffffff"
+        property real size: 40 * root.u
+        signal clicked()
+        width: size
+        height: size
+        scale: ima.pressed ? 0.85 : (ima.containsMouse ? 1.12 : 1)
+        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
+        Text {
+            anchors.centerIn: parent
+            text: ib.glyph
+            font.family: root.sans
+            font.pixelSize: ib.size * 0.5
+            color: ib.tint
+        }
+        MouseArea { id: ima; anchors.fill: parent; hoverEnabled: true; onClicked: ib.clicked() }
+    }
+
+    component Gauge: Item {
+        id: ga
+        property real ratio: 0
+        property string label: ""
+        property string valueText: ""
+        property real shown: ratio
+        Behavior on shown { NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
+
+        width: 66 * root.u
+        height: 92 * root.u
+
+        Item {
+            id: dial
+            width: 66 * root.u
+            height: 66 * root.u
+            Shape {
+                anchors.fill: parent
+                layer.enabled: true
+                layer.samples: 4
+                ShapePath {
+                    strokeColor: "#1fffffff"
+                    strokeWidth: 6 * root.u
+                    fillColor: "transparent"
+                    PathAngleArc { centerX: dial.width / 2; centerY: dial.height / 2; radiusX: dial.width / 2 - 5 * root.u; radiusY: dial.height / 2 - 5 * root.u; startAngle: -90; sweepAngle: 360 }
+                }
+                ShapePath {
+                    strokeColor: root.accent
+                    strokeWidth: 6 * root.u
+                    fillColor: "transparent"
+                    capStyle: ShapePath.RoundCap
+                    PathAngleArc { centerX: dial.width / 2; centerY: dial.height / 2; radiusX: dial.width / 2 - 5 * root.u; radiusY: dial.height / 2 - 5 * root.u; startAngle: -90; sweepAngle: 359.9 * Math.max(0.001, Math.min(1, ga.shown)) }
+                }
+            }
+            Text {
+                anchors.centerIn: parent
+                text: ga.valueText
+                font.family: root.sans
+                font.pixelSize: 14 * root.u
+                color: "#ffffff"
+            }
+        }
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 74 * root.u
+            text: ga.label
+            font.family: root.sans
+            font.pixelSize: 12 * root.u
+            color: "#99ffffff"
+        }
+    }
+
+    component DockButton: Item {
+        id: db
+        property string glyph: ""
+        property string label: ""
+        property string cmd: ""
+        width: 64 * root.u
+        height: 64 * root.u
+        scale: dma.pressed ? 0.9 : (dma.containsMouse ? 1.18 : 1)
+        Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 20 * root.u
+            color: dma.containsMouse ? "#2effffff" : "#14ffffff"
+            Behavior on color { ColorAnimation { duration: 150 } }
+        }
+        Text {
+            anchors.centerIn: parent
+            text: db.glyph
+            font.family: root.sans
+            font.pixelSize: 24 * root.u
+            color: "#ffffff"
+        }
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: -26 * root.u
+            text: db.label
+            opacity: dma.containsMouse ? 1 : 0
+            font.family: root.sans
+            font.pixelSize: 12 * root.u
+            color: "#ffffff"
+            Behavior on opacity { NumberAnimation { duration: 150 } }
+        }
+        MouseArea { id: dma; anchors.fill: parent; hoverEnabled: true; onClicked: root.run(db.cmd) }
+    }
+
+    // ---------- Window ----------
+
+    // Other monitors get the same softened desktop plus a quiet clock, so they never sit bright beside the dimmed one.
+    Variants {
+        model: Quickshell.screens
+        delegate: PanelWindow {
+            id: side
+            required property var modelData
+            readonly property real su: root.unitFor(modelData)
+
+            screen: modelData
+            visible: root.shown && modelData !== win.screen
+            anchors { top: true; bottom: true; left: true; right: true }
+            color: "transparent"
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.namespace: "home-screen"
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+
+            Item {
+                anchors.fill: parent
+                opacity: Math.max(0.001, Math.min(1, root.t * 2.5))
+
+                Image {
+                    id: sideImg
+                    anchors.fill: parent
+                    visible: false
+                    source: root.wallFor(side.modelData.name)
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    cache: false
+                    sourceSize.width: side.modelData.width
+                    sourceSize.height: side.modelData.height
+                }
+                MultiEffect {
+                    anchors.fill: parent
+                    source: sideImg
+                    scale: 1 + 0.035 * root.t
+                    blurEnabled: true
+                    blurMax: 64
+                    blur: 1
+                    brightness: -0.1
+                    saturation: 0.12
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#000000"
+                    opacity: 0.22 * root.t
+                }
+
+                Column {
+                    id: sideClock
+                    readonly property real p: root.seg(0.1)
+                    anchors.centerIn: parent
+                    opacity: p
+                    transform: Translate { y: (1 - sideClock.p) * 16 * side.su }
+                    spacing: 2 * side.su
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: Qt.formatTime(clock.date, "HH:mm")
+                        font.family: root.sans
+                        font.pixelSize: 110 * side.su
+                        font.weight: Font.Light
+                        color: "#ffffff"
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: Qt.formatDate(clock.date, "dddd, d MMMM")
+                        font.family: root.sans
+                        font.pixelSize: 20 * side.su
+                        color: "#ccffffff"
+                    }
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.close()
+            }
+        }
+    }
+
+    PanelWindow {
+        id: win
+        visible: root.shown
+        screen: root.targetScreen ?? Quickshell.screens[0]
+        anchors { top: true; bottom: true; left: true; right: true }
+        color: "transparent"
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.namespace: "home-screen"
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
+        Item {
+            id: stage
+            anchors.fill: parent
+            focus: true
+
+            Keys.onPressed: event => {
+                const k = event.key
+                const pl = root.player
+                if (k === Qt.Key_Escape) root.close()
+                else if (k === Qt.Key_L) root.run("hyprlock")
+                else if (k === Qt.Key_E) root.run("pkill Hyprland || pkill sway || pkill niri || loginctl terminate-user $USER")
+                else if (k === Qt.Key_R) root.run("systemctl reboot || loginctl reboot")
+                else if (k === Qt.Key_S) root.run("systemctl poweroff || loginctl poweroff")
+                else if (k === Qt.Key_Space && pl) pl.togglePlaying()
+                else if (k === Qt.Key_Right && pl) pl.next()
+                else if (k === Qt.Key_Left && pl) pl.previous()
+                else if (k === Qt.Key_Up) root.setVolume(root.volume + 0.05)
+                else if (k === Qt.Key_Down) root.setVolume(root.volume - 0.05)
+                else if (k === Qt.Key_M && root.sink) root.sink.audio.muted = !root.muted
+                else if (k === Qt.Key_PageUp || k === Qt.Key_BracketLeft) root.shiftMonth(-1)
+                else if (k === Qt.Key_PageDown || k === Qt.Key_BracketRight) root.shiftMonth(1)
+                else if (k === Qt.Key_D) root.dnd = !root.dnd
+                else if (k === Qt.Key_C) root.clearAll()
+            }
+
+            // The desktop itself softens: same wallpaper, same crop, then it crossfades to a fixed blur.
+            Item {
+                anchors.fill: parent
+                // Never 0: Qt skips invisible items, which would defer the blur's first render into the animation.
+                opacity: Math.max(0.001, Math.min(1, root.t * 2.5))
+
+                Image {
+                    id: wallImg
+                    anchors.fill: parent
+                    visible: false
+                    source: root.wallFor(win.screen ? win.screen.name : "")
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    cache: false
+                    sourceSize.width: win.screen ? win.screen.width : 1920
+                    sourceSize.height: win.screen ? win.screen.height : 1080
+                    onStatusChanged: if (status === Image.Ready) { root.wallReady = true; startTimer.restart() }
+                }
+                MultiEffect {
+                    anchors.fill: parent
+                    source: wallImg
+                    scale: 1 + 0.035 * root.t
+                    blurEnabled: true
+                    blurMax: 64
+                    blur: 1
+                    brightness: -0.1
+                    saturation: 0.12
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#000000"
+                    opacity: 0.22 * root.t
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.close()
+            }
+
+            // Clock
+            Column {
+                id: clockBlock
+                readonly property real p: root.seg(0.02)
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: 64 * root.u
+                opacity: p
+                transform: Translate { y: (1 - clockBlock.p) * -24 * root.u }
+                spacing: 2 * root.u
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: Qt.formatTime(clock.date, "HH:mm")
+                    font.family: root.sans
+                    font.pixelSize: 128 * root.u
+                    font.weight: Font.Light
+                    color: "#ffffff"
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: Qt.formatDate(clock.date, "dddd, d MMMM")
+                    font.family: root.sans
+                    font.pixelSize: 22 * root.u
+                    color: "#ccffffff"
+                }
+            }
+
+            // Widgets
+            Flow {
+                id: widgets
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: 330 * root.u
+                width: (root.portrait ? 728 : 1424) * root.u
+                spacing: 20 * root.u
+
+                // Media
+                Glass {
+                    id: media
+                    width: 360 * root.u
+                    height: 350 * root.u
+                    title: "Now Playing"
+                    delay: 0.06
+                    readonly property var pl: root.player
+
+                    Column {
+                        visible: !media.pl
+                        anchors.centerIn: parent
+                        spacing: 8 * root.u
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "\uf001"
+                            font.family: root.sans
+                            font.pixelSize: 34 * root.u
+                            color: "#55ffffff"
+                        }
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "Not playing"
+                            font.family: root.sans
+                            font.pixelSize: 14 * root.u
+                            color: "#80ffffff"
+                        }
+                    }
+
+                    Item {
+                        anchors.fill: parent
+                        visible: media.pl !== null
+
+                        ClippingRectangle {
+                            id: art
+                            width: 100 * root.u
+                            height: 100 * root.u
+                            radius: 18 * root.u
+                            color: "#22ffffff"
+                            Image {
+                                anchors.fill: parent
+                                source: media.pl && media.pl.trackArtUrl ? media.pl.trackArtUrl : ""
+                                sourceSize.width: 200
+                                sourceSize.height: 200
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                opacity: status === Image.Ready ? 1 : 0
+                                Behavior on opacity { NumberAnimation { duration: 300 } }
+                            }
+                        }
+                        Column {
+                            x: 116 * root.u
+                            width: parent.width - x
+                            anchors.verticalCenter: art.verticalCenter
+                            spacing: 4 * root.u
+                            Text {
+                                width: parent.width
+                                text: media.pl ? media.pl.trackTitle : ""
+                                elide: Text.ElideRight
+                                font.family: root.sans
+                                font.pixelSize: 17 * root.u
+                                color: "#ffffff"
+                            }
+                            Text {
+                                width: parent.width
+                                text: media.pl ? media.pl.trackArtist : ""
+                                elide: Text.ElideRight
+                                font.family: root.sans
+                                font.pixelSize: 13 * root.u
+                                color: "#99ffffff"
+                            }
+                        }
+
+                        Item {
+                            id: prog
+                            y: 126 * root.u
+                            width: parent.width
+                            height: 36 * root.u
+                            readonly property real len: media.pl ? media.pl.length : 0
+                            readonly property real ratio: len > 0 ? media.pl.position / len : 0
+                            Rectangle {
+                                width: parent.width
+                                height: 5 * root.u
+                                radius: height / 2
+                                color: "#26ffffff"
+                                Rectangle {
+                                    height: parent.height
+                                    radius: height / 2
+                                    width: parent.width * Math.min(1, prog.ratio)
+                                    color: "#f2ffffff"
+                                }
+                            }
+                            Text {
+                                y: 14 * root.u
+                                text: root.fmtTime(media.pl ? media.pl.position : 0)
+                                font.family: root.sans
+                                font.pixelSize: 11 * root.u
+                                color: "#80ffffff"
+                            }
+                            Text {
+                                y: 14 * root.u
+                                anchors.right: parent.right
+                                text: root.fmtTime(prog.len)
+                                font.family: root.sans
+                                font.pixelSize: 11 * root.u
+                                color: "#80ffffff"
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: mouse => {
+                                    if (media.pl && media.pl.canSeek && prog.len > 0)
+                                        media.pl.position = mouse.x / width * prog.len
+                                }
+                            }
+                        }
+
+                        Row {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: 176 * root.u
+                            spacing: 18 * root.u
+                            IconButton { size: 52 * root.u; glyph: "\uf048"; onClicked: media.pl.previous() }
+                            IconButton { size: 62 * root.u; glyph: media.pl && media.pl.isPlaying ? "\uf04c" : "\uf04b"; onClicked: media.pl.togglePlaying() }
+                            IconButton { size: 52 * root.u; glyph: "\uf051"; onClicked: media.pl.next() }
+                        }
+                    }
+                }
+
+                // Calendar
+                Glass {
+                    width: 340 * root.u
+                    height: 350 * root.u
+                    title: Qt.formatDate(new Date(root.calY, root.calM, 1), "MMMM yyyy")
+                    delay: 0.12
+
+                    Row {
+                        anchors.right: parent.right
+                        y: -34 * root.u
+                        spacing: 2 * root.u
+                        IconButton { size: 28 * root.u; glyph: "\uf053"; onClicked: root.shiftMonth(-1) }
+                        IconButton { size: 28 * root.u; glyph: "\uf054"; onClicked: root.shiftMonth(1) }
+                    }
+
+                    Grid {
+                        id: calGrid
+                        width: parent.width
+                        columns: 7
+                        readonly property real cw: width / 7
+
+                        SequentialAnimation {
+                            id: monthFlip
+                            NumberAnimation { target: calGrid; property: "opacity"; to: 0.1; duration: 90 }
+                            NumberAnimation { target: calGrid; property: "opacity"; to: 1; duration: 280; easing.type: Easing.OutCubic }
+                        }
+
+                        Repeater {
+                            model: ["M", "T", "W", "T", "F", "S", "S"]
+                            delegate: Text {
+                                required property string modelData
+                                width: calGrid.cw
+                                height: 26 * root.u
+                                horizontalAlignment: Text.AlignHCenter
+                                text: modelData
+                                font.family: root.sans
+                                font.pixelSize: 12 * root.u
+                                color: "#66ffffff"
+                            }
+                        }
+                        Repeater {
+                            model: root.cells
+                            delegate: Item {
+                                id: cell
+                                required property int modelData
+                                width: calGrid.cw
+                                height: 33 * root.u
+                                readonly property bool today: modelData > 0
+                                    && modelData === clock.date.getDate()
+                                    && root.calM === clock.date.getMonth()
+                                    && root.calY === clock.date.getFullYear()
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 28 * root.u
+                                    height: width
+                                    radius: width / 2
+                                    visible: cell.today
+                                    color: root.accent
+                                }
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: cell.modelData > 0 ? cell.modelData : ""
+                                    font.family: root.sans
+                                    font.pixelSize: 14 * root.u
+                                    font.weight: cell.today ? Font.DemiBold : Font.Normal
+                                    color: cell.today ? "#101418" : "#e6ffffff"
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // System
+                Glass {
+                    width: root.sysW * root.u
+                    height: 350 * root.u
+                    title: "System"
+                    delay: 0.18
+
+                    Row {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 14 * root.u
+                        Gauge { ratio: root.cpu; label: "CPU"; valueText: Math.round(root.cpu * 100) + "%" }
+                        Gauge { ratio: 1 - root.memAvail / root.memTotal; label: "Memory"; valueText: Math.round((1 - root.memAvail / root.memTotal) * 100) + "%" }
+                        Gauge { visible: root.hasGpu; ratio: root.gpuUtil; label: "GPU"; valueText: Math.round(root.gpuUtil * 100) + "%" }
+                        Gauge { visible: root.hasBattery; ratio: root.batPct / 100; label: root.batState === "Charging" ? "Charging" : "Battery"; valueText: root.batPct + "%" }
+                    }
+
+                    Column {
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        spacing: 6 * root.u
+                        Text {
+                            width: parent.width
+                            text: root.cpuModel
+                            elide: Text.ElideRight
+                            font.family: root.sans
+                            font.pixelSize: 12 * root.u
+                            color: "#ccffffff"
+                        }
+                        Text {
+                            width: parent.width
+                            text: (root.hasGpu ? root.gpuName + "  ·  " : "") + (root.memTotal / 1048576).toFixed(0) + " GB"
+                            elide: Text.ElideRight
+                            font.family: root.sans
+                            font.pixelSize: 12 * root.u
+                            color: "#80ffffff"
+                        }
+                        Text {
+                            width: parent.width
+                            text: "Up " + root.fmtUptime(root.uptime) + (root.cpuTemp > 0 ? "  ·  " + Math.round(root.cpuTemp) + "°C" : "")
+                            font.family: root.sans
+                            font.pixelSize: 12 * root.u
+                            color: "#80ffffff"
+                        }
+                    }
+                }
+
+                // Volume and notifications
+                Column {
+                    spacing: 20 * root.u
+
+                    Item {
+                        width: root.sysW * root.u
+                        height: 110 * root.u
+
+                        Glass {
+                            anchors.fill: parent
+                            title: "Volume"
+                            delay: 0.24
+
+                            Text {
+                                anchors.right: parent.right
+                                y: -32 * root.u
+                                text: root.muted ? "Muted" : Math.round(root.volume * 100) + "%"
+                                font.family: root.sans
+                                font.pixelSize: 13 * root.u
+                                color: "#99ffffff"
+                            }
+
+                            Item {
+                                id: vol
+                                anchors.bottom: parent.bottom
+                                width: parent.width
+                                height: 34 * root.u
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: height / 2
+                                    color: "#26ffffff"
+                                    clip: true
+                                    Rectangle {
+                                        height: parent.height
+                                        width: Math.max(parent.height, parent.width * (root.muted ? 0 : root.volume))
+                                        radius: height / 2
+                                        color: "#f2ffffff"
+                                        // Follows the pointer exactly while dragging, eases otherwise.
+                                        Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                    }
+                                }
+                                Text {
+                                    x: 13 * root.u
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: root.muted || root.volume === 0 ? "\uf026" : "\uf028"
+                                    font.family: root.sans
+                                    font.pixelSize: 15 * root.u
+                                    color: "#101418"
+                                }
+                                // Click or drag anywhere along the bar.
+                                MouseArea {
+                                    id: volDrag
+                                    anchors.fill: parent
+                                    preventStealing: true
+                                    onPressed: mouse => root.setVolume(mouse.x / width)
+                                    onPositionChanged: mouse => { if (pressed) root.setVolume(mouse.x / width) }
+                                }
+                                MouseArea {
+                                    width: parent.height
+                                    height: parent.height
+                                    onClicked: if (root.sink) root.sink.audio.muted = !root.muted
+                                }
+                            }
+                        }
+
+                        // Wheel over the whole tile changes volume; clicks fall through to the bar.
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.NoButton
+                            onWheel: wheel => root.setVolume(root.volume + wheel.angleDelta.y / 120 * 0.03)
+                        }
+                    }
+
+                    Glass {
+                        width: root.sysW * root.u
+                        height: 220 * root.u
+                        title: "Notifications" + (root.notifCount > 0 ? "  ·  " + root.notifCount : "")
+                        delay: 0.3
+
+                        Row {
+                            anchors.right: parent.right
+                            y: -34 * root.u
+                            spacing: 2 * root.u
+                            IconButton {
+                                size: 28 * root.u
+                                glyph: root.dnd ? "\uf1f6" : "\uf0f3"
+                                tint: root.dnd ? root.accent : "#ffffff"
+                                onClicked: root.dnd = !root.dnd
+                            }
+                            IconButton {
+                                size: 28 * root.u
+                                glyph: "\uf1f8"
+                                visible: root.notifCount > 0
+                                onClicked: root.clearAll()
+                            }
+                        }
+
+                        Column {
+                            anchors.centerIn: parent
+                            visible: root.notifCount === 0
+                            spacing: 8 * root.u
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: root.dnd ? "\uf1f6" : "\uf0f3"
+                                font.family: root.sans
+                                font.pixelSize: 34 * root.u
+                                color: "#55ffffff"
+                            }
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: root.dnd ? "Do Not Disturb" : "All clear"
+                                font.family: root.sans
+                                font.pixelSize: 14 * root.u
+                                color: "#80ffffff"
+                            }
+                        }
+
+                        ListView {
+                            id: notifList
+                            anchors.fill: parent
+                            clip: true
+                            spacing: 8 * root.u
+                            boundsBehavior: Flickable.StopAtBounds
+                            model: ScriptModel { values: root.notifs }
+
+                            delegate: NotificationCard {
+                                required property var modelData
+                                width: notifList.width
+                                n: modelData
+                                shell: root
+                                u: root.u
+                            }
+
+                            add: Transition {
+                                ParallelAnimation {
+                                    NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 250 }
+                                    NumberAnimation { property: "x"; from: 40 * root.u; duration: 320; easing.type: Easing.OutCubic }
+                                }
+                            }
+                            remove: Transition {
+                                ParallelAnimation {
+                                    NumberAnimation { property: "opacity"; to: 0; duration: 180 }
+                                    NumberAnimation { property: "x"; to: 60 * root.u; duration: 220; easing.type: Easing.InCubic }
+                                }
+                            }
+                            displaced: Transition {
+                                NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutCubic }
+                            }
+                        }
+
+                        // Sits in the tile margin; wheel and drag scroll the list.
+                        Rectangle {
+                            visible: notifList.contentHeight > notifList.height + 1
+                            x: parent.width + 12 * root.u
+                            y: parent.height * notifList.visibleArea.yPosition
+                            width: 3 * root.u
+                            height: parent.height * notifList.visibleArea.heightRatio
+                            radius: width / 2
+                            color: "#40ffffff"
+                        }
+                    }
+                }
+            }
+
+            // Power dock (everything wlogout had)
+            Glass {
+                id: dock
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 64 * root.u
+                width: dockRow.width + 32 * root.u
+                height: 96 * root.u
+                delay: 0.36
+
+                Row {
+                    id: dockRow
+                    parent: dock
+                    anchors.centerIn: parent
+                    spacing: 16 * root.u
+                    DockButton { glyph: "\uf023"; label: "Lock  L"; cmd: "hyprlock" }
+                    DockButton { glyph: "\uf08b"; label: "Log Out  E"; cmd: "pkill Hyprland || pkill sway || pkill niri || loginctl terminate-user $USER" }
+                    DockButton { glyph: "\uf021"; label: "Restart  R"; cmd: "systemctl reboot || loginctl reboot" }
+                    DockButton { glyph: "\uf011"; label: "Shut Down  S"; cmd: "systemctl poweroff || loginctl poweroff" }
+                }
+            }
+        }
+    }
+}

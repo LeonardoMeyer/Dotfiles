@@ -81,7 +81,9 @@ hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 4, bezier = "f
 hl.animation({ leaf = "layers", enabled = true, speed = 2, bezier = "snappy", style = "popin 70%" })
 
 hl.layer_rule({ name = "waybar-blur", match = { namespace = "waybar" }, blur = true, ignore_alpha = 0.5 })
-hl.layer_rule({ name = "swaync-cc-blur", match = { namespace = "swaync-control-center" }, blur = true, ignore_alpha = .3 })
-hl.layer_rule({ name = "swaync-notif-blur", match = { namespace = "swaync-notification-window" }, blur = true, ignore_alpha = .3 })
+hl.layer_rule({ name = "notification-popup-glass", match = { namespace = "notification-popup" }, blur = true, ignore_alpha = 0.5, no_anim = true })
 hl.layer_rule({ name = "selection-no-anim", match = { namespace = "selection" }, no_anim = true })
-hl.layer_rule({ name = "swayosd-blur", match = { namespace = "swayosd" }, blur = true, ignore_alpha = 0.5 })
+hl.layer_rule({ name = "osd-glass", match = { namespace = "osd" }, blur = true, ignore_alpha = 0.05, no_anim = true })
+hl.layer_rule({ name = "wofi-blur", match = { namespace = "launcher" }, blur = true, ignore_alpha = 0.3 })
+hl.layer_rule({ name = "wallpaper-picker-noanim", match = { namespace = "wallpaper-picker" }, no_anim = true })
+hl.layer_rule({ name = "home-screen-noanim", match = { namespace = "home-screen" }, no_anim = true })

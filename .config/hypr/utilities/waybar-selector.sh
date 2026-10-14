@@ -3,46 +3,35 @@
 set -euo pipefail
 
 WAYBAR_DIR="$HOME/.config/waybar"
-STYLECSS="$WAYBAR_DIR/style.css"
-CONFIG="$WAYBAR_DIR/config"
 ASSETS="$WAYBAR_DIR/assets"
 THEMES="$WAYBAR_DIR/themes"
 
+# Asset file name -> theme folder name.
+declare -A THEME_FOR=([main]=default [experimental]=experimental [line]=line [zen]=zen)
+
 menu() {
-    find "$ASSETS" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \) \
-        | awk '{print "img:"$0}'
+    local name
+    for name in main experimental line zen; do
+        [ -f "$ASSETS/$name.png" ] && printf 'img:%s:text:%s\n' "$ASSETS/$name.png" "${THEME_FOR[$name]^}"
+    done
 }
 
 main() {
-    local choice selected_wallpaper
+    local choice name theme
     choice="$(menu | wofi -c ~/.config/wofi/waybar -s ~/.config/wofi/style-waybar.css \
-        --show dmenu --prompt "  Select Waybar (Scroll with Arrows)" -n || true)"
-    selected_wallpaper="${choice#img:}"
+        --show dmenu --prompt "Select Waybar" -n || true)"
     [ -n "$choice" ] || exit 0
 
-    case "$selected_wallpaper" in
-        "$ASSETS/experimental.png")
-            cat "$THEMES/experimental/style-experimental.css" > "$STYLECSS"
-            cat "$THEMES/experimental/config-experimental" > "$CONFIG"
-            ;;
-        "$ASSETS/main.png")
-            cat "$THEMES/default/style-default.css" > "$STYLECSS"
-            cat "$THEMES/default/config-default" > "$CONFIG"
-            ;;
-        "$ASSETS/line.png")
-            cat "$THEMES/line/style-line.css" > "$STYLECSS"
-            cat "$THEMES/line/config-line" > "$CONFIG"
-            ;;
-        "$ASSETS/zen.png")
-            cat "$THEMES/zen/style-zen.css" > "$STYLECSS"
-            cat "$THEMES/zen/config-zen" > "$CONFIG"
-            ;;
-        *)
-            exit 0
-            ;;
-    esac
+    name="${choice#img:$ASSETS/}"
+    name="${name%%.png*}"
+    theme="${THEME_FOR[$name]:-}"
+    [ -n "$theme" ] || exit 0
 
-    pkill waybar && waybar
+    cat "$THEMES/$theme/style-$theme.css" > "$WAYBAR_DIR/style.css"
+    cat "$THEMES/$theme/config-$theme" > "$WAYBAR_DIR/config"
+
+    pkill -x waybar || true
+    waybar >/dev/null 2>&1 &
 }
 
 main

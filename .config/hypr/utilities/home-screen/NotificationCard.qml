@@ -1,0 +1,213 @@
+import QtQuick
+import QtQuick.Effects
+import Quickshell
+import Quickshell.Widgets
+import Quickshell.Services.Notifications
+
+// One notification, shared by the home tile (popup: false) and the pop-up window (popup: true).
+Item {
+    id: card
+
+    required property var n
+    required property var shell
+    property real u: 1
+    property bool popup: false
+    property bool expanded: false
+    // 1 to 0 while a pop-up counts down; negative hides the bar.
+    property real progress: -1
+
+    readonly property bool hovered: area.containsMouse || closeArea.containsMouse
+    readonly property bool critical: n.urgency === NotificationUrgency.Critical
+    readonly property string iconSrc: shell.iconFor(n)
+    readonly property real pad: (popup ? 14 : 10) * u
+    readonly property real iconSize: (popup ? 40 : 36) * u
+    readonly property var defaultAction: {
+        for (let i = 0; i < n.actions.length; i++)
+            if (n.actions[i].identifier === "default") return n.actions[i]
+        return null
+    }
+    readonly property var extraActions: {
+        const out = []
+        for (let i = 0; i < n.actions.length; i++)
+            if (n.actions[i].identifier !== "default") out.push(n.actions[i])
+        return out
+    }
+
+    height: Math.max(iconSize, col.implicitHeight) + pad * 2 + (progress >= 0 ? 4 * u : 0)
+
+    function activate() {
+        if (defaultAction) {
+            defaultAction.invoke()
+            if (popup) shell.hidePopup(n)
+        } else if (popup) shell.hidePopup(n)
+        else expanded = !expanded
+    }
+
+    Rectangle {
+        id: bg
+        anchors.fill: parent
+        radius: (popup ? 12 : 12) * card.u
+        color: card.popup ? shell.popupBg : (area.containsMouse ? "#26ffffff" : "#14ffffff")
+        border.width: card.popup || card.critical ? 1 : 0
+        border.color: card.critical ? "#b3ff6b6b" : Qt.alpha(shell.accent, 0.4)
+        Behavior on color { ColorAnimation { duration: 150 } }
+        // Soft drop shadow lifts pop-ups off the desktop; faint enough that the blur rule ignores it.
+        layer.enabled: card.popup
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: "#000000"
+            shadowOpacity: 0.4
+            shadowBlur: 1
+            shadowVerticalOffset: 8 * card.u
+        }
+    }
+
+    MouseArea {
+        id: area
+        anchors.fill: parent
+        hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        onClicked: mouse => {
+            if (mouse.button === Qt.LeftButton) card.activate()
+            else if (card.popup) shell.hidePopup(card.n)
+            else card.n.dismiss()
+        }
+    }
+
+    ClippingRectangle {
+        id: iconBox
+        x: card.pad
+        y: card.pad
+        width: card.iconSize
+        height: card.iconSize
+        radius: 10 * card.u
+        color: "#22ffffff"
+
+        Image {
+            anchors.fill: parent
+            anchors.margins: card.n.image !== "" ? 0 : 6 * card.u
+            visible: card.iconSrc !== ""
+            source: card.iconSrc
+            sourceSize.width: 96
+            sourceSize.height: 96
+            fillMode: card.n.image !== "" ? Image.PreserveAspectCrop : Image.PreserveAspectFit
+            asynchronous: true
+        }
+        Text {
+            anchors.centerIn: parent
+            visible: card.iconSrc === ""
+            text: card.critical ? "\uf071" : "\uf0f3"
+            font.family: shell.sans
+            font.pixelSize: card.iconSize * 0.45
+            color: card.critical ? "#ff6b6b" : shell.accent
+        }
+    }
+
+    Column {
+        id: col
+        x: card.pad + card.iconSize + 12 * card.u
+        y: card.pad
+        width: card.width - x - card.pad - 14 * card.u
+        spacing: 3 * card.u
+
+        Text {
+            width: parent.width
+            text: card.n.summary
+            elide: Text.ElideRight
+            font.family: shell.sans
+            font.pixelSize: (card.popup ? 14 : 13) * card.u
+            font.weight: Font.DemiBold
+            color: "#ffffff"
+        }
+        Text {
+            width: parent.width
+            visible: text !== ""
+            text: card.n.body
+            textFormat: Text.StyledText
+            wrapMode: Text.Wrap
+            maximumLineCount: card.expanded ? 14 : (card.popup ? 3 : 2)
+            elide: Text.ElideRight
+            font.family: shell.sans
+            font.pixelSize: (card.popup ? 12.5 : 12) * card.u
+            color: "#cfffffff"
+        }
+        Text {
+            width: parent.width
+            text: (card.n.appName !== "" ? card.n.appName + "  ·  " : "") + shell.ago(card.n)
+            elide: Text.ElideRight
+            font.family: shell.sans
+            font.pixelSize: 10.5 * card.u
+            color: "#66ffffff"
+        }
+        Flow {
+            width: parent.width
+            visible: card.extraActions.length > 0
+            topPadding: 5 * card.u
+            spacing: 6 * card.u
+            Repeater {
+                model: card.extraActions
+                delegate: Item {
+                    id: act
+                    required property var modelData
+                    width: actLabel.implicitWidth + 22 * card.u
+                    height: 26 * card.u
+                    scale: actArea.pressed ? 0.94 : 1
+                    Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } }
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: height / 2
+                        color: actArea.containsMouse ? "#40ffffff" : "#26ffffff"
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+                    Text {
+                        id: actLabel
+                        anchors.centerIn: parent
+                        text: act.modelData.text
+                        font.family: shell.sans
+                        font.pixelSize: 11 * card.u
+                        color: "#ffffff"
+                    }
+                    MouseArea {
+                        id: actArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: {
+                            act.modelData.invoke()
+                            if (card.popup) shell.hidePopup(card.n)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        visible: card.progress >= 0
+        x: card.pad
+        y: card.height - 7 * card.u
+        width: (card.width - card.pad * 2) * card.progress
+        height: 2 * card.u
+        radius: height / 2
+        color: card.critical ? "#ff6b6b" : shell.accent
+        opacity: 0.8
+    }
+
+    Text {
+        x: card.width - card.pad - width + 2 * card.u
+        y: card.pad - 2 * card.u
+        text: "\uf00d"
+        opacity: card.hovered ? 1 : 0
+        font.family: shell.sans
+        font.pixelSize: 13 * card.u
+        color: closeArea.containsMouse ? "#ffffff" : "#99ffffff"
+        Behavior on opacity { NumberAnimation { duration: 150 } }
+
+        MouseArea {
+            id: closeArea
+            anchors.fill: parent
+            anchors.margins: -8 * card.u
+            hoverEnabled: true
+            onClicked: card.n.dismiss()
+        }
+    }
+}

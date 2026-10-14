@@ -21,7 +21,7 @@
         "custom/notification": {
             "tooltip": false,
             "format": "",
-            "on-click": "swaync-client -t -sw",
+            "on-click": "~/.config/hypr/utilities/home.sh",
             "escape": true
         },
         "clock": {

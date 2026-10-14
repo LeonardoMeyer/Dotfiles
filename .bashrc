@@ -1,46 +1,93 @@
 # ~/.bashrc
-clear && myfetch -c 8 -C " █"
-eval "$(starship init bash)"
-eval "$(fzf --bash)"
+# Interactive shells only
 [[ $- != *i* ]] && return
+# Environment
+export EDITOR=nvim
+export VISUAL=nvim
+export NVM_DIR="$HOME/.nvm"
+export PATH="$HOME/.npm-global/bin:$PATH"
+export wallpaper="$HOME/wallpapers/pywallpaper.jpg"
+# Fast startup
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+myfetch -c 8 -C " █" && eval "$(starship init bash)"
+# General aliases
 alias lsd='eza --icons'
-alias search='yay -Q | grep'
-alias pacup='sudo pacman -Rns $(pacman -Qdtq)'
 alias grep='grep --color=auto'
-alias pool='clear && asciiquarium'
-alias f='clear && myfetch -i e -f -c 16 -C "  "'
-alias bye='paplay ~/.config/sounds/shudown.mp3 && shutdown now'
-alias loop='sudo reboot'
-alias Update='./Dotfiles/InstallScripts/install.sh '
-alias h='start-hyprland'
-alias fonts='fc-list -f "%{family}\n"'
+alias c='clear'
+alias n='nvim'
+alias v='nvim'
+alias files='yazi'
 alias tasks='btm'
-alias Docs="cd ~/Documents && nvim"
-alias docker="sudo docker"
-alias Settings="cd ~/.config/hypr && nvim"
-alias spot="ncspot"
-alias untar="tar -xf"
-alias n="nvim"
+alias spot='ncspot'
+alias untar='tar -xf'
+alias fonts='fc-list -f "%{family}\n"'
+# Navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias Docs='cd "$HOME/Documents" && nvim'
+alias Settings='cd "$HOME/.config/hypr" && nvim'
+# Package management
+alias search='yay -Q | grep'
+alias paci='sudo pacman -S'
+alias pacr='sudo pacman -Rns'
+alias pacs='pacman -Ss'
+alias pacq='pacman -Qs'
+alias pacinfo='pacman -Qi'
+alias pacfiles='pacman -Ql'
+alias pacclean='sudo paccache -r'
+alias pacup='sudo pacman -Syu'
+# Remove orphaned packages
+pacorphans() {
+    local packages
+    packages=$(pacman -Qdtq) || return
+    [[ -z "$packages" ]] && {
+        echo "No orphaned packages found."
+        return 0
+    }
+    printf 'Orphaned packages:\n%s\n' "$packages"
+    read -r -p "Remove these packages? [y/N] " confirm
+    [[ "$confirm" == [yY] ]] && sudo pacman -Rns $packages
+}
+# System diagnostics
+alias ports='ss -tulpn'
+alias mem='free -h'
+alias disk='df -h'
+alias failed='systemctl --failed'
+alias journal='journalctl -p 3 -xb'
+alias boot='systemd-analyze'
+alias gpu='nvidia-smi'
+# Git
+alias g='git'
+alias gs='git status'
+alias gd='git diff'
+alias gl='git log --oneline --graph -15'
+# Docker
+alias docker='sudo docker'
 alias start-portainer='docker start portainer'
 alias stop-portainer='docker stop portainer'
 alias start-docker='sudo systemctl start docker'
 alias stop-docker='sudo systemctl stop docker.service docker.socket'
 alias restart-docker='sudo systemctl restart docker'
-alias files="yazi"
-alias wss="hyprdvd -s"
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-PS1='[\u@\h \W]\$ '
-export PATH=~/.npm-global/bin:$PATH
-export EDITOR=nvim
-export VISUAL=nvim
-
+# Hyprland and desktop
+alias pool='clear && asciiquarium'
+alias f='clear && myfetch -i e -f -c 16 -C "  "'
+alias h='dbus-launch Hyprland'
+alias wss='hyprdvd -s'
+# Power
+alias bye='sudo shutdown -h now'
+alias loop='sudo reboot'
+# Dotfiles
+alias Update='./Dotfiles/InstallScripts/install.sh'
+alias reload='source "$HOME/.bashrc"'
+# Optional command-result sounds
 lol() {
     local status=$?
-    if [ $status -ne 0 ]; then
-        (paplay ~/.config/sounds/error.mp3 >/dev/null 2>&1 &)
+    if (( status != 0 )); then
+        paplay "$HOME/.config/sounds/error.mp3" >/dev/null 2>&1 &
     else
-        (paplay ~/.config/sounds/good.mp3 >/dev/null 2>&1 &)
+        paplay "$HOME/.config/sounds/good.mp3" >/dev/null 2>&1 &
     fi
 }
-# PROMPT_COMMAND="lol; $PROMPT_COMMAND"
+# Uncomment to enable command-result sounds
+# PROMPT_COMMAND='lol'

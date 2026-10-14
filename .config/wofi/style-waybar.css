@@ -1,97 +1,49 @@
-@import url('/home/ws-73/.cache/wal/colors-waybar.css');
-
-@define-color mauve  @color9;
-@define-color red  @color9;
-@define-color lavender  @color7;
-@define-color text  @color7;
-@keyframes fadeIn {
-    0% {
-    }
-    100% {
-    }
-}
+@import url('/home/eli/.cache/wal/colors-waybar.css');
 
 * {
     all: unset;
-    font-family: 'CodeNewRoman Nerd Font Mono', monospace;
-    font-size: 18px;
-    outline: none;
-    border: none;
-    text-shadow:none;
-    background-color:transparent;
+    font-family: 'CodeNewRoman Nerd Font Propo', monospace;
+    font-size: 16px;
 }
 
 window {
-    all:unset;
-    padding: 20px;
-    border-radius: 0px;
-    background-color: alpha(@background,.5);
+    padding: 10px;
+    border-radius: 16px;
+    background-color: alpha(@background, .6);
 }
-#inner-box {
-    margin: 2px;
-    padding: 5px
-    border: none;
-}
-#outer-box {    
-    border: none;
-}
-#scroll {
-    margin: 0px;
-    padding: 30px;
-    border: none;
-}
+
 #input {
-    all:unset;
-    margin-left:20px;
-    margin-right:20px;
-    margin-top:20px;
-    padding: 20px;
-    border: none;
-    outline: none;
-    color: @text;
-    box-shadow: 1px 1px 5px rgba(0, 0, 0, .5);
-    border-radius:10;
-    background-color: alpha(@background,.2);
+    margin: 0 0 8px 0;
+    padding: 10px 16px;
+    border-radius: 10px;
+    color: @color7;
+    background-color: alpha(@background, .5);
 }
+
 #input image {
-    border: none;
-    color: @red;
-}
-#input * {
-    border: none;
-    outline: none;
+    color: @color9;
+    padding-right: 10px;
 }
 
-#input:focus {
-    outline: none;
-    border: none;
-    border-radius:10;
-}
-#text {
-    margin: 5px;
-    border: none;
-    color: @text;
-    outline: none;
-}
 #entry {
-    border: none;
-    padding: 30;
+    margin: 3px 0;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background-color: alpha(@color7, .05);
 }
-#entry arrow {
-    border: none;
-    color: @lavender;
 
+#entry image {
+    margin-right: 24px;
 }
+
+#text {
+    color: alpha(@color7, .75);
+}
+
 #entry:selected {
-    padding: 30;
-    border: none;
-    border-radius: 20px;
-    background-color: alpha(@background,.2);
-}
-#entry:selected #text {
-    color: @mauve;
-}
-#entry:drop(active) {
-    background-color: @lavender !important;
+    background-color: alpha(@color7, .16);
 }
 
+#entry:selected #text {
+    color: @color7;
+}
