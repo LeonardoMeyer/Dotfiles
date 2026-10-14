@@ -8,7 +8,7 @@ CORE_PACKAGES=(
     cava brightnessctl clock-rs-git otf-code-new-roman nwg-look qogir-icon-theme
     materia-gtk-theme illogical-impulse-bibata-modern-classic-bin
     thunar gvfs tumbler eza bottom htop libreoffice-fresh spotify-launcher ncspot
-    discord visual-studio-code-bin yazi lazygit hyprdvd swayosd-git
+    discord visual-studio-code-bin yazi lazygit hyprdvd swayosd-git quickshell
 )
 
 OPTIONAL_PACKAGES=(
