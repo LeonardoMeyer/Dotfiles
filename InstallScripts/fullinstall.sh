@@ -220,16 +220,6 @@ run_wallpaper_selector() {
     fi
 }
 
-setup_dynamic_cursors() {
-    section "Dynamic Cursors"
-    if hyprpm add https://github.com/virtcode/hypr-dynamic-cursors && \
-       hyprpm enable dynamic-cursors; then
-        success "Dynamic cursors enabled."
-    else
-        warn "Dynamic cursors setup failed — you may need to run this manually."
-    fi
-}
-
 setup_mirrors() {
     section "Updating Pacman Mirrorlist"
     yay -S --needed reflector rsync
@@ -277,7 +267,6 @@ auto_install() {
 
     setup_bluetooth
     setup_pipewire
-    setup_dynamic_cursors
     apply_dotfiles
     run_wallpaper_selector
     finish
@@ -300,9 +289,6 @@ manual_install() {
 
     read -rp "Configure Pipewire & Network Displays? (Y/n): " p
     [[ "${p:-y}" =~ ^[Yy]$ ]] && setup_pipewire
-
-    read -rp "Enable Dynamic Cursors? (Y/n): " c
-    [[ "${c:-y}" =~ ^[Yy]$ ]] && setup_dynamic_cursors
 
     apply_dotfiles
     run_wallpaper_selector
