@@ -228,6 +228,30 @@ setup_mirrors() {
     success "Mirrorlist updated."
 }
 
+autologin() {
+    sudo pacman -S --needed greetd greetd-tuigreet || return
+
+    sudo tee /etc/greetd/config.toml > /dev/null <<'EOF'
+[terminal]
+vt = 1
+
+[default_session]
+command = "tuigreet --cmd start-hyprland"
+user = "greeter"
+
+[initial_session]
+command = "start-hyprland"
+user = "eli"
+EOF
+
+    sudo systemctl disable getty@tty1.service
+    sudo systemctl enable greetd.service
+}
+
+optional_reboot() {
+    read -rp "Reboot now?" m
+    [[ "${m:-y}" =~ ^[Yy]$ ]] && sudo reboot
+}
 setup_bluetooth() {
     section "Bluetooth"
     yay -S --needed blueman bluez
@@ -270,6 +294,7 @@ auto_install() {
     apply_dotfiles
     run_wallpaper_selector
     finish
+    optional_reboot
 }
 
 manual_install() {
@@ -293,6 +318,7 @@ manual_install() {
     apply_dotfiles
     run_wallpaper_selector
     finish
+    optional_reboot
 }
 
 # ── Entry point ───────────────────────────────────────────────────────────────
