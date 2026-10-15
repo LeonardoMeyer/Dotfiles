@@ -231,7 +231,7 @@ optional_reboot() {
     local choice
     read -rp "Reboot now? (Y/n): " choice
     if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-        sudo reboot
+        nohup bash -c 'sleep 2; sudo reboot' >/dev/null 2>&1 &
     fi
     return 0
 }
@@ -453,15 +453,15 @@ auto_install() {
     run_wallpaper_selector
     autologin
 
-    # local choice
-    # read -rp "Install Boot Screen? (Y/n): " choice
-    # if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-    #     boot_screen || warn "Boot screen setup failed."
-    # fi
+    local choice
+    read -rp "Install Boot Screen? (Y/n): " choice
+    if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
+        boot_screen || warn "Boot screen setup failed."
+    fi
 
     optional_packages
-    finish
     optional_reboot
+    finish
 }
 
 manual_install() {
@@ -488,10 +488,10 @@ manual_install() {
     apply_dotfiles
     run_wallpaper_selector
 
-    # read -rp "Install Boot Screen? (Y/n): " choice
-    # if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
-    #     boot_screen || warn "Boot screen setup failed."
-    # fi
+    read -rp "Install Boot Screen? (Y/n): " choice
+    if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
+        boot_screen || warn "Boot screen setup failed."
+    fi
 
     read -rp "Install autologin? (Y/n): " choice
     if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
@@ -499,8 +499,8 @@ manual_install() {
     fi
 
     optional_packages
-    finish
     optional_reboot
+    finish
 }
 
 # ── Entry point ─────────────────────────────────────────────────────────────

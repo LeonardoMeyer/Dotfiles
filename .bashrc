@@ -74,6 +74,7 @@ alias pool='clear && asciiquarium'
 alias f='clear && myfetch -i e -f -c 16 -C "  "'
 alias h='dbus-launch Hyprland'
 alias wss='hyprdvd -s'
+alias hyprrefresh='hyprctl reload'
 # Power
 alias bye='sudo shutdown -h now'
 alias loop='sudo reboot'
@@ -81,6 +82,7 @@ alias loop='sudo reboot'
 alias Update='./Dotfiles/InstallScripts/install.sh'
 alias reload='source "$HOME/.bashrc"'
 alias Dotfiles='cd ~/Dotfiles/ && nvim'
+alias Update-Dots='./Dotfiles/InstallScripts/sync-from-local.sh'
 # Optional command-result sounds
 lol() {
     local status=$?
