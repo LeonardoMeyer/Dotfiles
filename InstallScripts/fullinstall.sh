@@ -102,6 +102,8 @@ fix_wofi_paths() {
 apply_dotfiles() {
     section "Applying Dotfiles"
 
+    # Mirror: remove the destination first so stray local files don't survive
+    rm -rf "$HOME/wallpapers" "$HOME/.icons"
     cp -a "$DOTFILES_DIR/wallpapers" "$HOME/"
     cp -a "$DOTFILES_DIR/.icons" "$HOME/"
     mkdir -p "$HOME/.config"
@@ -110,11 +112,13 @@ apply_dotfiles() {
     for entry in "$src/"*; do
         [[ -e "$entry" ]] || continue
         [[ "$(basename "$entry")" == hypr ]] && continue
+        rm -rf "$dest/$(basename "$entry")"
         cp -a "$entry" "$dest/"
     done
 
     src="$DOTFILES_DIR/.config/hypr"
     dest="$HOME/.config/hypr"
+    rm -rf "$dest"
     mkdir -p "$dest" "$dest/utilities"
 
     for entry in hypridle.conf hyprlock.conf; do
@@ -225,7 +229,10 @@ optional_packages() {
 optional_reboot() {
     local choice
     read -rp "Reboot now? (Y/n): " choice
-    [[ "${choice:-y}" =~ ^[Yy]$ ]] && sudo reboot
+    if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
+        sudo reboot
+    fi
+    return 0
 }
 
 finish() {
@@ -452,8 +459,8 @@ auto_install() {
     # fi
 
     optional_packages
-    optional_reboot
     finish
+    optional_reboot
 }
 
 manual_install() {
@@ -491,8 +498,8 @@ manual_install() {
     fi
 
     optional_packages
-    optional_reboot
     finish
+    optional_reboot
 }
 
 # ── Entry point ─────────────────────────────────────────────────────────────
