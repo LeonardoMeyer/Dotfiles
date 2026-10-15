@@ -82,7 +82,6 @@ alias loop='sudo reboot'
 alias InstallDots='./Dotfiles/InstallScripts/install.sh'
 alias reload='source "$HOME/.bashrc"'
 alias Dotfiles='cd ~/Dotfiles/ && nvim'
-alias UpdateDots='./Dotfiles/InstallScripts/sync-from-local.sh'
 alias UpdateLocal='./Dotfiles/InstallScripts/apply.sh'
 # Optional command-result sounds
 lol() {
