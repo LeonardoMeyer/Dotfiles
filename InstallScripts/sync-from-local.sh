@@ -1,30 +1,27 @@
 #!/usr/bin/env bash
-# Copies local configs into this dotfiles repo, only for items that already exist here.
+# Mirrors local configs into this dotfiles repo, only for items that already exist here.
 set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-sync() {
+mirror() {
     local src="$1" dest="$2"
-    if [ ! -e "$src" ]; then
-        echo "skip (missing locally): $src"
+    if [ ! -e "$src" ] && [ ! -L "$src" ]; then
+        rm -rf "$dest"
+        echo "removed (missing locally): $dest"
         return
     fi
-    if [ -d "$src" ]; then
-        mkdir -p "$dest"
-        cp -a "$src/." "$dest/"
-    else
-        cp -a "$src" "$dest"
-    fi
-    echo "synced: $src -> $dest"
+    rm -rf "$dest"
+    cp -a "$src" "$dest"
+    echo "mirrored: $src -> $dest"
 }
 
 # Everything in .config that exists in the repo
+shopt -s nullglob dotglob
 for item in "$DOTFILES_DIR"/.config/*; do
-    [ -e "$item" ] || continue
-    sync "$HOME/.config/$(basename "$item")" "$item"
+    mirror "$HOME/.config/$(basename "$item")" "$item"
 done
 
-sync "$HOME/wallpapers" "$DOTFILES_DIR/wallpapers"
-sync "$HOME/.icons" "$DOTFILES_DIR/.icons"
-sync "$HOME/.bashrc" "$DOTFILES_DIR/.bashrc"
+mirror "$HOME/wallpapers" "$DOTFILES_DIR/wallpapers"
+mirror "$HOME/.icons" "$DOTFILES_DIR/.icons"
+mirror "$HOME/.bashrc" "$DOTFILES_DIR/.bashrc"
