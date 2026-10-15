@@ -102,42 +102,25 @@ fix_wofi_paths() {
 apply_dotfiles() {
     section "Applying Dotfiles"
 
-    # Mirror: remove the destination first so stray local files don't survive
-    rm -rf "$HOME/wallpapers" "$HOME/.icons"
-    cp -a "$DOTFILES_DIR/wallpapers" "$HOME/"
-    cp -a "$DOTFILES_DIR/.icons" "$HOME/"
-    mkdir -p "$HOME/.config"
+    local src="$DOTFILES_DIR/.config" dest="$HOME/.config" entry name
+    local style="$src/hypr/$HYPRLAND_STYLE_DIR"
 
-    local entry src="$DOTFILES_DIR/.config" dest="$HOME/.config"
-    for entry in "$src/"*; do
-        [[ -e "$entry" ]] || continue
-        [[ "$(basename "$entry")" == hypr ]] && continue
-        [[ "$(basename "$entry")" == archive ]] && continue
-        rm -rf "$dest/$(basename "$entry")"
+    rm -rf "$HOME/wallpapers" "$HOME/.icons"
+    cp -a "$DOTFILES_DIR/wallpapers" "$DOTFILES_DIR/.icons" "$HOME/"
+    mkdir -p "$dest"
+
+    for entry in "$src"/*; do
+        name="${entry##*/}"
+        [[ "$name" == archive ]] && continue
+        rm -rf "${dest:?}/$name"
         cp -a "$entry" "$dest/"
     done
 
-    src="$DOTFILES_DIR/.config/hypr"
-    dest="$HOME/.config/hypr"
-    rm -rf "$dest"
-    mkdir -p "$dest" "$dest/utilities"
-
-    for entry in hypridle.conf hyprlock.conf; do
-        cp -a "$src/$entry" "$dest/"
-    done
-    cp -a "$src/utilities/." "$dest/utilities/"
-
-    local profile
-    for profile in "$src"/*/; do
-        [[ -d "$profile" ]] || continue
-        cp -a "$profile" "$dest/"
-    done
-
-    # utilities/ and hyprlock.conf are shared; the active profile only adds its own files.
-    local style="$src/$HYPRLAND_STYLE_DIR"
-    [[ ! -d "$style/utilities" ]] || cp -an "$style/utilities/." "$dest/utilities/"
-    find "$style" -mindepth 1 -maxdepth 1 ! -name utilities ! -name hyprlock.conf -exec cp -a {} "$dest/" \;
-    printf '%s\n' "$HYPRLAND_STYLE_DIR" > "$dest/.active-profile"
+    # The active profile's files overlay hypr/; shared utilities/ and hyprlock.conf win.
+    cp -an "$style/utilities/." "$dest/hypr/utilities/" 2>/dev/null || true
+    find "$style" -mindepth 1 -maxdepth 1 ! -name utilities ! -name hyprlock.conf \
+        -exec cp -a {} "$dest/hypr/" \;
+    echo "$HYPRLAND_STYLE_DIR" > "$dest/hypr/.active-profile"
 
     cp -a "$DOTFILES_DIR/.bashrc" "$HOME/"
     fix_wofi_paths
