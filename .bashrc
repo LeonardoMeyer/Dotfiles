@@ -80,6 +80,7 @@ alias loop='sudo reboot'
 # Dotfiles
 alias Update='./Dotfiles/InstallScripts/install.sh'
 alias reload='source "$HOME/.bashrc"'
+alias Dotfiles='cd ~/Dotfiles/ && nvim'
 # Optional command-result sounds
 lol() {
     local status=$?

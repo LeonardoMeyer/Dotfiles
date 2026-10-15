@@ -55,8 +55,6 @@ hl.bind("ALT + w", hl.dsp.exec_cmd("~/.config/hypr/utilities/wallpaper.sh"))
 hl.bind("ALT + a", hl.dsp.exec_cmd("~/.config/waybar/scripts/refresh.sh"))
 hl.bind("ALT + B", hl.dsp.exec_cmd("~/.config/hypr/utilities/waybar-selector.sh"))
 hl.bind("ALT + H", hl.dsp.exec_cmd("~/.config/hypr/utilities/hypr-profile-selector.sh"))
-hl.bind("ALT + Z", hl.dsp.exec_cmd("~/.config/hypr/utilities/workspace-overview.sh"))
-
 hl.bind(mainMod .. " + M", hl.dsp.exit())
 hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("pypr toggle packages"))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("pypr toggle term"))

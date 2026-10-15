@@ -1,9 +1,10 @@
 -- Monitors, programs, autostart, and environment variables.
 
-hl.monitor({ output = "eDP-1", mode = "2560x1440@165", position = "0x0", scale = 1.6 })
+hl.monitor({ output = "DP-4", mode = "1920x1080@74.97", position = "1480x64", scale = 1.00, transform = 1 })
+hl.monitor({ output = "DP-5", mode = "1920x1080@239.96", position = "2560x480", scale = 1.00 })
 
 hl.on("hyprland.start", function()
-    hl.exec_cmd("hyprctl setcursor qogir-manjaro-dark 16")
+    hl.exec_cmd("hyprctl setcursor Bibata-Modern-Ice 12")
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
     hl.exec_cmd("qs -p ~/.config/hypr/utilities/home-screen --daemonize")

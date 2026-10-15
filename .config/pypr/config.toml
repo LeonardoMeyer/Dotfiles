@@ -29,7 +29,7 @@ offset = "200%"
 animation = "fromTop"
 command = "spotify-launcher"
 class = "Spotify"
-position = "17% 6%"
+position = "15% 20%"
 size = "70% 60%"
 offset = "200%"
 
