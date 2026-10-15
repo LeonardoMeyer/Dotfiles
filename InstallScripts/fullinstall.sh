@@ -112,6 +112,7 @@ apply_dotfiles() {
     for entry in "$src/"*; do
         [[ -e "$entry" ]] || continue
         [[ "$(basename "$entry")" == hypr ]] && continue
+        [[ "$(basename "$entry")" == archive ]] && continue
         rm -rf "$dest/$(basename "$entry")"
         cp -a "$entry" "$dest/"
     done
