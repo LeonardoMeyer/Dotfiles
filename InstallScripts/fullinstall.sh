@@ -99,32 +99,49 @@ fix_wofi_paths() {
     done
 }
 
-apply_dotfiles() {
-    section "Applying Dotfiles"
+# Symlink ~/<entry> -> repo for every top-level entry, so edits go both ways.
+link_entry() {
+    local target="$1" link="$2" backup="$3"
 
-    local src="$DOTFILES_DIR/.config" dest="$HOME/.config" entry name
+    if [[ -L "$link" && "$(readlink -f "$link")" == "$(readlink -f "$target")" ]]; then
+        return
+    fi
+    if [[ -e "$link" || -L "$link" ]]; then
+        mkdir -p "$backup"
+        mv "$link" "$backup/$(basename "$link")"
+        warn "Moved existing $link to $backup/"
+    fi
+    mkdir -p "$(dirname "$link")"
+    ln -s "$target" "$link"
+    success "Linked $link -> $target"
+}
+
+apply_dotfiles() {
+    section "Linking Dotfiles"
+
+    local src="$DOTFILES_DIR/.config" entry name
+    local backup="$HOME/.dotfiles_replaced_$(date +%Y%m%d_%H%M%S)"
     local style="$src/hypr/$HYPRLAND_STYLE_DIR"
 
-    rm -rf "$HOME/wallpapers" "$HOME/.icons"
-    cp -a "$DOTFILES_DIR/wallpapers" "$DOTFILES_DIR/.icons" "$HOME/"
-    mkdir -p "$dest"
-
+    shopt -s nullglob dotglob
     for entry in "$src"/*; do
-        name="${entry##*/}"
-        [[ "$name" == archive ]] && continue
-        rm -rf "${dest:?}/$name"
-        cp -a "$entry" "$dest/"
+        link_entry "$entry" "$HOME/.config/${entry##*/}" "$backup/.config"
     done
+    for name in wallpapers .icons .bashrc; do
+        [[ -e "$DOTFILES_DIR/$name" ]] && link_entry "$DOTFILES_DIR/$name" "$HOME/$name" "$backup"
+    done
+    shopt -u nullglob dotglob
 
-    # The active profile's files overlay hypr/; shared utilities/ and hyprlock.conf win.
-    cp -an "$style/utilities/." "$dest/hypr/utilities/" 2>/dev/null || true
-    find "$style" -mindepth 1 -maxdepth 1 ! -name utilities ! -name hyprlock.conf \
-        -exec cp -a {} "$dest/hypr/" \;
-    echo "$HYPRLAND_STYLE_DIR" > "$dest/hypr/.active-profile"
+    # The active profile's files overlay hypr/ (written through the symlink into the repo).
+    if [[ -n "$HYPRLAND_STYLE_DIR" && -d "$style" ]]; then
+        cp -an "$style/utilities/." "$src/hypr/utilities/" 2>/dev/null || true
+        find "$style" -mindepth 1 -maxdepth 1 ! -name utilities ! -name hyprlock.conf \
+            -exec cp -a {} "$src/hypr/" \;
+        echo "$HYPRLAND_STYLE_DIR" > "$src/hypr/.active-profile"
+    fi
 
-    cp -a "$DOTFILES_DIR/.bashrc" "$HOME/"
     fix_wofi_paths
-    success "Dotfiles applied."
+    success "Dotfiles linked."
     nohup bash -c 'sleep 1; hyprctl reload' >/dev/null 2>&1 &
 }
 
