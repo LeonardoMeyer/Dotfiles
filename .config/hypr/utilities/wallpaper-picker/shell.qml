@@ -109,27 +109,6 @@ ShellRoot {
         close()
     }
 
-    function notify(body, urgency) {
-        Quickshell.execDetached(["notify-send", "-a", "Boot screen", "-u", urgency || "normal", "Boot screen", body])
-    }
-
-    // Owned by the resident shell, so it keeps running and reports back after the picker closes.
-    function updateBoot() {
-        if (bootInstall.running) return
-        notify("Updating boot colors from the current Pywal palette...")
-        bootInstall.running = true
-    }
-
-    Process {
-        id: bootInstall
-        command: [root.home + "/.config/hypr/utilities/boot/apply.sh"]
-        onExited: code => {
-            if (code === 0) root.notify("Boot colors updated. They apply on next boot.")
-            else if (code === 75) root.notify("An install is already running.")
-            else root.notify("Install failed (exit " + code + "). Log: " + (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/boot-theme-install.log", "critical")
-        }
-    }
-
     function show() {
         watchdog.stop()
         if (shown && !leaving) return
@@ -394,7 +373,6 @@ ShellRoot {
                 else if (k === Qt.Key_Tab || k === Qt.Key_Down || k === Qt.Key_J) root.nextTheme(1)
                 else if (k === Qt.Key_Backtab || k === Qt.Key_Up || k === Qt.Key_K) root.nextTheme(-1)
                 else if (k === Qt.Key_R) root.go(Math.floor(Math.random() * root.items.length))
-                else if (k === Qt.Key_B) root.updateBoot()
                 else if (k === Qt.Key_Return || k === Qt.Key_Enter) root.apply()
             }
 
@@ -461,41 +439,6 @@ ShellRoot {
                             onClicked: { root.theme = chip.modelData; root.rebuild() }
                         }
                     }
-                }
-            }
-
-            // Rebuilds the boot splash with the current Pywal palette
-            Item {
-                id: bootButton
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.topMargin: 56
-                anchors.rightMargin: 56
-                width: bootLabel.implicitWidth + 36
-                height: 36
-                opacity: Math.max(0.001, root.seg(0))
-                transform: Translate { y: (1 - root.seg(0)) * -18 }
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 18
-                    color: bootArea.pressed ? "#55ffffff" : bootArea.containsMouse ? "#33ffffff" : "#1affffff"
-                    border.width: 1
-                    border.color: "#55ffffff"
-                    Behavior on color { ColorAnimation { duration: 150 } }
-                }
-                Text {
-                    id: bootLabel
-                    anchors.centerIn: parent
-                    text: "󰒓  Update boot colors"
-                    font.family: "CodeNewRoman Nerd Font Propo"
-                    font.pixelSize: 14
-                    color: "#ffffff"
-                }
-                MouseArea {
-                    id: bootArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: root.updateBoot()
                 }
             }
 

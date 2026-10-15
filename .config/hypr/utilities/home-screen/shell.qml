@@ -725,6 +725,37 @@ ShellRoot {
                     delay: 0.06
                     readonly property var pl: root.player
 
+                    Item {
+                        id: spotifyBtn
+                        anchors.right: parent.right
+                        anchors.rightMargin: -6 * root.u
+                        y: -35 * root.u
+                        width: 28 * root.u
+                        height: 28 * root.u
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\uf1bc"
+                            font.family: root.sans
+                            font.pixelSize: 20 * root.u
+                            color: root.accent
+                            opacity: spotifyMa.containsMouse ? 1 : 0.75
+                            scale: spotifyMa.containsMouse ? 1.15 : 1
+                            Behavior on opacity { NumberAnimation { duration: 120 } }
+                            Behavior on scale { NumberAnimation { duration: 120 } }
+                        }
+                        MouseArea {
+                            id: spotifyMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            // Focus an existing Spotify window; reveal it via pypr if it sits in the scratchpad; otherwise launch the scratchpad.
+                            onClicked: root.run("c=$(hyprctl clients -j | jq -c '[.[] | select(.class | test(\"^spotify$\"; \"i\"))][0] // empty'); " +
+                                "if [ -z \"$c\" ]; then pypr show spotify; " +
+                                "elif echo \"$c\" | jq -e '.workspace.name | startswith(\"special\")' >/dev/null; then pypr show spotify; " +
+                                "else hyprctl dispatch focuswindow address:$(echo \"$c\" | jq -r .address); fi")
+                        }
+                    }
+
                     Column {
                         visible: !media.pl
                         anchors.centerIn: parent
@@ -837,7 +868,7 @@ ShellRoot {
                             y: 176 * root.u
                             spacing: 18 * root.u
                             IconButton { size: 52 * root.u; glyph: "\uf048"; onClicked: media.pl.previous() }
-                            IconButton { size: 62 * root.u; glyph: media.pl && media.pl.isPlaying ? "\uf04c" : "\uf04b"; onClicked: media.pl.togglePlaying() }
+                            IconButton { size: 52 * root.u; glyph: media.pl && media.pl.isPlaying ? "\uf04c" : "\uf04b"; onClicked: media.pl.togglePlaying() }
                             IconButton { size: 52 * root.u; glyph: "\uf051"; onClicked: media.pl.next() }
                         }
                     }
@@ -929,6 +960,127 @@ ShellRoot {
                         Gauge { ratio: 1 - root.memAvail / root.memTotal; label: "Memory"; valueText: Math.round((1 - root.memAvail / root.memTotal) * 100) + "%" }
                         Gauge { visible: root.hasGpu; ratio: root.gpuUtil; label: "GPU"; valueText: Math.round(root.gpuUtil * 100) + "%" }
                         Gauge { visible: root.hasBattery; ratio: root.batPct / 100; label: root.batState === "Charging" ? "Charging" : "Battery"; valueText: root.batPct + "%" }
+                    }
+
+                    Row {
+                        y: 112 * root.u
+                        width: parent.width
+                        height: 70 * root.u
+                        spacing: 10 * root.u
+
+                        Rectangle {
+                            width: (parent.width - parent.spacing) / 2
+                            height: parent.height
+                            radius: 8 * root.u
+                            color: "#12ffffff"
+
+                            Text {
+                                x: 10 * root.u
+                                y: 8 * root.u
+                                text: "RAM"
+                                font.family: root.sans
+                                font.pixelSize: 10 * root.u
+                                color: "#80ffffff"
+                            }
+                            Text {
+                                x: 10 * root.u
+                                y: 22 * root.u
+                                width: parent.width - 20 * root.u
+                                text: ((root.memTotal - root.memAvail) / 1048576).toFixed(1) + " / " + (root.memTotal / 1048576).toFixed(0) + " GB"
+                                elide: Text.ElideRight
+                                font.family: root.sans
+                                font.pixelSize: 9 * root.u
+                                color: "#ddffffff"
+                            }
+                            Rectangle {
+                                x: 10 * root.u
+                                y: 42 * root.u
+                                width: parent.width - 20 * root.u
+                                height: 5 * root.u
+                                radius: height / 2
+                                color: "#20ffffff"
+                                Rectangle {
+                                    width: parent.width * Math.max(0, Math.min(1, 1 - root.memAvail / root.memTotal))
+                                    height: parent.height
+                                    radius: height / 2
+                                    color: root.accent
+                                }
+                            }
+                            Text {
+                                x: 10 * root.u
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: 7 * root.u
+                                text: "AVAILABLE  " + (root.memAvail / 1048576).toFixed(1) + " GB"
+                                font.family: root.sans
+                                font.pixelSize: 9 * root.u
+                                color: "#70ffffff"
+                            }
+                        }
+
+                        Rectangle {
+                            width: (parent.width - parent.spacing) / 2
+                            height: parent.height
+                            radius: 8 * root.u
+                            color: "#12ffffff"
+
+                            Text {
+                                x: 10 * root.u
+                                y: 8 * root.u
+                                text: root.hasGpu ? "VRAM" : "MACHINE"
+                                font.family: root.sans
+                                font.pixelSize: 10 * root.u
+                                color: "#80ffffff"
+                            }
+                            Text {
+                                x: 10 * root.u
+                                y: 22 * root.u
+                                text: root.hasGpu ? root.gpuMemUsed.toFixed(1) + " / " + root.gpuMemTotal.toFixed(1) + " GB" : root.host
+                                elide: Text.ElideRight
+                                width: parent.width - 20 * root.u
+                                font.family: root.sans
+                                font.pixelSize: 9 * root.u
+                                color: "#ddffffff"
+                            }
+                            Rectangle {
+                                x: 10 * root.u
+                                y: 42 * root.u
+                                width: parent.width - 20 * root.u
+                                height: 5 * root.u
+                                radius: height / 2
+                                color: "#20ffffff"
+                                visible: root.hasGpu
+                                Rectangle {
+                                    width: parent.width * Math.max(0, Math.min(1, root.gpuMemUsed / Math.max(0.1, root.gpuMemTotal)))
+                                    height: parent.height
+                                    radius: height / 2
+                                    color: root.accent
+                                }
+                            }
+                            Text {
+                                x: 10 * root.u
+                                y: 37 * root.u
+                                width: parent.width - 20 * root.u
+                                visible: !root.hasGpu
+                                text: root.os || root.kernel
+                                elide: Text.ElideRight
+                                font.family: root.sans
+                                font.pixelSize: 10 * root.u
+                                color: "#aaffffff"
+                            }
+                            Text {
+                                x: 10 * root.u
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: 7 * root.u
+                                text: root.hasGpu
+                                    ? (root.gpuTemp > 0 ? "GPU TEMP  " + Math.round(root.gpuTemp) + "°C" : "DEDICATED GRAPHICS")
+                                    : "KERNEL  " + root.kernel
+                                elide: Text.ElideRight
+                                width: parent.width - 20 * root.u
+                                font.family: root.sans
+                                font.pixelSize: 9 * root.u
+                                color: "#70ffffff"
+                            }
+                        }
                     }
 
                     Column {

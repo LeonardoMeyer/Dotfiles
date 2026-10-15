@@ -20,3 +20,4 @@ mkdir -p ~/.cache/wallpaper-picker && printf "%s\n" "$selected_wallpaper" > ~/.c
 cp -r "$selected_wallpaper" "$HOME/wallpapers/pywallpaper.jpg"
 "$(dirname "$(readlink -f "$0")")/home-screen/home-wall.sh" >/dev/null 2>&1 &
 "$(dirname "$(readlink -f "$0")")/boot/preview.sh" >/dev/null 2>&1 &
+"$(dirname "$(readlink -f "$0")")/boot/apply.sh" >/dev/null 2>&1 &

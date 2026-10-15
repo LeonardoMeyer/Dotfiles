@@ -3,7 +3,13 @@ set -euo pipefail
 THEME=retro-modern-arch
 SRC="$(cd -- "$(dirname -- "$0")" && pwd)"
 DEST="/usr/share/plymouth/themes/$THEME"
+ROOT_COPY=/usr/local/lib/boot-theme
 if [[ $EUID -ne 0 ]]; then echo "Run: sudo ./install.sh"; exit 1; fi
+# Block shutdown while the initramfs is being rebuilt.
+if [[ -z ${BOOT_INHIBITED:-} ]] && command -v systemd-inhibit >/dev/null 2>&1; then
+  exec env BOOT_INHIBITED=1 systemd-inhibit --what=shutdown:sleep --who="boot-theme" \
+    --why="Rebuilding the initramfs" --mode=block "$0" "$@"
+fi
 [[ -f "$SRC/$THEME.plymouth" && -f "$SRC/$THEME.script" ]] || { echo "Theme files missing; extract the full ZIP first."; exit 1; }
 
 if [[ -n ${SUDO_USER:-} && $SUDO_USER != root ]]; then
@@ -80,7 +86,11 @@ for i in "${!palette[@]}"; do
   printf 'color%s=%s\n' "$i" "${palette[$i]}" >> "$palette_tmp"
 done
 cat "$SRC/$THEME.script" >> "$script_tmp"
-python3 "$SRC/generate-assets.py" "$palette_tmp" "$assets_tmp" "$SRC/preview.png"
+if [[ $SRC == "$ROOT_COPY" ]]; then
+  python3 "$SRC/generate-assets.py" "$palette_tmp" "$assets_tmp"
+else
+  python3 "$SRC/generate-assets.py" "$palette_tmp" "$assets_tmp" "$SRC/preview.png"
+fi
 chmod 755 "$assets_tmp"; chmod 644 "$assets_tmp"/*
 rm -rf "$DEST/assets"
 mv "$assets_tmp" "$DEST/assets"
@@ -105,6 +115,23 @@ if ! mkinitcpio -P; then
     echo "ERROR: initramfs rebuild also failed while restoring the previous theme." >&2
   fi
   exit 1
+fi
+
+# One-time setup: a root-owned copy that sudo may run without a password, so later
+# palette changes rebuild the boot screen without prompting.
+if [[ $SRC != "$ROOT_COPY" && -n ${SUDO_USER:-} && $SUDO_USER != root ]]; then
+  install -d -m 755 -o root -g root "$ROOT_COPY"
+  for f in install.sh generate-assets.py plymouth-logfeed.sh plymouth-logfeed.service "$THEME.plymouth" "$THEME.script"; do
+    install -m 755 -o root -g root "$SRC/$f" "$ROOT_COPY/$f"
+  done
+  rule_tmp="$(mktemp)"
+  printf '%s ALL=(root) NOPASSWD: %s/install.sh\n' "$SUDO_USER" "$ROOT_COPY" > "$rule_tmp"
+  if visudo -cf "$rule_tmp" >/dev/null; then
+    install -m 440 -o root -g root "$rule_tmp" /etc/sudoers.d/boot-theme
+  else
+    echo "Skipped passwordless rule: generated sudoers entry was invalid." >&2
+  fi
+  rm -f "$rule_tmp"
 fi
 
 # Remove leftovers from an accidentally extracted initramfs; the theme files are kept.

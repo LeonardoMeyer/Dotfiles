@@ -1,20 +1,30 @@
 #!/usr/bin/env bash
-# Re-runs install.sh with the current Pywal palette. Exits 75 if already running; output goes to the log.
+# Rebuilds the boot splash with the current Pywal palette (run in the background after a wallpaper change).
 set -uo pipefail
 
 DIR="$(cd -- "$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 LOG="${XDG_RUNTIME_DIR:-/tmp}/boot-theme-install.log"
 LOCK="${XDG_RUNTIME_DIR:-/tmp}/boot-theme-install.lock"
+ROOT_INSTALL=/usr/local/lib/boot-theme/install.sh
+
+notify() { notify-send -a "Boot screen" -i "${3:-dialog-information}" -u "${2:-normal}" "Boot screen" "$1" 2>/dev/null || true; }
+
+# Boot theme not installed or Plymouth removed: nothing to update, stay silent.
+[[ -x $ROOT_INSTALL && -d /usr/share/plymouth/themes/retro-modern-arch ]] || exit 0
+command -v plymouth-set-default-theme >/dev/null 2>&1 && command -v mkinitcpio >/dev/null 2>&1 || exit 0
+
+# Block shutdown for the whole run, including time queued behind another rebuild.
+if [[ -z ${BOOT_APPLY_INHIBITED:-} ]] && command -v systemd-inhibit >/dev/null 2>&1; then
+    exec env BOOT_APPLY_INHIBITED=1 systemd-inhibit --what=shutdown:sleep --who="boot-theme" \
+        --why="Updating boot theme" --mode=block "$0" "$@"
+fi
 
 exec 9>"$LOCK"
-flock -n 9 || exit 75
+flock -w 600 9 || exit 75
 
-if sudo -n true 2>/dev/null; then
-    sudo -n "$DIR/install.sh" >"$LOG" 2>&1
-elif pgrep -f -i "polkit.*agent|polkit-gnome-authentication|hyprpolkitagent|polkit-kde-authentication" >/dev/null; then
-    pkexec "$DIR/install.sh" >"$LOG" 2>&1
-else
-    # No polkit agent to ask for the password, so fall back to a terminal prompt.
-    kitty --title "Boot screen install" bash -c "sudo '$DIR/install.sh' 2>&1 | tee '$LOG'; exit \${PIPESTATUS[0]}"
+if sudo -n "$ROOT_INSTALL" >"$LOG" 2>&1; then
+    notify "Boot theme updated. It applies on next boot." normal "$DIR/preview.png"
+    exit 0
 fi
-exit $?
+notify "Boot theme update failed. Log: $LOG" critical dialog-error
+exit 1

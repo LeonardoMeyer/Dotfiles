@@ -7,13 +7,23 @@ DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mirror() {
     local src="$1" dest="$2"
     if [ ! -e "$src" ] && [ ! -L "$src" ]; then
-        rm -rf "$dest"
-        echo "removed (missing locally): $dest"
+        echo "skipped (missing locally): $src"
         return
     fi
+
+    local src_real dest_real
+    src_real="$(realpath -m -- "$src")"
+    dest_real="$(realpath -m -- "$dest")"
+    if [[ "$src_real" == "/" || "$dest_real" == "/" ||
+        "$src_real" == "$dest_real" ||
+        "$src_real" == "$dest_real/"* ||
+        "$dest_real" == "$src_real/"* ]]; then
+        echo "error: refusing to sync overlapping paths: $src -> $dest" >&2
+        return 1
+    fi
+
     rm -rf "$dest"
     cp -a "$src" "$dest"
-    find "$dest" -name __pycache__ -type d -prune -exec rm -rf {} +
     echo "mirrored: $src -> $dest"
 }
 
