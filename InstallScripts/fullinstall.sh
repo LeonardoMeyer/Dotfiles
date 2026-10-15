@@ -419,8 +419,8 @@ for name, remove in drop.items():
 p.write_text(s)
 PY
 
-        # Remove every parameter this installer manages; the only one left is
-        # loglevel=7 (kernel debug output).
+        # Remove every parameter this installer manages, then set loglevel=7
+        # (kernel debug output) and systemd.show_status=true (boot status lines).
         while IFS= read -r f; do
             [[ -n "$f" ]] || continue
             sudo python - "$f" <<'PY' || return 1
@@ -436,7 +436,7 @@ for i, line in enumerate(lines):
             if t not in ("quiet", "splash", "plymouth.nolog")
             and not t.startswith(("loglevel=", "systemd.show_status=", "rd.udev.log_level="))
         ]
-        lines[i] = "options " + " ".join(tokens + ["loglevel=7"])
+        lines[i] = "options " + " ".join(tokens + ["loglevel=7", "systemd.show_status=true"])
 p.write_text("\n".join(lines) + "\n")
 PY
         done < <(sudo find /boot/loader/entries -maxdepth 1 -name '*.conf')
@@ -472,11 +472,14 @@ PY
         fi
 
         sudo systemctl daemon-reload || return 1
-        sudo pacman -Rns --noconfirm plymouth || return 1
+        # Safe to re-run: skip removal when plymouth is already gone.
+        if pacman -Q plymouth >/dev/null 2>&1; then
+            sudo pacman -Rns --noconfirm plymouth || return 1
+        fi
         sudo mkinitcpio -P || return 1
 
         echo "[✓] Plymouth and its custom theme removed."
-        echo "[✓] Boot configuration restored; kernel parameters: loglevel=7 only."
+        echo "[✓] Boot configuration restored; added loglevel=7 systemd.show_status=true."
     fi
 }
 
