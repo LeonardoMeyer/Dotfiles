@@ -430,7 +430,10 @@ boot_load() { boot_screen "$@"; }
 
 auto_install() {
     section "Automatic Installation"
-    setup_mirrors
+    
+    local choice 
+    read -rp "Update mirrorlist? (Y/n): " choice
+    [[ "${choice:-y}" =~ ^[Yy]$ ]] && setup_mirrors
 
     info "Installing core packages..."
     yay -S --needed "${CORE_PACKAGES[@]}"
