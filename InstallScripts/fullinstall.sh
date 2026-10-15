@@ -127,34 +127,22 @@ apply_dotfiles() {
     done
     cp -a "$src/utilities/." "$dest/utilities/"
 
-    local profile utility file relative
-    declare -A profile_utility_paths=()
-
+    local profile
     for profile in "$src"/*/; do
         [[ -d "$profile" ]] || continue
         cp -a "$profile" "$dest/"
-
-        utility="$profile/utilities"
-        [[ -d "$utility" ]] || continue
-
-        while IFS= read -r -d '' file; do
-            relative="${file#"$utility"/}"
-            profile_utility_paths["$relative"]=1
-        done < <(find "$utility" -type f -print0)
     done
 
-    for relative in "${!profile_utility_paths[@]}"; do
-        rm -rf "$dest/utilities/$relative"
-    done
-
-    utility="$src/$HYPRLAND_STYLE_DIR/utilities"
-    [[ ! -d "$utility" ]] || cp -a "$utility/." "$dest/utilities/"
-    cp -a "$src/$HYPRLAND_STYLE_DIR/." "$dest/"
+    # utilities/ and hyprlock.conf are shared; the active profile only adds its own files.
+    local style="$src/$HYPRLAND_STYLE_DIR"
+    [[ ! -d "$style/utilities" ]] || cp -an "$style/utilities/." "$dest/utilities/"
+    find "$style" -mindepth 1 -maxdepth 1 ! -name utilities ! -name hyprlock.conf -exec cp -a {} "$dest/" \;
     printf '%s\n' "$HYPRLAND_STYLE_DIR" > "$dest/.active-profile"
 
     cp -a "$DOTFILES_DIR/.bashrc" "$HOME/"
     fix_wofi_paths
     success "Dotfiles applied."
+    nohup bash -c 'sleep 1; hyprctl reload' >/dev/null 2>&1 &
 }
 
 run_wallpaper_selector() {

@@ -52,11 +52,12 @@ main() {
     local profile_dir="$ACTIVE_HYPR_DIR/$selected_profile"
     find "$ACTIVE_HYPR_DIR" -maxdepth 1 -type f -name '*.lua' -delete
 
-    rm -rf "$ACTIVE_HYPR_DIR/utilities"
-    find "$profile_dir" -mindepth 1 -maxdepth 1 ! -name utilities -exec cp -a {} "$ACTIVE_HYPR_DIR/" \;
+    # utilities/ and hyprlock.conf are shared; only a profile's own files are swapped in.
+    find "$profile_dir" -mindepth 1 -maxdepth 1 ! -name utilities ! -name hyprlock.conf -exec cp -a {} "$ACTIVE_HYPR_DIR/" \;
 
+    # Profile-only utilities are added without ever overwriting shared ones.
     if [ -d "$profile_dir/utilities" ]; then
-        cp -a "$profile_dir/utilities" "$ACTIVE_HYPR_DIR/"
+        cp -an "$profile_dir/utilities/." "$ACTIVE_HYPR_DIR/utilities/"
     fi
 
     printf '%s\n' "$selected_profile" > "$ACTIVE_HYPR_DIR/.active-profile"

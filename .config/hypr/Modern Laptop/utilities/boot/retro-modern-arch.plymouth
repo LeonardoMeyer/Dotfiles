@@ -1,8 +1,0 @@
-[Plymouth Theme]
-Name=Retro Modern Arch
-Description=Minimal Arch splash using the last saved Pywal palette
-ModuleName=script
-
-[script]
-ImageDir=/usr/share/plymouth/themes/retro-modern-arch
-ScriptFile=/usr/share/plymouth/themes/retro-modern-arch/retro-modern-arch.script
