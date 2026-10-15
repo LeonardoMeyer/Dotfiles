@@ -13,6 +13,7 @@ mirror() {
     fi
     rm -rf "$dest"
     cp -a "$src" "$dest"
+    find "$dest" -name __pycache__ -type d -prune -exec rm -rf {} +
     echo "mirrored: $src -> $dest"
 }
 
