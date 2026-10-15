@@ -233,191 +233,250 @@ finish() {
 
 # ── Boot screen / Plymouth ────────────────────────────────────────────────
 
-boot_screen() {
-    local dir="$HOME/.config/hypr/utilities/boot"
-    local conf=/etc/mkinitcpio.conf choice path image i attempt
-    local images=(/boot/initramfs-*.img)
-    local modules=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)
-    local files=(nvidia nvidia-modeset nvidia-uvm nvidia-drm)
-    local missing=()
 
-    [[ $EUID -ne 0 ]] || { error "Run as your normal user."; return 1; }
-    read -rp "Boot screen: (1) Install (2) Uninstall: " choice
+boot_screen() {
+    local choice
+    local boot_dir="$HOME/Dotfiles/.config/hypr/utilities/boot"
+    local installer="$HOME/Dotfiles/.config/hypr/utilities/boot/install.sh"
+    local entry="/boot/loader/entries/2026-03-05_23-29-34_linux.conf"
+    local mkinit="/etc/mkinitcpio.conf"
+    local greetd="/etc/greetd/config.toml"
+    local wrapper="/usr/local/bin/start-hyprland-quiet"
+    local greetd_dropin="/etc/systemd/system/greetd.service.d/plymouth.conf"
+    local greetd_legacy="/etc/systemd/system/greetd.service.d/override.conf"
+    local quit_dropin="/etc/systemd/system/plymouth-quit.service.d/override.conf"
+    local quit_wait_dropin="/etc/systemd/system/plymouth-quit-wait.service.d/override.conf"
+
+    read -rp "Boot screen: (1) Install/Update (2) Uninstall: " choice
 
     case "$choice" in
-        1)
-            [[ -f "$dir/install.sh" && -f "$dir/retro-modern-arch.script" ]] ||
-                { error "Theme files not found."; return 1; }
+        1) ;;
+        2) ;;
+        *) echo "Invalid option."; return 1 ;;
+    esac
 
-            [[ -r "$HOME/.cache/wal/colors" &&
-                $(grep -c '^#' "$HOME/.cache/wal/colors") -eq 16 ]] ||
-                { error "Run wal -i /path/to/wallpaper first."; return 1; }
+    [[ -d "$boot_dir" ]] || {
+        echo "Boot directory not found: $boot_dir"
+        return 1
+    }
 
-            command -v yay >/dev/null ||
-                { error "Install yay first."; return 1; }
+    if [[ "$choice" == 1 && ! -f "$installer" ]]; then
+        echo "Theme installer not found: $installer"
+        return 1
+    fi
 
-            grep -Eq '^HOOKS=.*[( ]encrypt[ )]' "$conf" &&
-                { error "Convert encrypt to sd-encrypt manually."; return 1; }
+    if [[ "$choice" == 1 ]]; then
+        # Install or update dependencies; pacman safely skips installed packages.
+        sudo pacman -S --needed plymouth mkinitcpio python python-pillow python-numpy || return 1
 
-            yay -S --needed plymouth mkinitcpio python python-pillow python-numpy ||
-                { error "Dependency installation failed."; return 1; }
-
-            sudo python - "$conf" <<'PY' || return 1
+        # Add hooks/modules idempotently.
+        sudo python - "$mkinit" install <<'PY' || return 1
 import re, sys
+from pathlib import Path
 
-p = sys.argv[1]
-s = open(p).read()
+p = Path(sys.argv[1])
+s = p.read_text()
 
 def update(name, transform):
     global s
-    s, n = re.subn(
-        rf'^{name}=\((.*?)\)',
-        lambda m: f'{name}=({" ".join(transform(m.group(1).split()))})',
-        s, count=1, flags=re.M
-    )
-    if not n:
-        raise SystemExit(f"Could not find {name} in mkinitcpio.conf")
+    pat = rf"(?m)^{name}=\(([^)]*)\)\s*$"
+    m = re.search(pat, s)
+    if not m:
+        raise SystemExit(f"Could not find {name}= in {p}")
+    values = m.group(1).split()
+    values = transform(values)
+    s = s[:m.start()] + f"{name}=({' '.join(values)})" + s[m.end():]
 
-def modules(items):
-    for x in ("nvidia", "nvidia_modeset", "nvidia_uvm", "nvidia_drm"):
-        if x not in items:
-            items.append(x)
-    return items
+def hooks(values):
+    values = [v for v in values if v != "plymouth"]
+    if "systemd" in values:
+        values.insert(values.index("systemd") + 1, "plymouth")
+    else:
+        values.insert(1 if values and values[0] == "base" else 0, "plymouth")
+    return values
 
-def hooks(items):
-    items = ["systemd" if x == "udev" else
-             "sd-vconsole" if x == "keymap" else x
-             for x in items if x != "consolefont"]
-    if "systemd" not in items:
-        raise SystemExit("systemd hook is required")
-    if "plymouth" not in items:
-        items.insert(items.index("systemd") + 1, "plymouth")
-    if "modconf" in items and "kms" not in items:
-        items.insert(items.index("modconf") + 1, "kms")
-    return items
+def modules(values):
+    for name in ("nvidia", "nvidia_modeset", "nvidia_uvm", "nvidia_drm"):
+        if name not in values:
+            values.append(name)
+    return values
 
-update("MODULES", modules)
 update("HOOKS", hooks)
-open(p, "w").write(s)
+update("MODULES", modules)
+p.write_text(s)
 PY
 
-            if [[ -f /etc/default/grub ]] && command -v grub-mkconfig >/dev/null; then
-                sudo sed -i -E '/^GRUB_CMDLINE_LINUX_DEFAULT="/ {
-                    s/(^|[[:space:]])(quiet|splash|systemd\.show_status=[^[:space:]"]+|loglevel=[^[:space:]"]+)([[:space:]]|")/\1/g
-                    s/"$/ quiet splash"/
-                }' /etc/default/grub
-                sudo grub-mkconfig -o /boot/grub/grub.cfg || return 1
-            elif compgen -G "/boot/loader/entries/*.conf" >/dev/null; then
-                for path in /boot/loader/entries/*.conf; do
-                    sudo sed -i -E '/^options/ {
-                        s/(^|[[:space:]])(quiet|splash|systemd\.show_status=[^[:space:]]+|loglevel=[^[:space:]]+)([[:space:]]|$)/\1/g
-                        s/$/ quiet splash/
-                    }' "$path"
-                done
-            elif [[ -f /etc/kernel/cmdline ]]; then
-                sudo sed -i -E 's/(^|[[:space:]])(quiet|splash|systemd\.show_status=[^[:space:]]+|loglevel=[^[:space:]]+)([[:space:]]|$)/\1/g' /etc/kernel/cmdline
-                sudo sed -i '1 s/$/ quiet splash/' /etc/kernel/cmdline
-            else
-                warn "Boot configuration not detected; add quiet splash manually."
-            fi
+        # Install/update the custom theme from the correct directory.
+        sudo bash "$installer" || return 1
+        sudo plymouth-set-default-theme retro-modern-arch || return 1
 
-            chmod +x "$dir"/*.sh
-            sudo bash "$dir/install.sh" || {
-                error "Theme installation failed."
-                return 1
-            }
-
-            images=(/boot/initramfs-*.img)
-            for attempt in 1 2; do
-                missing=()
-                for image in "${images[@]}"; do
-                    [[ -f "$image" ]] || continue
-                    for i in "${!modules[@]}"; do
-                        lsinitcpio -l "$image" 2>/dev/null |
-                            grep -Eq "/${files[i]}\.ko(\.(zst|xz|gz))?$" ||
-                            missing+=("$(basename "$image"): ${modules[i]}")
-                    done
-                done
-
-                ((${#missing[@]} == 0)) && break
-                if ((attempt == 1)); then
-                    warn "NVIDIA modules missing; rebuilding initramfs..."
-                    sudo mkinitcpio -P || warn "Initramfs rebuild failed."
-                fi
-            done
-
-            if ((${#missing[@]})); then
-                warn "NVIDIA modules still missing:"
-                printf '  %s\n' "${missing[@]}"
-                warn "Check modinfo nvidia and your installed kernel/driver."
-            else
-                success "NVIDIA modules verified."
-            fi
-            success "Boot screen installed."
-            ;;
-
-        2)
-            sudo python - "$conf" <<'PY' || return 1
-import re, sys
-
-p = sys.argv[1]
-s = open(p).read()
-s, n = re.subn(
-    r'^HOOKS=\((.*?)\)',
-    lambda m: "HOOKS=(" + " ".join(
-        x for x in m.group(1).split() if x != "plymouth"
-    ) + ")",
-    s, count=1, flags=re.M
-)
-if not n:
-    raise SystemExit("Could not find HOOKS in mkinitcpio.conf")
-open(p, "w").write(s)
-PY
-
-            if [[ -f /etc/default/grub ]] && command -v grub-mkconfig >/dev/null; then
-                sudo sed -i -E '/^GRUB_CMDLINE_LINUX_DEFAULT="/ {
-                    s/(^|[[:space:]])(quiet|splash|systemd\.show_status=[^[:space:]"]+|loglevel=[^[:space:]"]+)([[:space:]]|")/\1/g
-                    s/"$/ systemd.show_status=1 loglevel=7"/
-                }' /etc/default/grub
-                sudo grub-mkconfig -o /boot/grub/grub.cfg || return 1
-            elif compgen -G "/boot/loader/entries/*.conf" >/dev/null; then
-                for path in /boot/loader/entries/*.conf; do
-                    sudo sed -i -E '/^options/ {
-                        s/(^|[[:space:]])(quiet|splash|systemd\.show_status=[^[:space:]]+|loglevel=[^[:space:]]+)([[:space:]]|$)/\1/g
-                        s/$/ systemd.show_status=1 loglevel=7/
-                    }' "$path"
-                done
-            elif [[ -f /etc/kernel/cmdline ]]; then
-                sudo sed -i -E 's/(^|[[:space:]])(quiet|splash|systemd\.show_status=[^[:space:]]+|loglevel=[^[:space:]]+)([[:space:]]|$)/\1/g' /etc/kernel/cmdline
-                sudo sed -i '1 s/$/ systemd.show_status=1 loglevel=7/' /etc/kernel/cmdline
-            else
-                warn "Boot configuration not detected."
-            fi
-
-            sudo systemctl disable --now plymouth-logfeed.service 2>/dev/null || true
-            sudo systemctl disable --now plymouth-quit.service plymouth-quit-wait.service 2>/dev/null || true
-            sudo rm -rf /etc/plymouth /usr/share/plymouth
-            sudo rm -f /usr/local/bin/plymouth-logfeed /etc/systemd/system/plymouth-logfeed.service
-            sudo systemctl daemon-reload
-
-            if pacman -Qq plymouth &>/dev/null; then
-                yay -Rns --noconfirm plymouth || return 1
-            fi
-
-            sudo mkinitcpio -P || {
-                error "Initramfs rebuild failed; fix the error before rebooting."
-                return 1
-            }
-
-            success "Plymouth removed; verbose boot logging enabled."
-            ;;
-
-        *)
-            error "Choose 1 or 2."
+        # Normalize the active systemd-boot entry; never append duplicates.
+        [[ -f "$entry" ]] || {
+            echo "Boot entry not found: $entry"
             return 1
-            ;;
-    esac
+        }
+
+        sudo python - "$entry" install <<'PY' || return 1
+import re, sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+lines = p.read_text().splitlines()
+idx = [i for i, line in enumerate(lines) if re.match(r"^\s*options\s+", line)]
+if len(idx) != 1:
+    raise SystemExit(f"Expected exactly one options line; found {len(idx)}")
+
+i = idx[0]
+tokens = lines[i].split()[1:]
+managed = ("quiet", "splash", "plymouth.nolog")
+tokens = [
+    t for t in tokens
+    if t not in managed
+    and not t.startswith(("loglevel=", "systemd.show_status=", "rd.udev.log_level="))
+]
+tokens += [
+    "quiet", "splash", "loglevel=3",
+    "systemd.show_status=false", "rd.udev.log_level=3"
+]
+lines[i] = "options " + " ".join(tokens)
+p.write_text("\n".join(lines) + "\n")
+PY
+
+        # Hide automatic Hyprland startup output. This only applies when greetd
+        # has an autologin ([initial_session]); without one, the normal tuigreet
+        # (or getty) login prompt on tty1 is left exactly as it is.
+        sudo rm -f "$greetd_dropin"
+        if [[ -f "$greetd" ]] && grep -q '^\[initial_session\]' "$greetd"; then
+            sudo install -d -m 755 /usr/local/bin
+            sudo tee "$wrapper" >/dev/null <<'EOF' || return 1
+#!/bin/sh
+exec start-hyprland >/dev/null 2>&1
+EOF
+            sudo chmod 755 "$wrapper" || return 1
+
+            sudo python - "$greetd" <<'PY' || return 1
+import re, sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+s = p.read_text()
+pat = r"(?ms)(^\[initial_session\]\s*\n)(.*?)(?=^\[|\Z)"
+m = re.search(pat, s)
+section = m.group(2)
+section, n = re.subn(
+    r'(?m)^(\s*command\s*=\s*)"[^"]*"\s*$',
+    'command = "/usr/local/bin/start-hyprland-quiet"',
+    section, count=1
+)
+if n != 1:
+    raise SystemExit("Could not safely update initial_session command")
+
+p.write_text(s[:m.start(2)] + section + s[m.end(2):])
+PY
+
+            sudo install -d -m 755 "$(dirname "$greetd_dropin")"
+            sudo tee "$greetd_dropin" >/dev/null <<'EOF'
+[Service]
+StandardOutput=null
+StandardError=null
+EOF
+        else
+            sudo rm -f "$wrapper"
+        fi
+
+        # Remove overrides and the log feed from earlier versions; they could
+        # leave the splash stuck. getty on tty2-6 is never touched.
+        sudo rm -f "$greetd_legacy" "$quit_dropin" "$quit_wait_dropin"
+        sudo systemctl disable plymouth-logfeed.service 2>/dev/null || true
+        sudo rm -f /etc/systemd/system/plymouth-logfeed.service /usr/local/bin/plymouth-logfeed
+
+        sudo systemctl daemon-reload || return 1
+        sudo mkinitcpio -P || return 1
+
+        echo "[✓] Boot screen installed/updated."
+        echo "[✓] Boot parameters normalized."
+        echo "[✓] Quiet Hyprland startup configured."
+        echo "Reboot to test."
+
+    else
+        # Undo only what the installer added; other hooks/modules are untouched.
+        sudo python - "$mkinit" <<'PY' || return 1
+import re, sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+s = p.read_text()
+drop = {
+    "HOOKS": {"plymouth"},
+    "MODULES": {"nvidia", "nvidia_modeset", "nvidia_uvm", "nvidia_drm"},
 }
+for name, remove in drop.items():
+    pat = rf"(?m)^{name}=\(([^)]*)\)\s*$"
+    m = re.search(pat, s)
+    if m:
+        values = [v for v in m.group(1).split() if v not in remove]
+        s = s[:m.start()] + f"{name}=({' '.join(values)})" + s[m.end():]
+p.write_text(s)
+PY
+
+        # Remove every parameter this installer manages; the only one left is
+        # loglevel=7 (kernel debug output).
+        for f in /boot/loader/entries/*.conf; do
+            [[ -f "$f" ]] || continue
+            sudo python - "$f" <<'PY' || return 1
+import re, sys
+from pathlib import Path
+
+p = Path(sys.argv[1])
+lines = p.read_text().splitlines()
+for i, line in enumerate(lines):
+    if re.match(r"^\s*options\s+", line):
+        tokens = [
+            t for t in line.split()[1:]
+            if t not in ("quiet", "splash", "plymouth.nolog")
+            and not t.startswith(("loglevel=", "systemd.show_status=", "rd.udev.log_level="))
+        ]
+        lines[i] = "options " + " ".join(tokens + ["loglevel=7"])
+p.write_text("\n".join(lines) + "\n")
+PY
+        done
+
+        # Stock autologin config (same as autologin()).
+        if [[ -f "$greetd" ]]; then
+            sudo sed -i 's#/usr/local/bin/start-hyprland-quiet#start-hyprland#' "$greetd"
+        fi
+
+        sudo rm -f "$wrapper" "$greetd_dropin" "$greetd_legacy" "$quit_dropin" "$quit_wait_dropin"
+        sudo rmdir "$(dirname "$greetd_dropin")" "$(dirname "$quit_dropin")" \
+            "$(dirname "$quit_wait_dropin")" 2>/dev/null || true
+
+        # Remove the live-log feed and the passwordless theme-rebuild helper.
+        sudo systemctl disable plymouth-logfeed.service 2>/dev/null || true
+        sudo rm -f /etc/systemd/system/plymouth-logfeed.service \
+            /usr/local/bin/plymouth-logfeed /etc/sudoers.d/boot-theme
+        sudo rm -rf /usr/local/lib/boot-theme
+
+        # Use the standard text theme before removing the custom theme/package.
+        if command -v plymouth-set-default-theme >/dev/null 2>&1; then
+            sudo plymouth-set-default-theme text 2>/dev/null || true
+        fi
+
+        if [[ -f "$boot_dir/uninstall.sh" ]]; then
+            sudo bash "$boot_dir/uninstall.sh" || return 1
+        else
+            sudo rm -rf /usr/share/plymouth/themes/retro-modern-arch
+        fi
+
+        sudo systemctl daemon-reload || return 1
+        sudo pacman -Rns --noconfirm plymouth || return 1
+        sudo mkinitcpio -P || return 1
+
+        echo "[✓] Plymouth and its custom theme removed."
+        echo "[✓] Boot configuration restored; kernel parameters: loglevel=7 only."
+    fi
+}
+
+
 
 # Backwards-compatible name for the standalone boot-screen launcher.
 boot_load() { boot_screen "$@"; }
