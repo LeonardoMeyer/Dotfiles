@@ -311,7 +311,8 @@ PY
         sudo plymouth-set-default-theme retro-modern-arch || return 1
 
         # Normalize the active systemd-boot entry; never append duplicates.
-        [[ -f "$entry" ]] || {
+        # /boot is root-only (0077), so every check on it needs sudo.
+        sudo test -f "$entry" || {
             echo "Boot entry not found: $entry"
             return 1
         }
@@ -384,11 +385,10 @@ EOF
             sudo rm -f "$wrapper"
         fi
 
-        # Remove overrides and the log feed from earlier versions; they could
-        # leave the splash stuck. getty on tty2-6 is never touched.
-        sudo rm -f "$greetd_legacy" "$quit_dropin" "$quit_wait_dropin"
-        sudo systemctl disable plymouth-logfeed.service 2>/dev/null || true
-        sudo rm -f /etc/systemd/system/plymouth-logfeed.service /usr/local/bin/plymouth-logfeed
+        # Remove the old quit overrides that could leave the splash stuck. The
+        # theme installer adds the bounded handoff; getty on tty2-6 is untouched.
+        sudo rm -f "$greetd_legacy" "$quit_dropin" "$quit_wait_dropin" \
+            /etc/systemd/system/greetd.service.d/plymouth-handoff.conf
 
         sudo systemctl daemon-reload || return 1
         sudo mkinitcpio -P || return 1
@@ -421,8 +421,8 @@ PY
 
         # Remove every parameter this installer manages; the only one left is
         # loglevel=7 (kernel debug output).
-        for f in /boot/loader/entries/*.conf; do
-            [[ -f "$f" ]] || continue
+        while IFS= read -r f; do
+            [[ -n "$f" ]] || continue
             sudo python - "$f" <<'PY' || return 1
 import re, sys
 from pathlib import Path
@@ -439,21 +439,25 @@ for i, line in enumerate(lines):
         lines[i] = "options " + " ".join(tokens + ["loglevel=7"])
 p.write_text("\n".join(lines) + "\n")
 PY
-        done
+        done < <(sudo find /boot/loader/entries -maxdepth 1 -name '*.conf')
 
         # Stock autologin config (same as autologin()).
         if [[ -f "$greetd" ]]; then
             sudo sed -i 's#/usr/local/bin/start-hyprland-quiet#start-hyprland#' "$greetd"
         fi
 
-        sudo rm -f "$wrapper" "$greetd_dropin" "$greetd_legacy" "$quit_dropin" "$quit_wait_dropin"
+        sudo rm -f "$wrapper" "$greetd_dropin" "$greetd_legacy" \
+            "$quit_dropin" "$quit_wait_dropin" \
+            /etc/systemd/system/greetd.service.d/plymouth-handoff.conf
         sudo rmdir "$(dirname "$greetd_dropin")" "$(dirname "$quit_dropin")" \
             "$(dirname "$quit_wait_dropin")" 2>/dev/null || true
 
         # Remove the live-log feed and the passwordless theme-rebuild helper.
         sudo systemctl disable plymouth-logfeed.service 2>/dev/null || true
         sudo rm -f /etc/systemd/system/plymouth-logfeed.service \
-            /usr/local/bin/plymouth-logfeed /etc/sudoers.d/boot-theme
+            /usr/local/bin/plymouth-logfeed /usr/local/bin/plymouth-handoff \
+            /usr/local/bin/plymouth-handoff-watch \
+            /etc/systemd/system/plymouth-quit.service.d/handoff.conf /etc/sudoers.d/boot-theme
         sudo rm -rf /usr/local/lib/boot-theme
 
         # Use the standard text theme before removing the custom theme/package.
@@ -592,4 +596,3 @@ EOF
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     main "$@"
 fi
-

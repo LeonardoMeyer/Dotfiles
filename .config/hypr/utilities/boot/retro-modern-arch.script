@@ -110,7 +110,9 @@ fun update_bar (value) {
   fill.SetPosition(barX, barY, 4);
 }
 
+forced = 0;
 fun set_progress (duration, value) {
+  if (forced) return;
   progress = value;
   if (progress < 0) progress = 0;
   if (progress > 1) progress = 1;
@@ -138,6 +140,12 @@ fun fit (s) {
 }
 fun set_message (message) {
   if (message == "") return;
+  # "@100" from plymouth-handoff completes the bar; it is not a log line.
+  local.m = String(message);
+  if (m.SubString(0, 1) == "@") {
+    progress = 1; has_progress = 1; forced = 1;
+    return;
+  }
   line1Text = line2Text;
   line2Text = fit(message);
   line1.SetImage(mktext(line1Text, wal7R, wal7G, wal7B, 0.55, monoFont));
@@ -152,8 +160,11 @@ fun refresh_callback () {
   }
   if (has_progress && progress > 0) {
     sweep.SetPosition(-4000, barY, 4);
-    shown += (progress - shown) * 0.1;
-    if (Math.Abs(progress - shown) < 0.0008) shown = progress;
+    if (forced) shown = progress;
+    else {
+      shown += (progress - shown) * 0.1;
+      if (Math.Abs(progress - shown) < 0.0008) shown = progress;
+    }
     update_bar(shown);
     show_percent(shown);
   } else {

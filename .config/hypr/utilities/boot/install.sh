@@ -98,10 +98,24 @@ install -m 644 "$script_tmp" "$DEST/$THEME.script"
 install -m 644 "$palette_tmp" "$DEST/pywal-palette.conf"
 rm -f "$script_tmp" "$palette_tmp"
 
-# The live log feed crashed plymouth during boot; remove it if an older install left it.
-systemctl disable plymouth-logfeed.service 2>/dev/null || true
-rm -f /etc/systemd/system/plymouth-logfeed.service /usr/local/bin/plymouth-logfeed
+# Live log lines for the splash card
+install -m 755 "$SRC/plymouth-logfeed.sh" /usr/local/bin/plymouth-logfeed
+install -m 644 "$SRC/plymouth-logfeed.service" /etc/systemd/system/plymouth-logfeed.service
+
+# Finish the bar at 100% and keep the last frame until the desktop draws.
+install -m 755 "$SRC/plymouth-handoff.sh" /usr/local/bin/plymouth-handoff
+rm -f /usr/local/bin/plymouth-handoff-watch \
+  /etc/systemd/system/greetd.service.d/plymouth-handoff.conf
+install -d -m 755 /etc/systemd/system/plymouth-quit.service.d
+rm -f /etc/systemd/system/plymouth-quit.service.d/override.conf /etc/systemd/system/plymouth-quit-wait.service.d/override.conf
+cat > /etc/systemd/system/plymouth-quit.service.d/handoff.conf <<'EOF'
+[Service]
+ExecStart=
+ExecStart=-/usr/local/bin/plymouth-handoff
+TimeoutSec=15
+EOF
 systemctl daemon-reload
+systemctl enable plymouth-logfeed.service
 if ! plymouth-set-default-theme "$THEME"; then echo "Could not set theme."; exit 1; fi
 if ! mkinitcpio -P; then
   echo "ERROR: mkinitcpio failed; restoring the previous Plymouth theme." >&2
@@ -120,7 +134,7 @@ fi
 # palette changes rebuild the boot screen without prompting.
 if [[ $SRC != "$ROOT_COPY" && -n ${SUDO_USER:-} && $SUDO_USER != root ]]; then
   install -d -m 755 -o root -g root "$ROOT_COPY"
-  for f in install.sh generate-assets.py "$THEME.plymouth" "$THEME.script"; do
+  for f in install.sh generate-assets.py plymouth-logfeed.sh plymouth-logfeed.service plymouth-handoff.sh "$THEME.plymouth" "$THEME.script"; do
     install -m 755 -o root -g root "$SRC/$f" "$ROOT_COPY/$f"
   done
   rule_tmp="$(mktemp)"
