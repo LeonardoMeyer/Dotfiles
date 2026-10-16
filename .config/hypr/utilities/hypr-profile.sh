@@ -35,13 +35,9 @@ apply() {
         "$UTIL/shells.sh" stop
     fi
 
-    # settings.lua and overrides.lua belong to the settings panel, not to a profile.
+    # settings.lua and overrides.lua belong to the settings panel, not to a profile (settings.lua is rewritten below).
     find "$HYPR" -maxdepth 1 -type f -name '*.lua' ! -name overrides.lua ! -name settings.lua -delete
     cp -a "$src"/*.lua "$HYPR/"
-
-    # A style's tweaks start from its own defaults.
-    printf 'return {}\n' > "$HYPR/settings.lua"
-    rm -f "$HYPR/.settings.json"
 
     find "$UTIL" -maxdepth 1 -type l -delete
     for d in "$HYPR/$style/utilities"/*/; do
@@ -50,9 +46,13 @@ apply() {
 
     printf '%s/%s\n' "$style" "$variant" > "$HYPR/.active-profile"
 
+    # Each style/variant keeps its own tweaks (hypr/tweaks/); swap in the new profile's.
+    python3 "$UTIL/hypr-settings.py" sync
+
     [ "$offline" = "--offline" ] && return 0
 
     hyprctl reload >/dev/null 2>&1 || true
+    python3 "$UTIL/hypr-settings.py" cursor
     "$UTIL/shells.sh" start
     if grep -qi 'waybar' "$HYPR/startup.lua" 2>/dev/null; then
         pkill -x waybar 2>/dev/null || true

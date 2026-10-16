@@ -18,33 +18,34 @@ Item {
     readonly property real ratio: Math.max(0, Math.min(1, (shown - def.min) / (def.max - def.min)))
     readonly property bool hot: area.containsMouse || area.pressed
 
-    implicitHeight: 46
+    implicitHeight: 58
     opacity: ready ? 1 : 0.35
 
     Text {
-        anchors.left: parent.left
-        anchors.top: parent.top
+        x: Theme.pad
+        y: 10
         text: control.def.label
         font.family: Theme.sans
         font.pixelSize: 13
         color: control.hot ? Theme.bright : Theme.fg
-        Behavior on color { ColorAnimation { duration: 220 } }
+        Behavior on color { ColorAnimation { duration: Theme.fast } }
     }
 
     Text {
         anchors.right: parent.right
-        anchors.top: parent.top
+        anchors.rightMargin: Theme.pad
+        y: 10
         text: Number(control.shown).toFixed(control.decimals) + control.def.unit
         font.family: Theme.sans
         font.pixelSize: 13
-        color: Theme.bright
+        color: Theme.accent
     }
 
     Rectangle {
         id: track
-        anchors.left: parent.left
-        anchors.right: parent.right
-        y: 31
+        x: Theme.pad
+        y: 38
+        width: parent.width - Theme.pad * 2
         height: 4
         radius: 2
         color: Theme.alpha(Theme.fg, 0.16)
@@ -76,7 +77,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
 
         function update(x) {
-            const r = Math.max(0, Math.min(1, x / width))
+            const r = Math.max(0, Math.min(1, (x - track.x) / track.width))
             let v = control.def.min + Math.round(r * (control.def.max - control.def.min) / control.step) * control.step
             v = Number(Math.max(control.def.min, Math.min(control.def.max, v)).toFixed(control.decimals))
             control.dragValue = v
@@ -88,5 +89,13 @@ Item {
 
         onPressed: mouse => { control.lastSent = control.raw; update(mouse.x) }
         onPositionChanged: mouse => { if (pressed) update(mouse.x) }
+    }
+
+    // Right-click puts the setting back to the profile's own value.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        cursorShape: Qt.PointingHandCursor
+        onClicked: Store.reset(control.def.key)
     }
 }

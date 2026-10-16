@@ -13,76 +13,47 @@ Item {
         return name.charAt(0).toUpperCase() + name.slice(1)
     }
 
-    function pickStyle(style) {
-        const list = Store.styles[style] || []
-        Store.applyProfile(style, list.indexOf(Store.active.variant) >= 0 ? Store.active.variant : list[0])
+    function options(list) {
+        return list.map(n => ({ v: n, l: title(n) }))
     }
 
-    implicitHeight: column.implicitHeight
+    implicitHeight: col.height
 
     Column {
-        id: column
+        id: col
         width: parent.width
-        spacing: 10
 
-        Row {
-            spacing: 12
-            Text {
-                width: 64
-                height: 26
-                verticalAlignment: Text.AlignVCenter
-                text: "Style"
-                font.family: Theme.sans
-                font.pixelSize: 13
-                color: Theme.fg
-            }
-            Flow {
-                width: column.width - 76
-                spacing: 6
-                Repeater {
-                    model: control.styleNames
-                    Chip {
-                        required property string modelData
-                        text: control.title(modelData)
-                        active: Store.active.style === modelData
-                        onClicked: if (!active) control.pickStyle(modelData)
-                    }
-                }
+        Dropdown {
+            width: parent.width
+            label: "Style"
+            options: control.options(control.styleNames)
+            current: Store.active.style
+            onPicked: v => {
+                if (v === Store.active.style) return
+                const list = Store.styles[v] || []
+                Store.applyProfile(v, list.indexOf(Store.active.variant) >= 0 ? Store.active.variant : list[0])
             }
         }
 
-        Row {
-            spacing: 12
-            Text {
-                width: 64
-                height: 26
-                verticalAlignment: Text.AlignVCenter
-                text: "Variant"
-                font.family: Theme.sans
-                font.pixelSize: 13
-                color: Theme.fg
-            }
-            Flow {
-                width: column.width - 76
-                spacing: 6
-                Repeater {
-                    model: control.variants
-                    Chip {
-                        required property string modelData
-                        text: control.title(modelData)
-                        active: Store.active.variant === modelData
-                        onClicked: if (!active) Store.applyProfile(Store.active.style, modelData)
-                    }
-                }
-            }
+        Rectangle { width: parent.width - Theme.pad * 2; x: Theme.pad; height: 1; color: Theme.alpha(Theme.fg, 0.07) }
+
+        Dropdown {
+            width: parent.width
+            label: "Variant"
+            options: control.options(control.variants)
+            current: Store.active.variant
+            onPicked: v => { if (v !== Store.active.variant) Store.applyProfile(Store.active.style, v) }
         }
 
         Text {
-            width: parent.width
+            x: Theme.pad
+            width: parent.width - Theme.pad * 2
+            height: implicitHeight + 14
+            verticalAlignment: Text.AlignTop
             wrapMode: Text.WordWrap
-            text: "A style carries its own quickshells, animations and layout. Switching loads the profile's defaults and clears your tweaks."
+            text: "A style carries its own quickshells, waybar styles and animations. Every variant keeps its own tweaks, so laptop and desktop stay independent."
             font.family: Theme.sans
-            font.pixelSize: 12
+            font.pixelSize: 11
             color: Theme.dim
         }
     }

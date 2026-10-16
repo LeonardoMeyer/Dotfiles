@@ -8,37 +8,56 @@ if S.config then
     hl.config(S.config)
 end
 
--- Animation presets replace the profile's rules; "theme" (or nil) keeps the profile's own.
--- Speeds are in Hyprland deciseconds, divided by the panel's speed multiplier.
-local PRESETS = {
-    calm = {
-        curve = { { 0.16, 1 }, { 0.3, 1 } },
-        windows = { 7, "popin 90%" }, windowsOut = { 6, "popin 90%" }, windowsMove = { 5 },
-        fade = { 7 }, border = { 9 }, workspaces = { 7, "slide" },
-        specialWorkspace = { 7, "slidefadevert -35%" }, layers = { 5, "popin 80%" },
-    },
-    balanced = {
-        curve = { { 0.15, 0.85 }, { 0.25, 1 } },
-        windows = { 4, "popin 5%" }, windowsOut = { 3.5, "popin 5%" }, windowsMove = { 3 },
-        fade = { 4 }, border = { 6 }, workspaces = { 4, "slide" },
-        specialWorkspace = { 4, "slidefadevert -35%" }, layers = { 3, "popin 70%" },
-    },
-    snappy = {
-        curve = { { 0.3, 1 }, { 0.4, 1 } },
-        windows = { 2.5, "popin 20%" }, windowsOut = { 2, "popin 20%" }, windowsMove = { 2 },
-        fade = { 2.5 }, border = { 4 }, workspaces = { 2, "slide" },
-        specialWorkspace = { 2.5, "slidefadevert -35%" }, layers = { 2, "popin 70%" },
-    },
-}
+-- Animations: one curve drives every leaf. Base speeds are in Hyprland deciseconds and are
+-- divided by the panel's speed multiplier; window and workspace styles are chosen separately.
+local A = S.animation
+if A and A.curve then
+    local mult = math.max(0.1, tonumber(A.speed) or 1)
+    local windowStyle = A.window or "popin 90%"
+    local workspaceStyle = A.workspace or "slide"
+    hl.curve("panel", { type = "bezier", points = { { A.curve[1], A.curve[2] }, { A.curve[3], A.curve[4] } } })
+    local leaves = {
+        { "windows", 4, windowStyle },
+        { "windowsOut", 3.5, windowStyle },
+        { "windowsMove", 3 },
+        { "fade", 4 },
+        { "border", 6 },
+        { "workspaces", 4, workspaceStyle },
+        { "specialWorkspace", 4, workspaceStyle },
+        { "layers", 3, "popin 80%" },
+    }
+    for _, leaf in ipairs(leaves) do
+        hl.animation({ leaf = leaf[1], enabled = true, speed = leaf[2] / mult, bezier = "panel", style = leaf[3] })
+    end
+end
 
-local anim = S.animation
-local preset = anim and PRESETS[anim.preset]
-if preset then
-    local mult = math.max(0.1, tonumber(anim.speed) or 1)
-    hl.curve("panel", { type = "bezier", points = preset.curve })
-    for _, leaf in ipairs({ "windows", "windowsOut", "windowsMove", "fade", "border", "workspaces", "specialWorkspace", "layers" }) do
-        local rule = preset[leaf]
-        hl.animation({ leaf = leaf, enabled = true, speed = rule[1] / mult, bezier = "panel", style = rule[2] })
+-- Border gradient from the live pywal palette.
+local B = S.border
+if B and B.gradient then
+    local colors = {}
+    local file = io.open(os.getenv("HOME") .. "/.cache/wal/colors-hyprland", "r")
+    if file then
+        for line in file:lines() do
+            local idx, hex = line:match("%$color(%d+)%s*=%s*0x%x%x(%x%x%x%x%x%x)")
+            if idx then colors[tonumber(idx)] = "rgba(" .. hex .. "ff)" end
+        end
+        file:close()
+    end
+    local PALETTES = {
+        accent = { 9, 13 },
+        ocean = { 9, 12, 14 },
+        ember = { 1, 3 },
+        aurora = { 2, 6, 4 },
+        sunset = { 1, 5, 13 },
+        glow = { 9, 15 },
+    }
+    local stops = {}
+    for _, i in ipairs(PALETTES[B.palette] or PALETTES.accent) do
+        if colors[i] then stops[#stops + 1] = colors[i] end
+    end
+    if #stops == 1 then stops[2] = stops[1] end
+    if #stops >= 2 then
+        hl.config({ general = { col = { active_border = { colors = stops, angle = B.angle or 45 } } } })
     end
 end
 

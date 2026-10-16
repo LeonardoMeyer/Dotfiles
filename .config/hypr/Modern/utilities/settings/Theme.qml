@@ -9,6 +9,8 @@ Singleton {
     id: root
 
     readonly property string sans: "CodeNewRoman Nerd Font Propo"
+    readonly property int pad: 14
+    readonly property int fast: 160
 
     FileView {
         id: walFile
@@ -23,7 +25,8 @@ Singleton {
     readonly property color accent: wal ? wal.colors.color9 : "#8fd3ff"
     readonly property color fg: wal ? wal.colors.color7 : "#c7c6c2"
     readonly property color bright: wal ? wal.colors.color15 : "#ffffff"
-    readonly property color dim: wal ? wal.colors.color8 : "#716e5d"
+    // Derived from the text color so it stays readable on every palette (color8 is too dark on schemes like Nord).
+    readonly property color dim: Qt.rgba(fg.r, fg.g, fg.b, 0.5)
     readonly property color bg: wal ? wal.special.background : "#101418"
 
     function alpha(c, a) {

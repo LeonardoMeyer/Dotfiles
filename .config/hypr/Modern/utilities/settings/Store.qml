@@ -20,7 +20,15 @@ Singleton {
     property string colorTheme: "pywal"
     property string wallpaper: ""
     property var cursors: []
+    property var waybar: ({ styles: [], active: "" })
+    property string waybarActive: ""
+    property var caps: ({})
+    property var pywalPalette: []
     property var pending: ({})
+    // Wheels currently on screen; the newest one receives the panel's up/down keys.
+    property var wheels: []
+    property string lastSnapshot: ""
+    property bool refreshAfter: false
 
     function refresh() {
         if (!stateProc.running) {
@@ -30,17 +38,41 @@ Singleton {
     }
 
     function set(key, value) {
+        setMany({ [key]: value })
+    }
+
+    // Drops a tweak so the active profile's own value applies again.
+    function reset(...keys) {
+        const entries = {}
+        for (const k of keys) entries[k] = null
+        setMany(entries)
+    }
+
+    // Updates what the panel shows without writing anything.
+    function setValues(entries) {
+        values = Object.assign({}, values, entries)
+    }
+
+    // A null value removes the key; the true value is then re-read from the backend.
+    function setMany(entries) {
         const next = Object.assign({}, values)
-        next[key] = value
+        for (const key of Object.keys(entries)) {
+            // A removed tweak keeps its shown value until the profile's real default is read back.
+            if (entries[key] !== null) next[key] = entries[key]
+            pending[key] = entries[key]
+            if (entries[key] === null) refreshAfter = true
+        }
         values = next
-        pending[key] = value
         flushTimer.restart()
     }
 
     function flush() {
         if (setProc.running) return
         const keys = Object.keys(pending)
-        if (keys.length === 0) return
+        if (keys.length === 0) {
+            if (refreshAfter) { refreshAfter = false; lastSnapshot = ""; refresh() }
+            return
+        }
         const args = keys.map(k => k + "=" + JSON.stringify(pending[k]))
         pending = {}
         setProc.command = ["python3", py, "set"].concat(args)
@@ -57,6 +89,11 @@ Singleton {
         Quickshell.execDetached(["setsid", "-f", util + "/color-apply.sh", id])
     }
 
+    function applyWaybar(id) {
+        waybarActive = id
+        Quickshell.execDetached(["setsid", "-f", util + "/waybar-style.sh", "apply", id])
+    }
+
     function resetAll() {
         if (!resetProc.running) resetProc.running = true
     }
@@ -65,7 +102,7 @@ Singleton {
         Quickshell.execDetached(["python3", py, "ui", key + "=" + JSON.stringify(value)])
     }
 
-    Timer { id: flushTimer; interval: 120; onTriggered: root.flush() }
+    Timer { id: flushTimer; interval: 40; onTriggered: root.flush() }
 
     Process {
         id: setProc
@@ -84,6 +121,10 @@ Singleton {
             onStreamFinished: {
                 let data
                 try { data = JSON.parse(text) } catch (e) { return }
+                // Skip identical snapshots so an unchanged refresh never re-evaluates every control.
+                const snapshot = text
+                if (snapshot === root.lastSnapshot) return
+                root.lastSnapshot = snapshot
                 // Never clobber a value the user has changed but not yet flushed.
                 if (Object.keys(root.pending).length === 0 && !setProc.running) root.values = data.values
                 root.styles = data.styles
@@ -92,6 +133,10 @@ Singleton {
                 root.colorTheme = data.colorTheme
                 root.wallpaper = data.wallpaper
                 root.cursors = data.cursors
+                root.waybar = data.waybar
+                root.waybarActive = data.waybar.active
+                root.caps = data.caps
+                root.pywalPalette = data.pywalPalette
             }
         }
     }

@@ -1,3 +1,17 @@
 __pycache__/
 *.pyc
 .config/wal/colorschemes/dark/pywal16.json
+
+# Generated per machine by hypr-profile.sh / the settings panel (source of truth: hypr/<Style>/<variant>/ and hypr/tweaks/)
+.config/hypr/.active-profile
+.config/hypr/.color-theme
+.config/hypr/settings.lua
+.config/hypr/hyprland.lua
+.config/hypr/startup.lua
+.config/hypr/style.lua
+.config/hypr/shortcuts.lua
+.config/hypr/utilities/boot
+.config/hypr/utilities/home-screen
+.config/hypr/utilities/osd
+.config/hypr/utilities/settings
+.config/hypr/utilities/wallpaper-picker

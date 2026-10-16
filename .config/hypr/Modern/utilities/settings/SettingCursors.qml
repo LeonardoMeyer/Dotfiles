@@ -1,37 +1,20 @@
 import QtQuick
 
-Item {
+Dropdown {
     id: control
 
     property var def
 
-    implicitHeight: column.implicitHeight
+    label: "Cursor theme"
+    options: Store.cursors.map(c => ({ v: c.toLowerCase(), l: c }))
+    current: String(Store.values["cursor.theme"] || "").toLowerCase()
+    onPicked: v => Store.set("cursor.theme", Store.cursors.find(c => c.toLowerCase() === v))
 
-    Column {
-        id: column
-        width: parent.width
-        spacing: 6
-
-        Text {
-            text: "Cursor theme"
-            font.family: Theme.sans
-            font.pixelSize: 13
-            color: Theme.fg
-        }
-
-        Flow {
-            width: parent.width
-            spacing: 6
-
-            Repeater {
-                model: Store.cursors
-                Chip {
-                    required property string modelData
-                    text: modelData
-                    active: (Store.values["cursor.theme"] || "").toLowerCase() === modelData.toLowerCase()
-                    onClicked: Store.set("cursor.theme", modelData)
-                }
-            }
-        }
+    // Right-click puts the setting back to the profile's own value.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        cursorShape: Qt.PointingHandCursor
+        onClicked: Store.reset("cursor.theme")
     }
 }

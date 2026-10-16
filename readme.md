@@ -393,7 +393,7 @@ layerrule = ignorealpha 0.5, wofi
 
 `Alt+W` - Wallpaper Selector (Wofi)
 
-`Alt+S` - Hyprland Settings (slide-up panel: profile, colors, windows, effects, animations, input, cursor, system)
+`Alt+S` - Hyprland Settings (left-edge panel: profile, colors, windows, effects, animations, input, cursor, system)
 
 `Alt+Tab` - wlogout
 
@@ -404,9 +404,13 @@ layerrule = ignorealpha 0.5, wofi
 
 ## Hyprland Styles & Settings Panel
 
-`Alt+S` opens a settings sheet that slides up from the bottom (about a third of the screen). Drag its top edge to resize it; the height is remembered. Drag it far down, press `Esc`, or press `Alt+S` again to close.
+`Alt+S` opens a settings sheet that slides in from the left edge, below waybar (about a third of the screen width). Drag its right edge to resize it; the width is remembered. Drag it far left, press `Esc`, click outside it, or press `Alt+S` again to close. Keys: `←/→` or `h/l` change tab, `↑/↓` or `j/k` turn the wheel (or scroll the page), `Enter` applies the wheel's selection.
 
-The panel never edits a profile. Tweaks are saved to `~/.config/hypr/.settings.json` and written to the active `settings.lua`, which `overrides.lua` applies on top of the profile (live, through `hyprctl eval`). **Reset tweaks** in the System page, or switching profile, clears them. Color themes are applied with pywal: **Pywal** (default) follows the wallpaper, and every `*.json` in `~/.config/wal/colorschemes/dark` (or `light`) shows up as a fixed palette.
+The panel never edits a profile. Every style/variant keeps its own tweaks in `~/.config/hypr/tweaks/<Style>-<variant>.json`; the active one is written to `settings.lua`, which `overrides.lua` applies on top of the profile (live, through `hyprctl eval`). Switching profile swaps in that profile's own tweaks, so laptop and desktop stay independent, and **Reset tweaks** (System page) only resets the active one. **Right-click any setting** to put it back to the profile's own value. Rows only appear when they would do something: dependent options (blur size when blur is on, gradient angle when the gradient is on) and hardware options (touchpad, multi-monitor) are hidden otherwise.
+
+- **Colors** is a wheel: scroll to browse, click or Enter to apply. **Pywal** (default) follows the wallpaper, and every `*.json` in `~/.config/wal/colorschemes/dark` (or `light`) shows up as a fixed palette.
+- **Windows** includes the borders: width, rounding, and a gradient border (pywal palette slots) with an angle.
+- **Animations** has presets plus a Bézier editor: drag the two handles, watch the preview, or **Randomize** the curve, speed and window/workspace styles. **Copy line** puts a Hyprland `bezier = ...` line on the clipboard.
 
 Profiles are folders under `~/.config/hypr`:
 
@@ -415,10 +419,11 @@ hypr/
   Modern/                 <- a style
     laptop/  desktop/     <- variants: hyprland.lua, startup.lua, style.lua, shortcuts.lua
     utilities/            <- the style's quickshells (boot, osd, home-screen, wallpaper-picker, settings)
+    waybar/<name>/        <- waybar styles: config, style.css, preview.png (shown in the panel's Profile page)
   utilities/              <- shared scripts; the active style's quickshells are symlinked in here
 ```
 
-To add a style, create `hypr/<Style>/<variant>/` (copy a variant from `Modern`) and `hypr/<Style>/utilities/` (copy `Modern/utilities` and restyle). It appears in the panel's Profile page automatically; deleting the folder removes it.
+To add a style, create `hypr/<Style>/<variant>/` (copy a variant from `Modern`) and `hypr/<Style>/utilities/` (copy `Modern/utilities` and restyle). It appears in the panel's Profile page automatically; deleting the folder removes it. The Waybar section only appears for styles that have a `waybar/` folder, and `Alt+B` opens the same list in Wofi. Choices with five or more options (color themes, cursors) are shown as dropdowns.
 
 ## Help
 
