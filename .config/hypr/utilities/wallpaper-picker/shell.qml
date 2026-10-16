@@ -22,6 +22,7 @@ ShellRoot {
     property real t: 0
     property string indexText: ""
     property var targetScreen: null
+    property bool locating: false
     // The entrance waits for the backdrop so its first blur render never lands mid-animation.
     property bool backdropReady: false
     property bool startWaited: false
@@ -111,6 +112,20 @@ ShellRoot {
 
     function show() {
         watchdog.stop()
+        if ((shown && !leaving) || locating) return
+        // Hyprland.focusedMonitor can be stale until the first focus event after startup, so ask for the cursor directly.
+        locating = true
+        cursorQuery.running = true
+    }
+
+    function screenAt(x, y) {
+        return Quickshell.screens.find(s => x >= s.x && x < s.x + s.width && y >= s.y && y < s.y + s.height)
+            ?? Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
+            ?? Quickshell.screens[0]
+    }
+
+    function open(screen) {
+        locating = false
         if (shown && !leaving) return
         leaving = false
         t = 0
@@ -118,12 +133,25 @@ ShellRoot {
         startWaited = false
         if (!current || current.path !== landing) rebuild(landing)
         // Frozen for this open so moving the cursor to another monitor never drags the window along.
-        targetScreen = Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+        targetScreen = screen
         shown = true
         backdropReady = backdrop.settled
         startTimer.restart()
         waitTimer.restart()
         Qt.callLater(() => stage.forceActiveFocus())
+    }
+
+    Process {
+        id: cursorQuery
+        command: ["hyprctl", "-j", "cursorpos"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let c = null
+                try { c = JSON.parse(text) } catch (e) {}
+                root.open(c ? root.screenAt(c.x, c.y) : root.screenAt(-1, -1))
+            }
+        }
+        onExited: (code, status) => { if (code !== 0 && root.locating) root.open(root.screenAt(-1, -1)) }
     }
 
     function toggle() {

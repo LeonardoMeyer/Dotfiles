@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-ACTIVE_HYPR_DIR="$HOME/.config/hypr"
+# ~/.config/hypr is a symlink into the dotfiles repo; find does not descend into a symlinked start path.
+ACTIVE_HYPR_DIR="$(readlink -f "$HOME/.config/hypr")"
 WOFI_CONFIG="$HOME/.config/wofi/profiles"
 WOFI_STYLE="$HOME/.config/wofi/style-profiles.css"
 

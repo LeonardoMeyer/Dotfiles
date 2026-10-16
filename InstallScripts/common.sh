@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/wofi-paths.sh"
+
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 CYAN='\033[0;36m'; BOLD='\033[1m'; RESET='\033[0m'
 
@@ -26,6 +28,7 @@ ensure_prereqs() {
     fi
 
     mkdir -p "$CONFIG_DIR"
+    fix_wofi_paths
 }
 
 install_packages() {

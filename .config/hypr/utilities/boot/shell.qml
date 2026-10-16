@@ -65,6 +65,12 @@ ShellRoot {
         }).slice(0, 18)
     }
 
+    // Black-screen delay before the animation starts; each profile's startup.lua sets BOOT_BLACK_MS.
+    readonly property int blackMs: {
+        var v = parseInt(Quickshell.env("BOOT_BLACK_MS"))
+        return isNaN(v) || v < 0 ? 2500 : v
+    }
+
     property real reveal: 0
     property real boot: 0
     property real exit: 0
@@ -146,7 +152,7 @@ ShellRoot {
 
     Timer {
         id: launch
-        interval: 2500
+        interval: root.blackMs
         running: true
         onTriggered: {
             root.sequenceStarted = true

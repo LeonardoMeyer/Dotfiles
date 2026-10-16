@@ -4,7 +4,7 @@ hl.monitor({ output = "DP-4", mode = "1920x1080@74.97", position = "1480x64", sc
 hl.monitor({ output = "DP-5", mode = "1920x1080@239.96", position = "2560x480", scale = 1.00 })
 
 hl.on("hyprland.start", function()
-    hl.exec_cmd("qs -p ~/.config/hypr/utilities/boot --daemonize")
+    hl.exec_cmd("BOOT_BLACK_MS=2500 qs -p ~/.config/hypr/utilities/boot --daemonize")
     hl.exec_cmd("hyprctl setcursor Bibata-Modern-Ice 12")
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")

@@ -157,7 +157,7 @@ layerrule = ignorealpha 0.5, wofi
 ### `Pywal` with Wofi
 
 **If you want Pywal colors**
-- In `~/.config/wofi/style.css`, update the hostname in the file path to your `pywal` colors.
+- The install and apply scripts automatically update Wofi style imports to your Pywal cache path. If you copy the config manually, update the hostname in the `@import` path.
 **If you don't want Pywal colors**
 - You can remove the top line of your style.css and replace the colors at the top with your desired choice.
 </details>
@@ -525,4 +525,3 @@ materia-dark-gtk
   bottom
   ```
 </details>
-

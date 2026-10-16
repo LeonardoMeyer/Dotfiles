@@ -4,7 +4,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-bash -c 'source "$1/fullinstall.sh"; boot_screen' _ "$SCRIPT_DIR"
+bash -c 'source "$1/fullinstall.sh"; autologin' _ "$SCRIPT_DIR"
 status=$?
 
 echo

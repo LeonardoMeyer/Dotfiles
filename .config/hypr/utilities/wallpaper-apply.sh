@@ -19,5 +19,3 @@ pkill -USR2 cava 2>/dev/null || true
 mkdir -p ~/.cache/wallpaper-picker && printf "%s\n" "$selected_wallpaper" > ~/.cache/wallpaper-picker/current
 cp -r "$selected_wallpaper" "$HOME/wallpapers/pywallpaper.jpg"
 "$(dirname "$(readlink -f "$0")")/home-screen/home-wall.sh" >/dev/null 2>&1 &
-"$(dirname "$(readlink -f "$0")")/boot/preview.sh" >/dev/null 2>&1 &
-"$(dirname "$(readlink -f "$0")")/boot/apply.sh" >/dev/null 2>&1 &

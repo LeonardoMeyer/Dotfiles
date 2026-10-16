@@ -9,6 +9,7 @@ ensure_prereqs
 
 install_packages wofi python-pywal16
 copy_config_dir "wofi" "wofi"
+fix_wofi_paths
 apply_default_pywal
 
 success "Wofi component installed."
