@@ -383,7 +383,8 @@ ShellRoot {
                                         width: sec.width
                                         height: rows.height
                                         radius: 12
-                                        color: Theme.alpha(Theme.fg, 0.055)
+                                        color: sec.modelData.controls.length === 1 && sec.modelData.controls[0].type === "action"
+                                            ? "transparent" : Theme.alpha(Theme.fg, 0.055)
 
                                         Column {
                                             id: rows

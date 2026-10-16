@@ -7,7 +7,7 @@ Wheel {
     // Background plus the six hues and the accent: the same slots every scheme is built from.
     readonly property var slots: [0, 1, 2, 3, 4, 5, 6, 9]
 
-    centerFrac: 0.4
+    centerFrac: 0.5
 
     entries: {
         const pw = Store.pywalPalette

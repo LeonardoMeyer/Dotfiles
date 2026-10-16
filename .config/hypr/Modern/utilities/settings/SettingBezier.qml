@@ -79,6 +79,8 @@ Item {
         PropertyAction { target: control; property: "p"; value: 0 }
         PropertyAction { target: control; property: "t"; value: 0 }
         PauseAnimation { duration: 320 }
+
+        // Out: 0 -> 1 along the curve, then back: 1 -> 0 along the same curve, like a window opening and closing.
         ParallelAnimation {
             NumberAnimation { target: control; property: "t"; from: 0; to: 1; duration: control.previewMs }
             NumberAnimation {
@@ -91,7 +93,20 @@ Item {
                 easing.bezierCurve: [control.curve[0], control.curve[1], control.curve[2], control.curve[3], 1, 1]
             }
         }
-        PauseAnimation { duration: 1000 }
+        PauseAnimation { duration: 700 }
+        ParallelAnimation {
+            NumberAnimation { target: control; property: "t"; from: 1; to: 0; duration: control.previewMs }
+            NumberAnimation {
+                target: control
+                property: "p"
+                from: 1
+                to: 0
+                duration: control.previewMs
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: [control.curve[0], control.curve[1], control.curve[2], control.curve[3], 1, 1]
+            }
+        }
+        PauseAnimation { duration: 500 }
     }
 
     Column {
@@ -162,20 +177,23 @@ Item {
                 // Race: the eased dot against plain linear motion over the same time.
                 Item {
                     width: parent.width
-                    height: 54
+                    height: 90
 
-                    Rectangle { x: 6; y: 12; width: parent.width - 12; height: 2; radius: 1; color: Theme.alpha(Theme.fg, 0.14) }
-                    Rectangle { x: 6; y: 36; width: parent.width - 12; height: 2; radius: 1; color: Theme.alpha(Theme.fg, 0.14) }
+                    // linear row
+                    Text { x: 6; y: 2; text: "linear"; font.family: Theme.sans; font.pixelSize: 12; color: Theme.dim }
+                    Rectangle { x: 6; y: 26; width: parent.width - 12; height: 2; radius: 1; color: Theme.alpha(Theme.fg, 0.14) }
                     Rectangle {
-                        x: 6 + (parent.width - 12) * control.t - 5; y: 8; width: 10; height: 10; radius: 5
+                        x: 6 + (parent.width - 12) * control.t - 5; y: 22; width: 10; height: 10; radius: 5
                         color: Theme.alpha(Theme.fg, 0.5)
                     }
+
+                    // this curve row
+                    Text { x: 6; y: 48; text: "this curve"; font.family: Theme.sans; font.pixelSize: 12; color: Theme.dim }
+                    Rectangle { x: 6; y: 72; width: parent.width - 12; height: 2; radius: 1; color: Theme.alpha(Theme.fg, 0.14) }
                     Rectangle {
-                        x: 6 + (parent.width - 12) * control.p - 6; y: 30; width: 12; height: 12; radius: 6
+                        x: 6 + (parent.width - 12) * control.p - 6; y: 67; width: 12; height: 12; radius: 6
                         color: Theme.accent
                     }
-                    Text { x: 6; y: 16; text: "linear"; font.family: Theme.sans; font.pixelSize: 9; color: Theme.dim }
-                    Text { x: 6; y: 40; text: "this curve"; font.family: Theme.sans; font.pixelSize: 9; color: Theme.dim }
                 }
             }
         }
@@ -253,7 +271,7 @@ Item {
                 elide: Text.ElideRight
                 maximumLineCount: 2
                 wrapMode: Text.WordWrap
-                text: control.css + "\n" + (control.custom ? "opens windows in ~" + control.realMs + " ms" : "drag or pick Custom to override the profile")
+                text: control.css + "\n" + (control.custom ? "opens windows in ~" + control.realMs + " ms" : "")
                 font.family: Theme.sans
                 font.pixelSize: 11
                 color: Theme.fg

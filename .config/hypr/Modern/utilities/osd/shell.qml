@@ -14,13 +14,21 @@ ShellRoot {
     // Resident and hidden; present() drives every appearance.
     property bool active: false
     property bool leaving: false
-    property real t: 0
-    property real pulse: 0
+    property real t: 0          // enter/exit progress (can overshoot slightly on enter)
+    property real pulse: 0      // quick bump on each update
+    property real wiggle: 0     // icon rotation on state toggle (mute, caps, mic)
+    property int fillDuration: 110
 
     property string kind: "volume"
     property bool flag: false
     property string label: ""
     property real shownValue: 0
+
+    // Morph geometry: circle (dot) -> full pill.
+    readonly property real dotSize: 52
+    readonly property real fullWidth: 300
+    // Width progress starts after the dot has begun rising; may overshoot a touch on enter.
+    readonly property real w: Math.max(0, (t - 0.2) / 0.8)
 
     FileView {
         id: walFile
@@ -69,16 +77,28 @@ ShellRoot {
     }
     readonly property bool readoutLit: kind === "caps" ? flag : (kind === "mic" ? !flag : !off)
 
+    // Staggered progress: 0 until `from`, then ramps to 1 as t completes.
+    function stage(from) {
+        return Math.max(0, Math.min(1, (t - from) / (1 - from)))
+    }
+
     function present(k, v, f, text) {
         const fresh = !active || leaving || kind !== k
+        const toggled = !fresh && flag !== f
+
         kind = k
         flag = f
         label = text
+
         if (fresh) {
+            // Bar starts empty and sweeps to its value as the card morphs open.
             barBehavior.enabled = false
-            shownValue = v
+            shownValue = 0
+            fillDuration = 420
             barBehavior.enabled = true
+            shownValue = v
         } else {
+            fillDuration = 120
             shownValue = v
         }
 
@@ -94,16 +114,18 @@ ShellRoot {
         } else {
             pulseAnim.restart()
         }
+
+        if (toggled) wiggleAnim.restart()
     }
 
-    // Same curves and timings as style.lua: windows use "fluid" at 300ms, windowsOut "snappy" at 250ms, popin 5%.
+    // Enter: springy rise with overshoot. Exit: ease-in so it accelerates off the bottom of the screen.
     function animateTo(target) {
         tween.stop()
         tween.from = t
         tween.to = target
-        tween.duration = target === 1 ? 300 : 250
+        tween.duration = target === 1 ? 480 : 340
         tween.easing.type = Easing.BezierSpline
-        tween.easing.bezierCurve = target === 1 ? [0.15, 0.85, 0.25, 1, 1, 1] : [0.3, 1, 0.4, 1, 1, 1]
+        tween.easing.bezierCurve = target === 1 ? [0.18, 1.2, 0.32, 1, 1, 1] : [0.45, 0, 0.8, 0.35, 1, 1]
         tween.start()
     }
 
@@ -125,7 +147,15 @@ ShellRoot {
     SequentialAnimation {
         id: pulseAnim
         NumberAnimation { target: root; property: "pulse"; to: 1; duration: 70; easing.type: Easing.OutCubic }
-        NumberAnimation { target: root; property: "pulse"; to: 0; duration: 180; easing.type: Easing.OutCubic }
+        NumberAnimation { target: root; property: "pulse"; to: 0; duration: 220; easing.type: Easing.OutBack }
+    }
+
+    SequentialAnimation {
+        id: wiggleAnim
+        NumberAnimation { target: root; property: "wiggle"; to: -14; duration: 60; easing.type: Easing.OutQuad }
+        NumberAnimation { target: root; property: "wiggle"; to: 11; duration: 90; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: root; property: "wiggle"; to: -6; duration: 80; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: root; property: "wiggle"; to: 0; duration: 100; easing.type: Easing.OutQuad }
     }
 
     IpcHandler {
@@ -138,9 +168,10 @@ ShellRoot {
         visible: root.active
         screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
         anchors.bottom: true
-        margins.bottom: 56
+        // Window sits on the screen edge so the card can slide fully off-screen.
+        margins.bottom: 0
         implicitWidth: 340
-        implicitHeight: 100
+        implicitHeight: 156
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         mask: Region {}
@@ -150,18 +181,21 @@ ShellRoot {
 
         Item {
             id: card
-            width: 300
-            height: 52
+            width: root.dotSize + (root.fullWidth - root.dotSize) * root.w
+            height: root.dotSize
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 20
-            opacity: root.t
-            scale: 0.95 + 0.05 * root.t
+            // Rests 76px above the screen edge; starts and ends fully below it.
+            anchors.bottomMargin: 76 - 132 * (1 - root.t)
+            // Solid the whole way (no faint tail for the blur to ghost on).
+            opacity: Math.min(1, root.t * 8)
+            scale: 1 + 0.015 * root.pulse
 
-            // Matches Hyprland: 10px rounding, no border, translucent background over compositor blur.
+            // Matches Hyprland at rest: 10px rounding, translucent background over compositor blur.
+            // Fully round as a dot, relaxing to 10px as the pill opens.
             Rectangle {
                 anchors.fill: parent
-                radius: 10
+                radius: Math.max(10, root.dotSize / 2 - (root.dotSize / 2 - 10) * Math.min(1, root.w))
                 color: Qt.rgba(root.bg.r, root.bg.g, root.bg.b, 0.45)
             }
 
@@ -176,12 +210,15 @@ ShellRoot {
                 font.family: root.sans
                 font.pixelSize: 18
                 color: root.off ? root.dim : root.accent
-                scale: 1 + 0.18 * root.pulse
+                rotation: root.wiggle
+                // Icon is the dot's face: present from the start, bumps on each update.
+                scale: (0.75 + 0.25 * root.stage(0.1)) * (1 + 0.18 * root.pulse)
                 Behavior on color { ColorAnimation { duration: 120 } }
             }
 
             Text {
                 id: readout
+                visible: root.stage(0.55) > 0
                 anchors.right: parent.right
                 anchors.rightMargin: 16
                 anchors.verticalCenter: parent.verticalCenter
@@ -191,12 +228,14 @@ ShellRoot {
                 font.family: root.sans
                 font.pixelSize: 14
                 color: root.readoutLit ? root.fg : root.dim
+                opacity: root.stage(0.55)
+                transform: Translate { x: 6 * (1 - root.stage(0.55)) }
                 Behavior on color { ColorAnimation { duration: 120 } }
             }
 
             Rectangle {
                 id: meter
-                visible: root.hasBar
+                visible: root.hasBar && root.stage(0.5) > 0
                 anchors.left: icon.right
                 anchors.leftMargin: 14
                 anchors.right: readout.left
@@ -205,18 +244,31 @@ ShellRoot {
                 height: 4
                 radius: 2
                 color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.16)
+                opacity: root.stage(0.5)
 
                 Rectangle {
+                    id: fill
                     height: parent.height
                     radius: 2
                     width: parent.width * Math.max(0, Math.min(1, root.shownValue))
                     color: root.off ? root.dim : root.accent
                     Behavior on color { ColorAnimation { duration: 90 } }
+
+                    // Solid knob riding the leading edge of the fill.
+                    Rectangle {
+                        visible: root.shownValue > 0.01 && !root.off
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 10 + 6 * root.pulse
+                        height: width
+                        radius: width / 2
+                        x: parent.width - width / 2
+                        color: root.accent
+                    }
                 }
             }
 
             Text {
-                visible: !root.hasBar
+                visible: !root.hasBar && root.stage(0.5) > 0
                 anchors.left: icon.right
                 anchors.leftMargin: 14
                 anchors.right: readout.left
@@ -227,9 +279,11 @@ ShellRoot {
                 font.family: root.sans
                 font.pixelSize: 15
                 color: root.fg
+                opacity: root.stage(0.5)
+                transform: Translate { x: -6 * (1 - root.stage(0.5)) }
             }
         }
     }
 
-    Behavior on shownValue { id: barBehavior; NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+    Behavior on shownValue { id: barBehavior; NumberAnimation { duration: root.fillDuration; easing.type: Easing.OutCubic } }
 }

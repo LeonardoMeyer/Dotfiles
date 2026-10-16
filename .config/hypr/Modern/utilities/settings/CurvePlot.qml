@@ -122,7 +122,11 @@ Item {
         id: area
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
+        preventStealing: true          // stops the parent Flickable from grabbing the drag and scrolling
+        hoverEnabled: true
         property int active: -1
+        property real offX: 0
+        property real offY: 0
         cursorShape: active >= 0 ? Qt.ClosedHandCursor : Qt.ArrowCursor
 
         function nearest(mx, my) {
@@ -132,17 +136,29 @@ Item {
 
         function drag(mx, my) {
             const c = plot.curve.slice()
-            c[active * 2] = Math.round(plot.fromX(mx) * 100) / 100
-            c[active * 2 + 1] = Math.round(plot.fromY(my) * 100) / 100
+            c[active * 2] = Math.round(plot.fromX(mx + offX) * 100) / 100
+            c[active * 2 + 1] = Math.round(plot.fromY(my + offY) * 100) / 100
             plot.edited(c)
         }
 
         onPressed: mouse => {
             if (mouse.button === Qt.RightButton) { plot.resetRequested(); return }
             active = nearest(mouse.x, mouse.y)
-            drag(mouse.x, mouse.y)
+            // Grabbing close to a handle keeps it under the cursor (no jump).
+            // Clicking elsewhere teleports the nearest handle to the pointer.
+            const hx = plot.px(plot.curve[active * 2])
+            const hy = plot.py(plot.curve[active * 2 + 1])
+            if (Math.hypot(hx - mouse.x, hy - mouse.y) <= 30) {
+                offX = hx - mouse.x
+                offY = hy - mouse.y
+            } else {
+                offX = 0
+                offY = 0
+                drag(mouse.x, mouse.y)
+            }
         }
         onPositionChanged: mouse => { if (active >= 0) drag(mouse.x, mouse.y) }
         onReleased: active = -1
+        onCanceled: active = -1
     }
 }

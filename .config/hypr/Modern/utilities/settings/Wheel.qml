@@ -14,6 +14,9 @@ Item {
     // Where the centered entry sits in the stage (0 = top, 1 = bottom); lower leaves less dead space above the first entry.
     property real centerFrac: 0.5
     property bool showHint: true
+    // Shows the centered entry's name once above the whole stack instead of under that entry.
+    property bool titleAbove: false
+    readonly property real stageH: stage.height
     signal applied(string id)
 
     readonly property int n: entries.length
@@ -36,6 +39,16 @@ Item {
     property int cur: 0
     property real pos: 0
     property real wheelAcc: 0
+
+    // Slow free-running phase for the centered entry's subtle drift.
+    property real t: 0
+    NumberAnimation on t {
+        from: 0
+        to: Math.PI * 2
+        duration: 3200
+        loops: Animation.Infinite
+        running: wheel.visible && wheel.n > 0
+    }
 
     // The panel's key handling drives whichever wheel is on the current page.
     Component.onCompleted: {
@@ -91,6 +104,7 @@ Item {
     Item {
         id: stage
         anchors.fill: parent
+        anchors.topMargin: wheel.titleAbove ? 26 : 0
         anchors.bottomMargin: wheel.showHint ? 34 : 0
         clip: true
 
@@ -107,6 +121,10 @@ Item {
                 readonly property bool centered: wheel.mod(Math.round(wheel.pos)) === index
                 readonly property bool isImage: !!modelData.image
 
+                // 1 when exactly centered, 0 once a full step away (smoothstepped). Used by image entries.
+                readonly property real lift: Math.max(0, 1 - ad)
+                readonly property real ease: lift * lift * (3 - 2 * lift)
+
                 // An entry fades out as it nears the seam and back in on the other side, so it never shows twice or pops.
                 readonly property real edge: Math.max(0, Math.min(1, Math.min(d - wheel.lo, wheel.lo + wheel.n - d) / 0.5))
                 visible: ad < 3.6 && edge > 0.01
@@ -114,7 +132,8 @@ Item {
                 height: wheel.rowH
                 x: (stage.width - width) / 2
                 y: stage.height * wheel.centerFrac - height / 2 + d * wheel.pitch * (1 - 0.05 * Math.min(ad, 3)) * wheel.intro
-                scale: Math.max(0.62, 1 - 0.09 * ad)
+                // Image entries stay one size and only the centered one swells; color entries keep the original falloff.
+                scale: isImage ? 1 + 0.05 * ease : Math.max(0.62, 1 - 0.09 * ad)
                 opacity: Math.max(0, 1 - 0.26 * ad) * Math.min(1, wheel.intro * 1.6) * edge
                 z: 10 - ad
 
@@ -136,10 +155,15 @@ Item {
                             width: (cells.width - cells.spacing * (n - 1)) / n
                             height: cells.height
 
+                            // Eases the drift in and out as this entry enters or leaves the center.
+                            property real breath: item.centered ? 1 : 0
+                            Behavior on breath { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+
                             Rectangle {
                                 width: parent.width
                                 height: parent.height * (item.centered ? wheel.wave[cell.index % 8] : 0.5 + 0.18 * wheel.wave[cell.index % 8])
                                 anchors.verticalCenter: parent.verticalCenter
+                                anchors.verticalCenterOffset: cell.breath * Math.sin(wheel.t + cell.index * 0.8) * 2.5
                                 radius: Math.min(width / 2, 10)
                                 color: cell.modelData
                                 Behavior on height { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
@@ -148,11 +172,32 @@ Item {
                     }
                 }
 
-                RoundedImage {
+                // Image entries: faint backing plate so floating pieces read as one strip, a dim wash that
+                // lifts as the entry reaches the center, and a barely-there float on the centered one.
+                Item {
+                    id: imgBox
                     visible: item.isImage
                     anchors.fill: parent
-                    radius: 10
-                    source: item.isImage ? item.modelData.image : ""
+                    transform: Translate { y: Math.sin(wheel.t) * 1.5 * item.ease }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: -4 * item.ease
+                        radius: 12
+                        color: Theme.alpha(Theme.bright, 0.03 + 0.07 * item.ease)
+                    }
+
+                    RoundedImage {
+                        anchors.fill: parent
+                        radius: 10
+                        source: item.isImage ? item.modelData.image : ""
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 10
+                        color: Theme.alpha(Theme.bg, 0.4 * (1 - item.ease))
+                    }
                 }
 
                 // In-use marker, visible even when the entry is off-center.
@@ -169,8 +214,9 @@ Item {
                 }
 
                 Text {
+                    visible: !wheel.titleAbove
                     anchors.top: parent.bottom
-                    anchors.topMargin: 6
+                    anchors.topMargin: item.isImage ? 10 : 6
                     anchors.horizontalCenter: parent.horizontalCenter
                     opacity: item.centered ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 200 } }
@@ -187,6 +233,17 @@ Item {
                 }
             }
         }
+    }
+
+    Text {
+        visible: wheel.titleAbove && wheel.n > 0
+        anchors.top: parent.top
+        anchors.topMargin: 4
+        anchors.horizontalCenter: parent.horizontalCenter
+        text: wheel.n > 0 ? wheel.entries[wheel.mod(wheel.cur)].name : ""
+        font.family: Theme.sans
+        font.pixelSize: 13
+        color: Theme.bright
     }
 
     Text {
