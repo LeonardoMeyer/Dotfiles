@@ -1,2 +1,3 @@
 __pycache__/
 *.pyc
+.config/wal/colorschemes/dark/pywal16.json

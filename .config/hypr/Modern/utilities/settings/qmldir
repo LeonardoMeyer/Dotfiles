@@ -1,0 +1,12 @@
+singleton Theme 1.0 Theme.qml
+singleton Store 1.0 Store.qml
+Chip 1.0 Chip.qml
+RailItem 1.0 RailItem.qml
+SettingSlider 1.0 SettingSlider.qml
+SettingToggle 1.0 SettingToggle.qml
+SettingChoice 1.0 SettingChoice.qml
+SettingSection 1.0 SettingSection.qml
+SettingProfile 1.0 SettingProfile.qml
+SettingThemes 1.0 SettingThemes.qml
+SettingCursors 1.0 SettingCursors.qml
+SettingAction 1.0 SettingAction.qml

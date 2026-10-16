@@ -17,7 +17,7 @@ ShellRoot {
     readonly property color ink: wal ? wal.special.background : "#101418"
     readonly property var sourceLabels: [
         "hypr/startup.lua",
-        "hypr/Modern/startup.lua",
+        "hypr/shortcuts.lua",
         "hypr/style.lua",
         "waybar/config",
         "boot/shell.qml"
@@ -111,7 +111,7 @@ ShellRoot {
 
     FileView {
         id: modernConfigFile
-        path: root.home + "/.config/hypr/Modern/startup.lua"
+        path: root.home + "/.config/hypr/shortcuts.lua"
         watchChanges: true
         onFileChanged: reload()
     }

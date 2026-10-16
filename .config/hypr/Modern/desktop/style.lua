@@ -63,7 +63,7 @@ hl.config({
     input = {
         kb_layout = "us",
         follow_mouse = 1,
-        sensitivity = .2,
+        sensitivity = .6,
         touchpad = {
             natural_scroll = true,
         },
@@ -86,5 +86,6 @@ hl.layer_rule({ name = "selection-no-anim", match = { namespace = "selection" },
 hl.layer_rule({ name = "osd-glass", match = { namespace = "osd" }, blur = true, ignore_alpha = 0.05, no_anim = true })
 hl.layer_rule({ name = "wofi-blur", match = { namespace = "launcher" }, blur = true, ignore_alpha = 0.3 })
 hl.layer_rule({ name = "wallpaper-picker-noanim", match = { namespace = "wallpaper-picker" }, no_anim = true })
+hl.layer_rule({ name = "settings-panel-glass", match = { namespace = "settings-panel" }, blur = true, ignore_alpha = 0.05, no_anim = true })
 hl.layer_rule({ name = "home-screen-noanim", match = { namespace = "home-screen" }, no_anim = true })
 hl.layer_rule({ name = "boot-sequence-blur", match = { namespace = "boot-sequence" }, blur = true, ignore_alpha = 0.15, no_anim = true })

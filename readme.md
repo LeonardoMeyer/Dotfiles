@@ -393,12 +393,32 @@ layerrule = ignorealpha 0.5, wofi
 
 `Alt+W` - Wallpaper Selector (Wofi)
 
+`Alt+S` - Hyprland Settings (slide-up panel: profile, colors, windows, effects, animations, input, cursor, system)
+
 `Alt+Tab` - wlogout
 
 > [!NOTE]
 > This isnt every Keybind. Just some highlighted ones.
 > 
 > More can be found and changed in `~/.confing/hypr/hyprland.conf`
+
+## Hyprland Styles & Settings Panel
+
+`Alt+S` opens a settings sheet that slides up from the bottom (about a third of the screen). Drag its top edge to resize it; the height is remembered. Drag it far down, press `Esc`, or press `Alt+S` again to close.
+
+The panel never edits a profile. Tweaks are saved to `~/.config/hypr/.settings.json` and written to the active `settings.lua`, which `overrides.lua` applies on top of the profile (live, through `hyprctl eval`). **Reset tweaks** in the System page, or switching profile, clears them. Color themes are applied with pywal: **Pywal** (default) follows the wallpaper, and every `*.json` in `~/.config/wal/colorschemes/dark` (or `light`) shows up as a fixed palette.
+
+Profiles are folders under `~/.config/hypr`:
+
+```
+hypr/
+  Modern/                 <- a style
+    laptop/  desktop/     <- variants: hyprland.lua, startup.lua, style.lua, shortcuts.lua
+    utilities/            <- the style's quickshells (boot, osd, home-screen, wallpaper-picker, settings)
+  utilities/              <- shared scripts; the active style's quickshells are symlinked in here
+```
+
+To add a style, create `hypr/<Style>/<variant>/` (copy a variant from `Modern`) and `hypr/<Style>/utilities/` (copy `Modern/utilities` and restyle). It appears in the panel's Profile page automatically; deleting the folder removes it.
 
 ## Help
 

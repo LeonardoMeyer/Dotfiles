@@ -18,7 +18,6 @@ error()   { echo -e "${RED}${BOLD}[✗]${RESET} $*" >&2; }
 section() { echo -e "\n${BOLD}${CYAN}══ $* ══${RESET}\n"; }
 
 DOTFILES_DIR="$HOME/Dotfiles"
-HYPRLAND_STYLES=("Modern|Modern" "Modern laptop|Modern Laptop")
 HYPRLAND_STYLE_DIR=""
 
 # ── Backups ────────────────────────────────────────────────────────────────
@@ -63,9 +62,16 @@ backup_bashrc() {
 select_hyprland_style() {
     section "Hyprland Style"
 
-    local i=1 style choice
-    for style in "${HYPRLAND_STYLES[@]}"; do
-        echo "$i. ${style%%|*}"
+    # Every <style>/<variant> folder under hypr/ is offered, so new styles need no installer change.
+    local profiles=() entry i=1 choice
+    while IFS= read -r entry; do
+        profiles+=("$entry")
+    done < <("$DOTFILES_DIR/.config/hypr/utilities/hypr-profile.sh" list)
+
+    [[ ${#profiles[@]} -gt 0 ]] || { error "No Hyprland profiles found."; return 1; }
+
+    for entry in "${profiles[@]}"; do
+        echo "$i. ${entry/\// — }"
         ((i += 1))
     done
 
@@ -73,16 +79,11 @@ select_hyprland_style() {
     choice="${choice:-1}"
 
     [[ "$choice" =~ ^[0-9]+$ ]] &&
-        ((choice >= 1 && choice <= ${#HYPRLAND_STYLES[@]})) ||
+        ((choice >= 1 && choice <= ${#profiles[@]})) ||
         { error "Invalid style."; return 1; }
 
-    style="${HYPRLAND_STYLES[$((choice - 1))]}"
-    HYPRLAND_STYLE_DIR="${style#*|}"
-
-    [[ -d "$DOTFILES_DIR/.config/hypr/$HYPRLAND_STYLE_DIR" ]] ||
-        { error "Profile not found: $HYPRLAND_STYLE_DIR"; return 1; }
-
-    success "Selected ${style%%|*}"
+    HYPRLAND_STYLE_DIR="${profiles[$((choice - 1))]}"
+    success "Selected ${HYPRLAND_STYLE_DIR/\// — }"
 }
 
 # ── Apply dotfiles ─────────────────────────────────────────────────────────
@@ -109,7 +110,6 @@ apply_dotfiles() {
 
     local src="$DOTFILES_DIR/.config" entry name
     local backup="$HOME/.dotfiles_replaced_$(date +%Y%m%d_%H%M%S)"
-    local style="$src/hypr/$HYPRLAND_STYLE_DIR"
 
     shopt -s nullglob dotglob
     for entry in "$src"/*; do
@@ -120,12 +120,9 @@ apply_dotfiles() {
     done
     shopt -u nullglob dotglob
 
-    # The active profile's files overlay hypr/ (written through the symlink into the repo).
-    if [[ -n "$HYPRLAND_STYLE_DIR" && -d "$style" ]]; then
-        cp -an "$style/utilities/." "$src/hypr/utilities/" 2>/dev/null || true
-        find "$style" -mindepth 1 -maxdepth 1 ! -name utilities ! -name hyprlock.conf \
-            -exec cp -a {} "$src/hypr/" \;
-        echo "$HYPRLAND_STYLE_DIR" > "$src/hypr/.active-profile"
+    # The profile's files become the active config (written through the symlink into the repo).
+    if [[ -n "$HYPRLAND_STYLE_DIR" ]]; then
+        "$src/hypr/utilities/hypr-profile.sh" apply "${HYPRLAND_STYLE_DIR%%/*}" "${HYPRLAND_STYLE_DIR#*/}" --offline
     fi
 
     fix_wofi_paths
