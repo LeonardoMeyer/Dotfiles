@@ -56,28 +56,76 @@ PanelWindow {
         delegate: Item {
             id: slot
             required property var modelData
-            // expireTimeout is in milliseconds; -1 means the sender has no preference, 0 means never expire.
             readonly property real secs: modelData.expireTimeout > 0 ? modelData.expireTimeout / 1000 : 6
             readonly property bool sticky: modelData.expireTimeout === 0
                 || (modelData.urgency === NotificationUrgency.Critical && modelData.expireTimeout < 0)
             property real remain: 1
 
-            width: list.width
-            height: card.height
+            // 0 = collapsed at the left edge, 1 = fully open. Can overshoot past 1 on entry.
+            property real reveal: 0
+            readonly property real r: Math.max(0, Math.min(1, reveal))
 
-            NotificationCard {
-                id: card
-                width: parent.width
-                n: slot.modelData
-                shell: win.shell
-                u: win.u
-                popup: true
-                progress: slot.sticky ? -1 : slot.remain
-                scale: hovered ? 1.015 : 1
-                Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+            width: list.width
+            // Slot height follows the reveal, so the stack makes room (and closes the gap) smoothly.
+            height: card.height * r
+
+            // Entry: morph out of the left edge with a soft overshoot.
+            NumberAnimation {
+                id: enter
+                target: slot
+                property: "reveal"
+                from: 0
+                to: 1
+                duration: 560
+                easing.type: Easing.OutBack
+                easing.overshoot: 1.2 
+            }
+            Component.onCompleted: enter.start()
+
+            // Exit: hold the delegate alive, fold back into the left edge, then release it.
+            ListView.onRemove: SequentialAnimation {
+                PropertyAction { target: slot; property: "ListView.delayRemove"; value: true }
+                NumberAnimation {
+                    target: slot
+                    property: "reveal"
+                    to: 0
+                    duration: 300
+                    easing.type: Easing.InOutCubic
+                }
+                PropertyAction { target: slot; property: "ListView.delayRemove"; value: false }
             }
 
-            // Counts down the card's bar and dismisses it at zero; hovering freezes both.
+            Item {
+                id: morph
+                width: parent.width
+                height: card.height
+                anchors.bottom: parent.bottom
+                opacity: Math.max(0, Math.min(1, slot.reveal * 2.2))
+                x: -56 * win.u * (1 - slot.r)
+
+                // Covers the full card area, not just the text or buttons inside it.
+                HoverHandler { id: hover }
+
+                transform: Scale {
+                    origin.x: 0
+                    origin.y: morph.height / 2
+                    xScale: 0.35 + 0.65 * slot.reveal
+                    yScale: 0.72 + 0.28 * slot.reveal
+                }
+
+                NotificationCard {
+                    id: card
+                    width: parent.width
+                    n: slot.modelData
+                    shell: win.shell
+                    u: win.u
+                    popup: true
+                    progress: slot.sticky ? -1 : slot.remain
+                    scale: hover.hovered ? 1.015 : 1
+                    Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                }
+            }
+
             NumberAnimation {
                 target: slot
                 property: "remain"
@@ -85,28 +133,9 @@ PanelWindow {
                 to: 0
                 duration: slot.secs * 1000
                 running: !slot.sticky
-                paused: card.hovered
+                paused: hover.hovered
                 onFinished: win.shell.expirePopup(slot.modelData)
             }
-        }
-
-        // Cards ease in from the left with a small overshoot, so they read as part of the shell rather than a stuck-on window.
-        add: Transition {
-            ParallelAnimation {
-                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 260; easing.type: Easing.OutCubic }
-                NumberAnimation { property: "x"; from: -90 * win.u; duration: 520; easing.type: Easing.OutBack; easing.overshoot: 0.9 }
-                NumberAnimation { property: "scale"; from: 0.9; to: 1; duration: 420; easing.type: Easing.OutCubic }
-            }
-        }
-        remove: Transition {
-            ParallelAnimation {
-                NumberAnimation { property: "opacity"; to: 0; duration: 220; easing.type: Easing.InCubic }
-                NumberAnimation { property: "x"; to: -80 * win.u; duration: 280; easing.type: Easing.InCubic }
-                NumberAnimation { property: "scale"; to: 0.94; duration: 280; easing.type: Easing.InCubic }
-            }
-        }
-        displaced: Transition {
-            NumberAnimation { properties: "y"; duration: 340; easing.type: Easing.OutBack; easing.overshoot: 0.7 }
         }
     }
 }
