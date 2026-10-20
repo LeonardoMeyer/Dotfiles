@@ -128,7 +128,7 @@ ShellRoot {
         target: root
         property: "t"
         onFinished: {
-            if (root.leaving) { root.active = false; root.leaving = false; root.t = 0 }
+            if (root.leaving) Quickshell.quit()
             else Store.refresh()
         }
     }

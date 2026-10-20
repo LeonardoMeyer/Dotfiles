@@ -1,21 +1,21 @@
 return {
     "nvim-lualine/lualine.nvim",
-    dependencies = { "nvim-tree/nvim-web-devicons","kdheepak/tabline.nvim" },
+    dependencies = { "nvim-tree/nvim-web-devicons", "kdheepak/tabline.nvim" },
 
     config = function()
+        vim.opt.showcmd = true
+        vim.opt.showcmdloc = "statusline"
         local function current_lualine_theme()
             if vim.g.colors_name == "pywal" then
                 return "pywal-nvim"
             end
             return "auto"
         end
-
         local function setup_lualine()
             require("lualine").setup {
                 options = {
                     icons_enabled = true,
                     theme = current_lualine_theme(),
-                    component_separators = "",
                     section_separators = { left = "", right = "" },
                     component_separators = { "", "" },
                     disabled_filetypes = {
@@ -35,7 +35,9 @@ return {
                 sections = {
                     lualine_a = { "mode" },
                     lualine_b = { "branch" },
-                    lualine_c = {},
+                    lualine_c = {
+                        function() return "%S" end,
+                    },
                     lualine_x = { "filetype" },
                     lualine_y = { "progress" },
                     lualine_z = { "location" }
@@ -74,7 +76,11 @@ return {
                 end
             end,
         })
+        local ns = vim.api.nvim_create_namespace("showcmd-redraw")
+        vim.on_key(function()
+            vim.defer_fn(function()
+                pcall(vim.cmd, "redrawstatus")
+            end, 10)
+        end, ns)
     end,
 }
-
-

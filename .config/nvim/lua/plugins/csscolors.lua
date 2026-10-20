@@ -1,5 +1,5 @@
 return {
-  'norcalli/nvim-colorizer.lua',
+  'catgoose/nvim-colorizer.lua',
   config = function()
     require('colorizer').setup({ '*', css = { css = true }, scss = { css = true }, sass = { css = true }, html = { css = true }, javascript = { css = true }, javascriptreact = { css = true }, typescript = { css = true }, typescriptreact = { css = true }, vue = { css = true } }, {
       RGB = true,

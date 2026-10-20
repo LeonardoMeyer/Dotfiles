@@ -39,10 +39,6 @@ local function apply_pywal_plugin_overrides()
     -- be reapplied when returning to pywal.
     vim.api.nvim_set_hl(0, "NoiceCmdlineIcon", { fg = color9 })
     vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", { fg = color5 })
-    vim.api.nvim_set_hl(0, "NotifyINFOBorder", { fg = color5 })
-    vim.api.nvim_set_hl(0, "NotifyINFOIcon", { fg = color9 })
-    vim.api.nvim_set_hl(0, "NotifyINFOTitle", { fg = color5 })
-
     -- Neo-tree groups are not covered by pywal.nvim (it supports nvim-tree).
     vim.api.nvim_set_hl(0, "NeoTreeNormal", { fg = color_fg, bg = color_bg })
     vim.api.nvim_set_hl(0, "NeoTreeNormalNC", { fg = color_fg, bg = color_bg })

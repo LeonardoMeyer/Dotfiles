@@ -75,6 +75,8 @@ alias f='clear && myfetch -i e -f -c 16 -C "  "'
 alias h='dbus-launch Hyprland'
 alias wss='hyprdvd -s'
 alias hyprrefresh='hyprctl reload'
+alias hypr='cd ~/.config/hypr && nvim'
+alias bashrc='n .bashrc'
 # Power
 alias bye='sudo shutdown -h now'
 alias loop='sudo reboot'
@@ -83,6 +85,8 @@ alias InstallDots='./Dotfiles/InstallScripts/install.sh'
 alias reload='source "$HOME/.bashrc"'
 alias Dotfiles='cd ~/Dotfiles/ && nvim'
 alias UpdateLocal='./Dotfiles/InstallScripts/apply.sh'
+alias Savepro='./.config/hypr/utilities/save-profile.sh'
+alias Nvim='cd ~/.config/nvim/ && nvim'
 # Optional command-result sounds
 lol() {
     local status=$?

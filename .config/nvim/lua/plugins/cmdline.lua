@@ -1,18 +1,17 @@
 return {
     "folke/noice.nvim",
     event = "VeryLazy",
-    opts = {
-        -- add any options here
-    },
     dependencies = {
         "MunifTanjim/nui.nvim",
-        "rcarriga/nvim-notify",
     },
     config = function()
         vim.cmd("source ~/.cache/wal/colors-wal.vim")
         local color9 = vim.g.color9 or "#808080"
         local color5 = vim.g.color5 or "#ffffff"
+
         require("noice").setup({
+            -- notify_system owns vim.notify, so noice must not replace it
+            notify = { enabled = false },
             lsp = {
                 override = {
                     ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
@@ -27,12 +26,37 @@ return {
                 inc_rename = false,
                 lsp_doc_border = false,
             },
+            messages = { enabled = true },
+            routes = {
+                {
+                    -- error messages only: forward to a system notification
+                    -- and hide noice's own popup for them
+                    filter = {
+                        event = "msg_show",
+                        cond = function(message)
+                            local kind = message.kind or ""
+                            if kind ~= "emsg" and kind ~= "echoerr"
+                                and kind ~= "lua_error" and kind ~= "rpc_error" then
+                                return false
+                            end
+
+                            local text = vim.trim(message:content() or "")
+                            if text == "" then
+                                return false
+                            end
+
+                            vim.schedule(function()
+                                vim.notify(text, vim.log.levels.ERROR)
+                            end)
+                            return true
+                        end,
+                    },
+                    opts = { skip = true },
+                },
+            },
         })
-        vim.cmd('highlight NoiceCmdlineIcon guifg=' .. color9)
-        vim.cmd('highlight NoiceCmdlinePopupBorder guifg=' .. color5)
-        vim.cmd('highlight NotifyINFOBorder guifg=' .. color5)
-        vim.cmd('highlight NotifyINFOIcon guifg=' .. color9)
-        vim.cmd('highlight NotifyINFOTitle guifg=' .. color5)
+
+        vim.cmd("highlight NoiceCmdlineIcon guifg=" .. color9)
+        vim.cmd("highlight NoiceCmdlinePopupBorder guifg=" .. color5)
     end,
 }
-

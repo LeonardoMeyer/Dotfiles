@@ -97,6 +97,11 @@ var PAGES = [
     {
         id: "effects", label: "Effects", icon: "\uf0d0",
         sections: [
+            section("Glass", [
+                toggle("config.plugin.hyprglass.enabled", "Liquid glass"),
+                toggle("config.plugin.hyprglass.layers.enabled", "Glass on bars and popups",
+                    { when: { key: "config.plugin.hyprglass.enabled", eq: true } })
+            ]),
             section("Blur", [
                 toggle("config.decoration.blur.enabled", "Background blur"),
                 slider("config.decoration.blur.size", "Size", 1, 20, 1, "", { when: { key: "config.decoration.blur.enabled", eq: true } }),
@@ -226,7 +231,10 @@ function shown(c, values, caps) {
     if (!w) return true
     var v = values[w.key]
     if (v === undefined || v === null) return false
-    if (w.eq !== undefined) return v === w.eq
+    if (w.eq !== undefined) {
+        if (typeof w.eq === "boolean") return !!v === w.eq
+        return v === w.eq
+    }
     if (w.ne !== undefined) return v !== w.ne
     if (w.gt !== undefined) return v > w.gt
     return !!v

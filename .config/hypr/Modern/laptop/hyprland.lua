@@ -4,4 +4,5 @@
 require("startup")
 require("style")
 require("shortcuts")
+require("hyprglass")
 require("overrides")

@@ -5,7 +5,27 @@ local ok, S = pcall(require, "settings")
 if not ok or type(S) ~= "table" then S = {} end
 
 if S.config then
-    hl.config(S.config)
+    -- Plugin keys aren't core config keys; hl.config rejects them.
+    local core = {}
+    for k, v in pairs(S.config) do
+        if k ~= "plugin" then core[k] = v end
+    end
+    hl.config(core)
+
+    local glass = S.config.plugin and S.config.plugin.hyprglass
+    if glass then
+        local function apply_glass()
+            if hl.plugin and hl.plugin.hyprglass then
+                hl.plugin.hyprglass.config(glass)
+                return true
+            end
+            return false
+        end
+        -- If the plugin isn't registered yet at config time, retry once startup begins.
+        if not apply_glass() then
+            hl.on("hyprland.start", apply_glass)
+        end
+    end
 end
 
 -- Animations: one curve drives every leaf. Base speeds are in Hyprland deciseconds and are

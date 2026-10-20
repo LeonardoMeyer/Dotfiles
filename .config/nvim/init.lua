@@ -1,4 +1,4 @@
--- Path for lazy.nvim plugin manager
+-- Path for lazy.nvim plugin manager 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
     vim.fn.system({
@@ -14,5 +14,6 @@ vim.opt.rtp:prepend(lazypath)
 vim.cmd("set number")
 require("vim-options")
 require("ui_settings").init()
+require("notify_system").setup()
 require("lazy").setup("plugins")
 vim.opt.termguicolors = true

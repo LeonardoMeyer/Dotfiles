@@ -197,7 +197,28 @@ autologin() {
         *) error "Invalid option."; return 1 ;;
     esac
 }
-
+glass_install() {
+    yay -S hyprpm
+    hyprpm update
+    hyprpm add https://github.com/hyprnux/hyprglass
+    hyprpm enable hyprglass
+    success "hyprglass plugin Installed"
+}
+glass_uninstall() {
+    hyprpm update
+    hyprpm disable hyprglass
+    hyprpm remove https://github.com/hyprnux/hyprglass
+    success "hyprglass plugin removed"
+}
+glass() {
+    local choice
+    read -rp "hyprglass: (1) Install/Update (2) Uninstall [1]: " choice
+    case "${choice:-1}" in
+        1) glass_install ;;
+        2) glass_uninstall ;;
+        *) error "Invalid option."; return 1 ;;
+    esac
+}
 setup_bluetooth() {
     section "Bluetooth"
     yay -S --needed blueman bluez
@@ -263,7 +284,7 @@ auto_install() {
     if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
         autologin || warn "Autologin setup failed."
     fi
-
+    glass
     optional_packages
     finish
     optional_reboot
@@ -297,7 +318,7 @@ manual_install() {
     if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
         autologin || warn "Autologin setup failed."
     fi
-
+    glass
     optional_packages
     finish
     optional_reboot

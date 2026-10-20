@@ -9,7 +9,8 @@ local saved = require("settings")
 local boot = saved.boot or defaults.boot
 local cursor = saved.cursor or defaults.cursor
 
-hl.monitor({ output = "eDP-1", mode = "2560x1440@165", position = "0x0", scale = 1.6 })
+hl.monitor({ output =
+"eDP-1", mode = "2560x1440@165", position = "0x0", scale = 1.6 })
 
 hl.on("hyprland.start", function()
     if boot.enabled ~= false then
@@ -25,6 +26,13 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
     hl.exec_cmd("sleep .5 && swww restore")
     hl.exec_cmd("awww-daemon")
+    hl.exec_cmd([[sh -c '
+        command -v hyprpm >/dev/null 2>&1 || exit 0
+        hyprpm list 2>/dev/null | grep -qi hyprglass || exit 0
+        hyprpm reload -n >/dev/null 2>&1
+        sleep 1
+        hyprctl plugin list 2>/dev/null | grep -qi hyprglass && hyprctl reload
+    ']])
 end)
 
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")

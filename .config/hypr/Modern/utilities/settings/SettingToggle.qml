@@ -6,7 +6,7 @@ Item {
     property var def
     readonly property var raw: Store.values[def.key]
     readonly property bool ready: raw !== undefined && raw !== null
-    readonly property bool on: ready && raw === true
+    readonly property bool on: ready && !!raw
     readonly property bool hot: area.containsMouse
 
     implicitHeight: 46

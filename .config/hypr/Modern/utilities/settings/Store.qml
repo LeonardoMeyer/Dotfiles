@@ -38,7 +38,10 @@ Singleton {
     }
 
     function set(key, value) {
-        setMany({ [key]: value })
+        if (key === "config.plugin.hyprglass.enabled" && !value)
+            setMany({ [key]: value, "config.plugin.hyprglass.layers.enabled": false })
+        else
+            setMany({ [key]: value })
     }
 
     // Drops a tweak so the active profile's own value applies again.
@@ -55,6 +58,12 @@ Singleton {
 
     // A null value removes the key; the true value is then re-read from the backend.
     function setMany(entries) {
+        const glass = "config.plugin.hyprglass.enabled"
+        const layers = "config.plugin.hyprglass.layers.enabled"
+        // Glass off (or reset) takes bars and popups with it.
+        if (entries[glass] === false || entries[glass] === null)
+            entries = Object.assign({}, entries, { [layers]: entries[glass] })
+
         const next = Object.assign({}, values)
         for (const key of Object.keys(entries)) {
             // A removed tweak keeps its shown value until the profile's real default is read back.
