@@ -81,12 +81,15 @@ alias bashrc='n .bashrc'
 alias bye='sudo shutdown -h now'
 alias loop='sudo reboot'
 # Dotfiles
+
+alias dotpull='git -C ~/Dotfiles pull'
 alias InstallDots='./Dotfiles/InstallScripts/install.sh'
 alias reload='source "$HOME/.bashrc"'
 alias Dotfiles='cd ~/Dotfiles/ && nvim'
 alias UpdateLocal='./Dotfiles/InstallScripts/apply.sh'
 alias Savepro='./.config/hypr/utilities/save-profile.sh'
 alias Nvim='cd ~/.config/nvim/ && nvim'
+
 # Optional command-result sounds
 lol() {
     local status=$?
