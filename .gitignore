@@ -15,8 +15,3 @@ __pycache__/
 .config/hypr/utilities/osd
 .config/hypr/utilities/settings
 .config/hypr/utilities/wallpaper-picker
-
-
-.config/wofi/style-wallpaper.css
-.config/wofi/style-waybar.css
-.config/wofi/style.css
