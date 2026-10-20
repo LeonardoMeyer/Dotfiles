@@ -17,3 +17,5 @@ fix_wofi_paths() {
             "$file"
     done < <(find "$dir" -maxdepth 1 -type f -name '*.css' -print0)
 }
+
+fix_wofi_paths
