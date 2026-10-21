@@ -1,22 +1,21 @@
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=30&letterSpacing=tiny&duration=2000&pause=3000&color=F7F7F7&center=true&vCenter=true&width=435&lines=Eli's+Dotfiles)](https://git.io/typing-svg)
 
-<table>
-  <tr>
-    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-default.png" width="100%"></td>
-    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-glass.png" width="100%"></td>
-    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-zen.png" width="100%"></td>
-  </tr>
-  <tr>
-    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice7.png" width="100%"></td>
-    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice1.png" width="100%"></td>
-    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice4.png" width="100%"></td>
-  </tr>
-  <tr>
-    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice5.png" width="100%"></td>
-    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice6.png" width="100%"></td>
-    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice3.png" width="100%"></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-zen.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice7.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice1.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice4.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice5.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice6.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice3.png" width="32%">
+</p>
+
 
 <details>
   <summary>View Desktop Tour</summary>
