@@ -23,6 +23,211 @@
   <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/tour.gif" width="75%">
 </details>
 
+<details>
+<summary>Gallery</summary>
+
+### Desktop Profiles
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-zen.png" width="32%">
+</p>
+
+### Quickshell
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/launcher-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/launcher-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/launcher-zen.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/home-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/home-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/home-zen.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/settings-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/settings-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/settings-zen.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/music-default.jpg" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/music-glass.jpg" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/music-zen.jpg" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/wallpaper-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/wallpaper-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/wallpaper-zen.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/osd-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/osd-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/osd-zen.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/notify-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/notify-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/notify-zen.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/boot-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/boot-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/boot-zen.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/lock-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/lock-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/lock-zen.png" width="32%">
+</p>
+
+### Waybar
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/waybar-default.png" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/waybar-glass.png" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/waybar-zen.png" width="100%">
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/waybar1.png" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/waybar6.png" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/waybar4.png" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/waybar3.png" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/waybar2.png" width="100%">
+</p>
+
+### Other Applications
+
+**Neovim**
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/nvim-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/nvim-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/nvim-zen.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/nvim1.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/nvim2.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/nvim3.png" width="32%">
+</p>
+
+**Starship**
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/starship-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/starship-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/starship-zen.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/starship.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/starship1.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/starship2.png" width="32%">
+</p>
+
+**Pywalfox**
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/fox-default.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/fox-glass.png" width="32%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/fox-zen.png" width="32%">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/fox1.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/fox2.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/fox3.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/fox4.png" width="20%">
+</p>
+
+**Wofi**
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/wofi1.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/wofi2.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/wofi3.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/wofi4.png" width="20%">
+</p>
+
+**Swaync**
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/swaync1.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/swaync2.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/swaync3.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/swaync4.png" width="20%">
+</p>
+
+**Wlogout**
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/wlogout1.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/wlogout2.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/wlogout3.png" width="20%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/wlogout4.png" width="20%">
+</p>
+
+### GIFs
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/tour.gif" width="75%">
+</p>
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/launcher.gif" width="100%">
+    </td>
+    <td align="center" width="33%">
+      <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/home.gif" width="100%">
+    </td>
+    <td align="center" width="33%">
+      <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/settings.gif" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/music.gif" width="100%">
+    </td>
+    <td align="center" width="33%">
+      <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/wallpaper.gif" width="100%">
+    </td>
+    <td align="center" width="33%">
+      <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/osd.gif" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/notify.gif" width="100%">
+    </td>
+    <td align="center" width="33%">
+      <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/boot.gif" width="100%">
+    </td>
+    <td align="center" width="33%">
+      <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/lock.gif" width="100%">
+    </td>
+  </tr>
+</table>
+
+### Older Screenshots
+
+**Hyprlock**
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/lock1.PNG" width="48%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/lock2.png" width="48%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/lock3.png" width="48%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/lock4.png" width="48%">
+</p>
+
+**Old Wallpaper Picker**
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/wofi1.png" width="48%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/wofi2.png" width="48%">
+</p>
+
+</details>
+
 > [!TIP]
 > Check out [MyFetch](https://github.com/elifouts/MyFetch) now!
 
