@@ -2,9 +2,23 @@
 
 ![tour](https://github.com/elifouts/Dotfiles/blob/main/images/v2/tour.gif)
 
-<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/rice-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/rice-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/rice-zen.png" width = "33%">
-
-<img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice7.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice1.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice4.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice5.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice6.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice3.png" width = "50%">
+<table>
+  <tr>
+    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-default.png" width="100%"></td>
+    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-glass.png" width="100%"></td>
+    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-zen.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice7.png" width="100%"></td>
+    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice1.png" width="100%"></td>
+    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice4.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice5.png" width="100%"></td>
+    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice6.png" width="100%"></td>
+    <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice3.png" width="100%"></td>
+  </tr>
+</table>
 
 > [!TIP]
 > Check out [MyFetch](https://github.com/elifouts/MyFetch) now!
