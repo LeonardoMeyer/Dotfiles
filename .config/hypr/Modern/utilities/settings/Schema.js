@@ -2,6 +2,7 @@
 
 // Every page and option of the panel. Keys are dotted paths into the active profile's tweaks:
 //   config.*  -> hl.config() options (live values come from hyprctl getoption)
+//   glass.*  -> hyprglass preset values, layered over hyprglass.lua's preset by overrides.lua
 //   animation.*, border.*, cursor.*, boot.* -> handled by overrides.lua / startup.lua
 // Adding an option is one line here. Choices with 5+ options render as a dropdown.
 // A control can carry `when` (hide unless another option has a value) or `cap` (hide unless
@@ -16,6 +17,9 @@ function toggle(key, label, extra) {
 function choice(key, label, options, extra) {
     return Object.assign({ type: "choice", key: key, label: label, options: options }, extra)
 }
+function color(key, label, extra) {
+    return Object.assign({ type: "color", key: key, label: label }, extra)
+}
 function section(label, controls) {
     return { label: label, controls: controls }
 }
@@ -24,6 +28,16 @@ function opt(v, l, extra) {
 }
 
 var ON = { eq: true }
+var GLASS = { key: "config.plugin.hyprglass.enabled", eq: true }
+var LAYERS = [GLASS, { key: "config.plugin.hyprglass.layers.enabled", eq: true }]
+// Layer/subsurface presets: "" follows the windows' preset; then this setup's preset and the built-ins.
+var PRESET_OPTIONS = [opt("", "Same as windows", { dflt: true }), opt("apple_extreme", "Apple extreme"),
+    opt("glass", "Glass"), opt("pomme", "Pomme"), opt("clear", "Clear"), opt("subtle", "Subtle"), opt("high_contrast", "High contrast")]
+
+// Glass rows only exist while the plugin is loaded.
+function glass(controls) {
+    return controls.map(function (c) { c.cap = "hyprglass"; return c })
+}
 var NOT_THEME = { key: "animation.preset", ne: "theme" }
 
 var PAGES = [
@@ -31,6 +45,7 @@ var PAGES = [
         id: "profile", label: "Profile", icon: "\uf108",
         sections: [
             section("Style", [{ type: "profile" }]),
+            section("Saved profiles", [{ type: "saved" }]),
             section("Waybar", [{ type: "waybar" }])
         ]
     },
@@ -97,11 +112,6 @@ var PAGES = [
     {
         id: "effects", label: "Effects", icon: "\uf0d0",
         sections: [
-            section("Glass", [
-                toggle("config.plugin.hyprglass.enabled", "Liquid glass"),
-                toggle("config.plugin.hyprglass.layers.enabled", "Glass on bars and popups",
-                    { when: { key: "config.plugin.hyprglass.enabled", eq: true } })
-            ]),
             section("Blur", [
                 toggle("config.decoration.blur.enabled", "Background blur"),
                 slider("config.decoration.blur.size", "Size", 1, 20, 1, "", { when: { key: "config.decoration.blur.enabled", eq: true } }),
@@ -129,7 +139,88 @@ var PAGES = [
                 toggle("config.decoration.dim_inactive", "Dim inactive windows"),
                 slider("config.decoration.dim_strength", "Dim strength", 0, 1, 0.05, "", { when: { key: "config.decoration.dim_inactive", eq: true } }),
                 toggle("config.decoration.motion_blur.enabled", "Motion blur")
-            ])
+            ]),
+            section("Glass", glass([
+                toggle("config.plugin.hyprglass.enabled", "Liquid glass"),
+                toggle("config.plugin.hyprglass.layers.enabled", "Glass on bars and popups", { when: GLASS }),
+                choice("config.plugin.hyprglass.default_theme", "Theme", [opt("dark", "Dark"), opt("light", "Light")], { when: GLASS })
+            ])),
+            section("Glass blur", glass([
+                slider("glass.blur_strength", "Blur (× 12 px)", 0, 30, 0.1, "", { when: GLASS }),
+                slider("glass.blur_iterations", "Blur passes", 1, 5, 1, "", { when: GLASS }),
+                slider("glass.noise_strength", "Grain", 0, 10, 0.01, "", { when: GLASS }),
+                slider("glass.glass_opacity", "Opacity", 0, 1, 0.01, "", { when: GLASS }),
+                slider("glass.frost", "Frost over windows", 0, 1, 0.01, "", { when: GLASS }),
+                slider("glass.frost_blur", "Frost blur", 0, 10, 0.1, "", { when: [GLASS, { key: "glass.frost", gt: 0 }] }),
+                slider("glass.self_sample", "Show own content", 0, 1, 0.01, "", { when: GLASS }),
+                toggle("glass.xray", "X-ray (wallpaper only)", { when: GLASS })
+            ])),
+            section("Glass refraction", glass([
+                slider("glass.refraction_strength", "Refraction (× 50 px)", 0, 20, 0.05, "", { when: GLASS }),
+                slider("glass.refraction_flow", "Flow (center to edges)", 0, 1, 0.01, "", { when: GLASS }),
+                slider("glass.refraction_spread", "Spread (rim to whole)", 0, 1, 0.01, "", { when: GLASS }),
+                slider("glass.lens_distortion", "Lens dome", 0, 50, 0.1, "", { when: GLASS }),
+                slider("glass.chromatic_aberration", "Rainbow edges", 0, 10, 0.05, "", { when: GLASS })
+            ])),
+            section("Glass edge", glass([
+                slider("glass.edge_thickness", "Edge width (of smaller side)", 0, 0.5, 0.005, "", { when: GLASS }),
+                slider("glass.edge_thickness_px", "Edge width in pixels (0 = relative)", 0, 540, 1, " px", { when: GLASS }),
+                slider("glass.edge_height", "Lens edge height (0 = soft edge)", 0, 500, 1, " px", { when: GLASS }),
+                slider("glass.fresnel_reflection", "Lens edge mirror", 0, 1, 0.01, "", { when: [GLASS, { key: "glass.edge_height", gt: 0 }] }),
+                slider("glass.fresnel_strength", "Edge glow", 0, 10, 0.05, "", { when: GLASS }),
+                slider("glass.fresnel_tint", "Glow takes background color", 0, 1, 0.01, "", { when: [GLASS, { key: "glass.fresnel_strength", gt: 0 }] }),
+                color("glass.fresnel_color", "Glow color", { when: [GLASS, { key: "glass.fresnel_strength", gt: 0 }] })
+            ])),
+            section("Glass highlights", glass([
+                slider("glass.specular_strength", "Highlight", 0, 10, 0.05, "", { when: GLASS }),
+                slider("glass.specular_angle", "Highlight angle", 0, 360, 1, "°", { when: [GLASS, { key: "glass.specular_strength", gt: 0 }] }),
+                slider("glass.bevel_strength", "Bevel line", 0, 10, 0.05, "", { when: GLASS }),
+                slider("glass.bevel_size", "Bevel width", 0, 100, 0.5, " px", { when: [GLASS, { key: "glass.bevel_strength", gt: 0 }] }),
+                slider("glass.bevel_angle", "Bevel light angle", 0, 360, 1, "°", { when: [GLASS, { key: "glass.bevel_strength", gt: 0 }] }),
+                slider("glass.bevel_shadow", "Bevel shadow", 0, 2, 0.01, "", { when: [GLASS, { key: "glass.bevel_strength", gt: 0 }] }),
+                slider("glass.bevel_tint", "Bevel takes background color", 0, 1, 0.01, "", { when: [GLASS, { key: "glass.bevel_strength", gt: 0 }] }),
+                color("glass.bevel_color", "Bevel color", { when: [GLASS, { key: "glass.bevel_strength", gt: 0 }] }),
+                slider("glass.focus_light", "Active window light", 0, 1, 0.01, "", { when: GLASS }),
+                color("glass.focus_light_color", "Active light color", { when: [GLASS, { key: "glass.focus_light", gt: 0 }] })
+            ])),
+            section("Glass color", glass([
+                color("glass.tint_color", "Tint (alpha = strength)", { when: GLASS }),
+                slider("glass.brightness", "Brightness", 0, 3, 0.01, "", { when: GLASS }),
+                slider("glass.contrast", "Contrast", 0, 3, 0.01, "", { when: GLASS }),
+                slider("glass.saturation", "Saturation", 0, 3, 0.01, "", { when: GLASS }),
+                slider("glass.vibrancy", "Vibrancy", 0, 5, 0.01, "", { when: GLASS }),
+                slider("glass.vibrancy_darkness", "Vibrancy holds off darks", 0, 10, 0.05, "", { when: GLASS }),
+                slider("glass.adaptive_dim", "Dim bright backgrounds", 0, 1, 0.01, "", { when: GLASS }),
+                slider("glass.adaptive_boost", "Lift dark backgrounds", 0, 1, 0.01, "", { when: GLASS })
+            ])),
+            section("Glass on bars and popups", glass([
+                choice("config.plugin.hyprglass.layers.preset", "Preset", PRESET_OPTIONS, { when: LAYERS }),
+                choice("config.plugin.hyprglass.layers.mask_mode", "Where glass goes", [opt("auto", "Auto"), opt("region", "Region"), opt("alpha", "Alpha"), opt("contour", "Contour")], { when: LAYERS }),
+                slider("config.plugin.hyprglass.layers.mask_threshold", "Alpha cutoff", 0, 1, 0.001, "", { when: LAYERS }),
+                slider("config.plugin.hyprglass.layers.mask_feather", "Soft edges", 0, 1, 0.01, "", { when: LAYERS }),
+                toggle("config.plugin.hyprglass.layers.manage_blur", "Replace Hyprland blur", { when: LAYERS }),
+                toggle("config.plugin.hyprglass.layers.live_resample", "Follow changes behind", { when: LAYERS }),
+                slider("config.plugin.hyprglass.layers.live_resample_fps", "Follow rate (0 = uncapped)", 0, 240, 1, " fps", { when: [LAYERS, { key: "config.plugin.hyprglass.layers.live_resample", eq: true }] }),
+                toggle("config.plugin.hyprglass.layers.force_live_resample", "Redraw every frame (heavy)", { when: LAYERS })
+            ])),
+            section("Glass on app subsurfaces", glass([
+                toggle("config.plugin.hyprglass.subsurfaces.enabled", "Glass on app subsurfaces", { when: GLASS }),
+                choice("config.plugin.hyprglass.subsurfaces.preset", "Preset", PRESET_OPTIONS, { when: [GLASS, { key: "config.plugin.hyprglass.subsurfaces.enabled", eq: true }] }),
+                slider("config.plugin.hyprglass.subsurfaces.radius", "Corners (-1 = capsule)", -1, 500, 1, " px", { when: [GLASS, { key: "config.plugin.hyprglass.subsurfaces.enabled", eq: true }] })
+            ])),
+            section("Glass performance", glass([
+                toggle("config.plugin.hyprglass.manage_window_blur", "Turn off Hyprland blur on glass", { when: GLASS }),
+                toggle("config.plugin.hyprglass.skip_opaque_windows", "Skip glass under opaque windows", { when: GLASS }),
+                toggle("config.plugin.hyprglass.blur_fold", "Fewer blur passes, same look", { when: GLASS }),
+                toggle("config.plugin.hyprglass.windows.background_cache", "Cache window backgrounds", { when: GLASS }),
+                toggle("config.plugin.hyprglass.windows.live_resample", "Follow changes behind windows", { when: GLASS }),
+                slider("config.plugin.hyprglass.windows.live_resample_fps", "Follow rate (0 = uncapped)", 0, 240, 1, " fps", { when: [GLASS, { key: "config.plugin.hyprglass.windows.live_resample", eq: true }] })
+            ])),
+            section("Glass debugging", glass([
+                choice("config.plugin.hyprglass.debug.mode", "Debug mode", [opt("off", "Off"), opt("hints_only", "Hints only"), opt("gl_work_only", "GL work only")], { when: GLASS }),
+                toggle("config.plugin.hyprglass.debug.timers", "GPU timers", { when: GLASS })
+            ])),
+
         ]
     },
     {
@@ -227,8 +318,15 @@ var PAGES = [
 // Whether a control should currently be shown, given the live values and device capabilities.
 function shown(c, values, caps) {
     if (c.cap && !(caps && caps[c.cap])) return false
-    var w = c.when
-    if (!w) return true
+    if (!c.when) return true
+    // A list of conditions comes back from QML's model as a list wrapper, not an Array.
+    var conds = c.when.key === undefined ? c.when : [c.when]
+    for (var i = 0; i < conds.length; i++)
+        if (!holds(conds[i], values)) return false
+    return true
+}
+
+function holds(w, values) {
     var v = values[w.key]
     if (v === undefined || v === null) return false
     if (w.eq !== undefined) {

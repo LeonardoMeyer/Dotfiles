@@ -9,13 +9,12 @@ files=(
     wallpapers/pywallpaper.jpg
     .config/wofi/style-wallpaper.css
     .config/wofi/style.css
-    .config/wofi/style-waybar.css
 )
 
 # Temporarily reveal local changes
 git update-index --no-skip-worktree -- "${files[@]}"
 
-echo "Changes to the 6 local config files:"
+echo "Changes to the 5 local config files:"
 git status --short -- "${files[@]}"
 
 

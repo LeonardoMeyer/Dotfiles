@@ -27,13 +27,18 @@ ShellRoot {
     property real gridIntro: 1
     property var targetScreen: null
 
+    // Order here is the tab bar's order; everything else refers to tabs by id.
     readonly property var tabs: [
-        { id: "apps", label: "Apps", title: "Applications", icon: "", search: "Search apps" },
         { id: "home", label: "Home", title: "Home", icon: "", search: "" },
+        { id: "apps", label: "Apps", title: "Applications", icon: "", search: "Search apps" },
         { id: "commands", label: "Commands", title: "Commands", icon: "", search: "Search commands" },
         { id: "keybinds", label: "Keybinds", title: "Keybinds", icon: "", search: "Search keybinds" }
     ]
-    property int tab: 0
+    // Opening without a tab named lands on Home; typing there still jumps to the app search.
+    readonly property int homeTab: tabIndex("home")
+    property int tab: homeTab
+    readonly property string tabId: tabs[tab].id
+    function tabIndex(id) { return tabs.findIndex(x => x.id === id) }
     readonly property bool searchable: tabs[tab].search !== ""
     property real introHome: 0
     property real introBinds: 0
@@ -91,6 +96,18 @@ ShellRoot {
     }
     Timer { id: rebuild; interval: 120; onTriggered: root.buildApps() }
     Timer { id: rescan; interval: 1500; onTriggered: scan.running = true }
+
+    // The music player publishes where its card sits (see music/shell.qml).
+    readonly property var music: {
+        try { return JSON.parse(musicFile.text()) } catch (e) { return { open: false } }
+    }
+    FileView {
+        id: musicFile
+        path: Quickshell.env("XDG_RUNTIME_DIR") + "/music-player.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+    }
 
     FileView {
         id: appCacheFile
@@ -239,9 +256,9 @@ ShellRoot {
     NumberAnimation { id: gridIntroAnim; target: root; property: "gridIntro"; from: 0; to: 1; duration: 720 }
 
     function replayIntro() {
-        if (tab === 0) gridIntroAnim.restart()
-        else if (tab === 1) introHomeAnim.restart()
-        else if (tab === 3) introBindsAnim.restart()
+        if (tabId === "apps") gridIntroAnim.restart()
+        else if (tabId === "home") introHomeAnim.restart()
+        else if (tabId === "keybinds") introBindsAnim.restart()
     }
 
     function runHome(id, cmd, afterClose) {
@@ -276,7 +293,7 @@ ShellRoot {
     }
 
     function back() {
-        if (tab === 1 && homePage.cancel()) return
+        if (tabId === "home" && homePage.cancel()) return
         if (searchable && (query !== "" || searchPinned)) {
             search.text = ""
             searchPinned = false
@@ -296,7 +313,7 @@ ShellRoot {
         if (k === Qt.Key_Tab) { setTab((tab + 1) % tabs.length); return true }
         if (ctrl && k >= Qt.Key_1 && k <= Qt.Key_4) { setTab(k - Qt.Key_1); return true }
 
-        if (tab === 0) {
+        if (tabId === "apps") {
             if (k === Qt.Key_Right) moveSelection(1)
             else if (k === Qt.Key_Left) moveSelection(-1)
             else if (k === Qt.Key_Down) moveSelection(cols)
@@ -307,12 +324,14 @@ ShellRoot {
             else return false
             return true
         }
-        if (tab === 1) return homePage.handleKey(event)
-        if (tab === 2) return shellPage.handleKey(event)
+        if (tabId === "home") return homePage.handleKey(event)
+        if (tabId === "commands") return shellPage.handleKey(event)
         return binds.handleKey(event)
     }
 
     // ---- Open and close --------------------------------------------------------------------------------------
+
+    Rounding { id: rounding }
 
     Component.onCompleted: {
         targetScreen = focusedScreen()
@@ -325,15 +344,15 @@ ShellRoot {
         return Quickshell.screens.find(s => s.name === mon?.name) ?? Quickshell.screens[0]
     }
 
-    function show(tabId) {
-        const i = tabs.findIndex(x => x.id === tabId)
+    function show(which) {
+        const i = tabs.findIndex(x => x.id === which)
         if (active && !leaving) {
             if (i >= 0) setTab(i)
             return
         }
         // Everything that resets between sessions already ran when the last one closed, so opening only animates.
         if (!active) {
-            tab = Math.max(0, i)
+            tab = i >= 0 ? i : homeTab
         } else if (i >= 0) {
             tab = i
         }
@@ -350,6 +369,7 @@ ShellRoot {
     function begin() {
         leaving = false
         active = true
+        rounding.refresh()
         focusTab()
         replayIntro()
         animateTo(1)
@@ -357,7 +377,7 @@ ShellRoot {
 
     function close() {
         if (!active || leaving) return
-        if (tab === 3 && binds.touched) bump(bindCache, binds.currentId)
+        if (tabId === "keybinds" && binds.touched) bump(bindCache, binds.currentId)
         leaving = true
         animateTo(0)
     }
@@ -427,7 +447,18 @@ ShellRoot {
         color: "transparent"
         exclusionMode: ExclusionMode.Normal
         // While open the whole surface takes input, so a click outside the panel closes it.
-        mask: Region { item: root.active && !root.leaving ? keyRoot : null }
+        // The music card, when it's open on this screen, is cut out so both can be used at once.
+        mask: Region {
+            item: root.active && !root.leaving ? keyRoot : null
+            Region {
+                readonly property var m: root.music.open && root.music.screen === win.screen?.name ? root.music : null
+                intersection: Intersection.Subtract
+                x: m ? Math.round((win.width - m.side) / 2) : 0
+                y: m ? m.top : 0
+                width: m ? m.side : 0
+                height: m ? m.side : 0
+            }
+        }
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "app-drawer"
         WlrLayershell.keyboardFocus: root.active && !root.leaving ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -442,7 +473,7 @@ ShellRoot {
                 // Typing on Home jumps to the app search with that character.
                 const ch = event.text
                 if (ch.length === 1 && ch >= " " && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) {
-                    root.setTab(0)
+                    root.setTab(root.tabIndex("apps"))
                     search.text += ch
                     event.accepted = true
                 }
@@ -459,8 +490,9 @@ ShellRoot {
                 id: card
                 width: root.dot + (root.cardW - root.dot) * root.mw
                 height: root.dot + (root.cardH - root.dot) * root.mh
-                // Fully round as a capsule, relaxing to Hyprland's 10px as it opens.
-                readonly property real radius: Math.max(10, root.dot / 2 - (root.dot / 2 - 10) * Math.min(1, root.mw))
+                // Fully round as a capsule, relaxing to Hyprland's own rounding as it opens.
+                readonly property real rest: Math.min(root.dot / 2, rounding.value)
+                readonly property real radius: Math.max(rest, root.dot / 2 - (root.dot / 2 - rest) * Math.min(1, root.mw))
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 // Solid the whole way (no faint tail for the blur to ghost on).
@@ -471,7 +503,7 @@ ShellRoot {
                 // Clicks on bare panel must not reach the close-on-outside-click backdrop.
                 MouseArea { anchors.fill: parent }
 
-                // Matches Hyprland: 10px rounding, translucent over compositor blur (and hyprglass where enabled).
+                // Matches Hyprland: its rounding, translucent over compositor blur (and hyprglass where enabled).
                 // The bottom is pushed past the screen edge so only the top corners are rounded.
                 Rectangle {
                     width: parent.width
@@ -510,11 +542,11 @@ ShellRoot {
                             placeholder: root.tabs[root.tab].search
                             expanded: root.searchable && (root.searchPinned || root.query !== "")
                             hint: root.query === "" ? ""
-                                : root.tab === 0 ? (root.picked ? root.picked.name : "")
-                                : root.tab === 2 && shellPage.current ? shellPage.current.n : ""
+                                : root.tabId === "apps" ? (root.picked ? root.picked.name : "")
+                                : root.tabId === "commands" && shellPage.current ? shellPage.current.n : ""
                             onClicked: {
                                 root.searchPinned = true
-                                if (!root.searchable) root.setTab(0)
+                                if (!root.searchable) root.setTab(root.tabIndex("apps"))
                                 else root.focusTab()
                             }
                             // The field forwards navigation to the panel and keeps everything else as text.
@@ -553,9 +585,9 @@ ShellRoot {
                             anchors.verticalCenter: parent.verticalCenter
                             horizontalAlignment: Text.AlignRight
                             elide: Text.ElideRight
-                            text: root.tab === 0 ? (root.picked ? root.picked.name : "")
-                                : root.tab === 1 ? "Enter to run"
-                                : root.tab === 2 ? root.shellCommands.length + " commands"
+                            text: root.tabId === "apps" ? (root.picked ? root.picked.name : "")
+                                : root.tabId === "home" ? "Enter to run"
+                                : root.tabId === "commands" ? root.shellCommands.length + " commands"
                                 : "shortcuts.lua"
                             font.family: Theme.sans
                             font.pixelSize: 12
@@ -574,7 +606,7 @@ ShellRoot {
                         opacity: root.stage(0.62)
 
                         Page {
-                            index: 0
+                            tab: "apps"
                             AppGrid {
                                 id: grid
                                 anchors.fill: parent
@@ -594,7 +626,7 @@ ShellRoot {
                         }
 
                         Page {
-                            index: 1
+                            tab: "home"
                             HomePage {
                                 id: homePage
                                 anchors.fill: parent
@@ -605,20 +637,20 @@ ShellRoot {
                         }
 
                         Page {
-                            index: 2
+                            tab: "commands"
                             ShellPage {
                                 id: shellPage
                                 anchors.fill: parent
                                 commands: root.shellCommands
                                 counts: root.counts(shellCacheFile.text())
                                 query: root.query
-                                live: root.active && root.tab === 2
+                                live: root.active && root.tabId === "commands"
                                 onRun: (cmd, key, background) => root.runShell(cmd, key, background)
                             }
                         }
 
                         Page {
-                            index: 3
+                            tab: "keybinds"
                             KeybindsPage {
                                 id: binds
                                 anchors.fill: parent
@@ -701,7 +733,8 @@ ShellRoot {
 
     // Pages stay alive; the current one is opaque and in place, the others wait faded to the side they lie on.
     component Page: Item {
-        required property int index
+        required property string tab
+        readonly property int index: root.tabIndex(tab)
         readonly property bool on: root.tab === index
         anchors.fill: parent
         enabled: on

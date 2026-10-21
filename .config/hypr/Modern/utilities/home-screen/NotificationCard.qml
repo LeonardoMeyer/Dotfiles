@@ -46,7 +46,7 @@ Item {
     Rectangle {
         id: bg
         anchors.fill: parent
-        radius: (popup ? 12 : 12) * card.u
+        radius: card.shell.rounding
         color: card.popup ? shell.popupBg : (area.containsMouse ? "#26ffffff" : "#14ffffff")
         border.width: card.popup || card.critical ? 1 : 0
         border.color: card.critical ? "#b3ff6b6b" : Qt.alpha(shell.accent, 0.4)
@@ -80,7 +80,7 @@ Item {
         y: card.pad
         width: card.iconSize
         height: card.iconSize
-        radius: 10 * card.u
+        radius: card.shell.rr(10)
         color: "#22ffffff"
 
         Image {

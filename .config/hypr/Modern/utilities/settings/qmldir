@@ -14,5 +14,7 @@ SettingProfile 1.0 SettingProfile.qml
 SettingWaybar 1.0 SettingWaybar.qml
 SettingCursors 1.0 SettingCursors.qml
 SettingAction 1.0 SettingAction.qml
+SettingSaved 1.0 SettingSaved.qml
 SettingAnimpreset 1.0 SettingAnimpreset.qml
 SettingBezier 1.0 SettingBezier.qml
+SettingColor 1.0 SettingColor.qml

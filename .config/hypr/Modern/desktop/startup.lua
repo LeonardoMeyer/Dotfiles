@@ -21,11 +21,18 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
     hl.exec_cmd("~/.config/hypr/utilities/shells.sh start")
     hl.exec_cmd("waybar")
-    hl.exec_cmd("pypr")
+    hl.exec_cmd("~/.config/hypr/utilities/pypr.sh")
     hl.exec_cmd("pactl set-sink-mute @DEFAULT_SINK@ 0")
     hl.exec_cmd("hypridle")
     hl.exec_cmd("sleep .5 && swww restore")
     hl.exec_cmd("awww-daemon")
+    hl.exec_cmd([[sh -c '
+        command -v hyprpm >/dev/null 2>&1 || exit 0
+        hyprpm list 2>/dev/null | grep -qi hyprglass || exit 0
+        hyprpm reload -n >/dev/null 2>&1
+        sleep 1
+        hyprctl plugin list 2>/dev/null | grep -qi hyprglass && hyprctl reload
+    ']])
 end)
 
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")

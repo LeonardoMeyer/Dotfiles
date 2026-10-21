@@ -88,5 +88,6 @@ hl.layer_rule({ name = "wofi-blur", match = { namespace = "launcher" }, blur = t
 hl.layer_rule({ name = "wallpaper-picker-noanim", match = { namespace = "wallpaper-picker" }, no_anim = true })
 hl.layer_rule({ name = "settings-panel-glass", match = { namespace = "settings-panel" }, blur = true, ignore_alpha = 0.05, no_anim = true })
 hl.layer_rule({ name = "app-drawer-glass", match = { namespace = "app-drawer" }, blur = true, ignore_alpha = 0.05, no_anim = true })
+hl.layer_rule({ name = "music-player-glass", match = { namespace = "music-player" }, blur = true, ignore_alpha = 0.05, no_anim = true })
 hl.layer_rule({ name = "home-screen-noanim", match = { namespace = "home-screen" }, no_anim = true })
 hl.layer_rule({ name = "boot-sequence-blur", match = { namespace = "boot-sequence" }, blur = true, ignore_alpha = 0.15, no_anim = true })

@@ -28,6 +28,20 @@ if S.config then
     end
 end
 
+-- Glass look: the panel's values extend hyprglass.lua's preset (preset values win over hg.config).
+-- Each one also goes in both theme variants, which would otherwise beat the shared value.
+local look = S.glass
+local base = package.loaded.hyprglass
+if look and type(base) == "table" and hl.plugin and hl.plugin.hyprglass then
+    local values = { dark = {}, light = {} }
+    for k, v in pairs(look) do
+        values[k] = v
+        values.dark[k] = v
+        values.light[k] = v
+    end
+    hl.plugin.hyprglass.preset(base.preset, values)
+end
+
 -- Animations: one curve drives every leaf. Base speeds are in Hyprland deciseconds and are
 -- divided by the panel's speed multiplier; window and workspace styles are chosen separately.
 local A = S.animation

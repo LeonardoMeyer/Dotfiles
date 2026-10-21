@@ -28,6 +28,9 @@ case "${1:-}" in
         # waybar reloads its style on change; a restart picks up the new module layout.
         pkill -x waybar 2>/dev/null || true
         setsid -f waybar >/dev/null 2>&1 </dev/null
+        # Remembered by the live profile entry, like its wallpaper (not when the panel re-applies an entry,
+        # or when the panel records the pick itself).
+        [ -n "${HYPR_SETTINGS_NO_RECORD:-}" ] || python3 "$HYPR/utilities/hypr-settings.py" set "waybar.style=\"$name\"" >/dev/null 2>&1 || true
         ;;
     *)
         echo "usage: waybar-style.sh apply <name> | list" >&2

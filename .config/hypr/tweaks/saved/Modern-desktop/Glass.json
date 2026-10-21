@@ -1,0 +1,78 @@
+{
+  "colors": {
+    "theme": "pywal"
+  },
+  "config": {
+    "decoration": {
+      "rounding": 30,
+      "shadow": {
+        "enabled": true,
+        "range": 14,
+        "render_power": 4,
+        "scale": 1
+      }
+    },
+    "plugin": {
+      "hyprglass": {
+        "blur_fold": true,
+        "debug": {
+          "mode": "off",
+          "timers": false
+        },
+        "default_theme": "light",
+        "enabled": true,
+        "layers": {
+          "enabled": true,
+          "force_live_resample": false,
+          "live_resample": true,
+          "manage_blur": true,
+          "mask_feather": 0.22,
+          "mask_mode": "auto",
+          "mask_threshold": 0.136,
+          "preset": ""
+        },
+        "manage_window_blur": true,
+        "skip_opaque_windows": true,
+        "windows": {
+          "background_cache": true,
+          "live_resample": true,
+          "live_resample_fps": 100
+        }
+      }
+    }
+  },
+  "glass": {
+    "adaptive_boost": 0,
+    "adaptive_dim": 0.21,
+    "blur_iterations": 2,
+    "blur_strength": 2.3,
+    "brightness": 1.27,
+    "chromatic_aberration": 0.5,
+    "contrast": 1.32,
+    "edge_height": 0,
+    "edge_thickness": 0.045,
+    "edge_thickness_px": 33,
+    "fresnel_strength": 0,
+    "frost": 0,
+    "frost_blur": 10,
+    "glass_opacity": 1,
+    "lens_distortion": 6.4,
+    "noise_strength": 0.27,
+    "refraction_flow": 0.03,
+    "refraction_spread": 0.12,
+    "refraction_strength": 5,
+    "saturation": 0.4,
+    "self_sample": 0,
+    "specular_strength": 0,
+    "tint_color": 1346517299,
+    "vibrancy": 1.59,
+    "vibrancy_darkness": 0,
+    "xray": false
+  },
+  "wallpaper": {
+    "path": "/home/ws-73/wallpapers/library/cars/car-08.jpg"
+  },
+  "waybar": {
+    "style": "experimental"
+  }
+}

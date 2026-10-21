@@ -120,6 +120,9 @@ apply_dotfiles() {
     done
     shopt -u nullglob dotglob
 
+    # Patched pypr wrapper; ~/.local/bin is ahead of /usr/bin on PATH so `pypr` picks it up.
+    link_entry "$HOME/.config/hypr/utilities/pypr.py" "$HOME/.local/bin/pypr" "$backup/.local/bin"
+
     # The profile's files become the active config (written through the symlink into the repo).
     if [[ -n "$HYPRLAND_STYLE_DIR" ]]; then
         "$src/hypr/utilities/hypr-profile.sh" apply "${HYPRLAND_STYLE_DIR%%/*}" "${HYPRLAND_STYLE_DIR#*/}" --offline

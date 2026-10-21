@@ -1,7 +1,7 @@
 #!/bin/bash
 set -uo pipefail
 
-# Toggles the app launcher; launcher.sh apps|home|commands|keybinds opens straight to that tab.
+# Toggles the app launcher (opens on Home); launcher.sh apps|home|commands|keybinds opens straight to that tab.
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/launcher"
 
 if [ -n "${1:-}" ]; then

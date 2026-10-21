@@ -41,7 +41,7 @@ ShellRoot {
             if (ui.page && Schema.PAGES.some(p => p.id === ui.page)) page = ui.page
         } catch (e) {}
         dragFrac = frac
-        targetScreen = focusedScreen()
+        targetScreen = usableScreen(focusedScreen())
         Store.refresh()
     }
 
@@ -50,16 +50,67 @@ ShellRoot {
         return Quickshell.screens.find(s => s.name === mon?.name) ?? Quickshell.screens[0]
     }
 
-    function show() {
-        if (active && !leaving) return
-        const scr = focusedScreen()
-        if (!active && scr !== targetScreen) {
-            // A different monitor needs a new surface; give it a moment before sliding in.
+    // settings.sh passes the monitor under the cursor; Hyprland's focused monitor is only the fallback.
+    function screenNamed(name) {
+        return Quickshell.screens.find(s => s.name === name) ?? focusedScreen()
+    }
+
+    function show(name) {
+        showOn(name ? screenNamed(name) : focusedScreen())
+    }
+
+    // The sheet never goes to a portrait (rotated) monitor: it stays where it is, or takes the first landscape one.
+    function landscape(scr) {
+        return !!scr && scr.width >= scr.height
+    }
+
+    function usableScreen(scr) {
+        if (landscape(scr)) return scr
+        if (landscape(targetScreen)) return targetScreen
+        return Quickshell.screens.find(s => landscape(s)) ?? scr
+    }
+
+    function showOn(scr) {
+        scr = usableScreen(scr)
+        if (active && !leaving && scr === targetScreen) return
+        if (scr !== targetScreen) {
+            // Another monitor (even mid-close): drop this sheet; the new surface needs a moment before sliding in.
+            tween.stop()
+            active = false
+            leaving = false
+            t = 0
             targetScreen = scr
             moveDelay.restart()
             return
         }
         begin()
+    }
+
+    // The monitor whose layout box holds a point; Quickshell screens are in the same logical coordinates as hyprctl.
+    function screenAt(x, y) {
+        return Quickshell.screens.find(s => x >= s.x && x < s.x + s.width && y >= s.y && y < s.y + s.height) ?? null
+    }
+
+    // While open, the sheet follows the cursor to whichever monitor it moves onto.
+    function followCursor(text) {
+        if (!active || leaving || dragging) return
+        let pos
+        try { pos = JSON.parse(text) } catch (e) { return }
+        const scr = screenAt(pos.x, pos.y)
+        if (landscape(scr) && scr !== targetScreen) showOn(scr)
+    }
+
+    Process {
+        id: cursorProc
+        command: ["hyprctl", "-j", "cursorpos"]
+        stdout: StdioCollector { onStreamFinished: root.followCursor(text) }
+    }
+
+    Timer {
+        interval: 200
+        repeat: true
+        running: root.active && !root.leaving
+        onTriggered: if (!cursorProc.running) cursorProc.running = true
     }
 
     function begin() {
@@ -76,9 +127,11 @@ ShellRoot {
         animateTo(0)
     }
 
-    function toggle() {
-        if (active && !leaving) close()
-        else show()
+    function toggle(name) {
+        // Compared after the portrait skip, so the shortcut on a vertical monitor closes the sheet too.
+        const scr = usableScreen(name ? screenNamed(name) : focusedScreen())
+        if (active && !leaving && scr === targetScreen) close()
+        else show(name)
     }
 
     function stepPage(d) {
@@ -128,17 +181,20 @@ ShellRoot {
         target: root
         property: "t"
         onFinished: {
-            if (root.leaving) Quickshell.quit()
+            // Stay resident and hidden (settings.sh reopens over IPC); fully closed lets the next open pick a monitor.
+            if (root.leaving) { root.active = false; root.leaving = false }
             else Store.refresh()
         }
     }
 
     IpcHandler {
         target: "settings"
-        function toggle(): void { root.toggle() }
-        function open(): void { root.show() }
+        function toggle(): void { root.toggle("") }
+        function open(): void { root.show("") }
+        function toggleOn(screen: string): void { root.toggle(screen) }
+        function openOn(screen: string): void { root.show(screen) }
         function close(): void { root.close() }
-        function page(id: string): void { root.selectPage(id); root.show() }
+        function page(id: string): void { root.selectPage(id); root.show("") }
     }
 
     // Rows appear only when they would do something: a dependency is met, the hardware exists, styles are present.
@@ -157,6 +213,33 @@ ShellRoot {
 
     function source(type) {
         return "Setting" + type.charAt(0).toUpperCase() + type.slice(1) + ".qml"
+    }
+
+    // A click on any other monitor counts as outside the sheet too.
+    Variants {
+        model: Quickshell.screens
+
+        PanelWindow {
+            required property var modelData
+            screen: modelData
+            visible: root.active && !root.leaving && modelData !== root.targetScreen
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
+            color: "transparent"
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.namespace: "settings-panel-outside"
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+
+            MouseArea {
+                anchors.fill: parent
+                onPressed: root.close()
+            }
+        }
     }
 
     PanelWindow {
@@ -179,14 +262,15 @@ ShellRoot {
 
         Item {
             id: keyRoot
+            objectName: "keyRoot"
             anchors.fill: parent
             focus: true
             Keys.onEscapePressed: root.close()
-            // Arrows and vim keys: h/l (or left/right) change tab, j/k (or down/up) turn the wheel or scroll the page.
+            // Arrows and vim keys: h/l (or left/right, Tab/Shift+Tab) change tab, j/k (or down/up) turn the wheel or scroll the page.
             Keys.onPressed: event => {
                 const k = event.key
-                if (k === Qt.Key_Left || k === Qt.Key_H) root.stepPage(-1)
-                else if (k === Qt.Key_Right || k === Qt.Key_L) root.stepPage(1)
+                if (k === Qt.Key_Left || k === Qt.Key_H || k === Qt.Key_Backtab) root.stepPage(-1)
+                else if (k === Qt.Key_Right || k === Qt.Key_L || k === Qt.Key_Tab) root.stepPage(1)
                 else if (k === Qt.Key_Down || k === Qt.Key_J) root.moveSelection(1)
                 else if (k === Qt.Key_Up || k === Qt.Key_K) root.moveSelection(-1)
                 else if ((k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) && Store.wheels.length > 0) Store.wheels[Store.wheels.length - 1].apply(Store.wheels[Store.wheels.length - 1].cur)
@@ -209,13 +293,14 @@ ShellRoot {
                 // Clicks on bare sheet must not reach the close-on-outside-click backdrop.
                 MouseArea { anchors.fill: parent }
 
-                // Matches Hyprland: 10px rounding, no border, translucent background over compositor blur.
-                // The left side is pushed off-screen so only the right corners are rounded.
+                // Matches Hyprland: its rounding (as set here, override or profile default), no border, translucent
+                // background over compositor blur. The left side is pushed off-screen so only the right corners are rounded.
                 Rectangle {
-                    x: -12
-                    width: parent.width + 12
+                    readonly property real rounding: Store.values["config.decoration.rounding"] ?? 10
+                    x: -(rounding + 2)
+                    width: parent.width + rounding + 2
                     height: parent.height
-                    radius: 10
+                    radius: rounding
                     color: Theme.alpha(Theme.bg, 0.64)
                 }
 

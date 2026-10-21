@@ -72,6 +72,7 @@ alias restart-docker='sudo systemctl restart docker'
 # Hyprland and desktop
 alias pool='clear && asciiquarium'
 alias f='clear && myfetch -i e -f -c 16 -C "  "'
+alias mefetch='clear && myfetch -c 8 -C " █" && eval "$(starship init bash)"'
 alias h='dbus-launch Hyprland'
 alias wss='hyprdvd -s'
 alias hyprrefresh='hyprctl reload'

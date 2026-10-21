@@ -24,6 +24,8 @@ Singleton {
     property string waybarActive: ""
     property var caps: ({})
     property var pywalPalette: []
+    // The profile page's list: Default, each variant's tweaks, saved snapshots; and which one is live.
+    property var saved: ({ entries: [], active: "default" })
     property var pending: ({})
     // Wheels currently on screen; the newest one receives the panel's up/down keys.
     property var wheels: []
@@ -93,14 +95,24 @@ Singleton {
         Quickshell.execDetached(["setsid", "-f", util + "/hypr-profile.sh", "apply", style, variant])
     }
 
+    // Colors and waybar are part of the applied profile entry too, recorded like any other edit.
     function applyTheme(id) {
         colorTheme = id
         Quickshell.execDetached(["setsid", "-f", util + "/color-apply.sh", id])
+        setMany({ "colors.theme": id })
     }
 
     function applyWaybar(id) {
         waybarActive = id
-        Quickshell.execDetached(["setsid", "-f", util + "/waybar-style.sh", "apply", id])
+        Quickshell.execDetached(["env", "HYPR_SETTINGS_NO_RECORD=1", "setsid", "-f", util + "/waybar-style.sh", "apply", id])
+        setMany({ "waybar.style": id })
+    }
+
+    // action: save NAME | apply ID | delete ID | wipe. Runs one at a time; the panel re-reads everything afterwards.
+    function savedRun(action, name) {
+        if (savedProc.running) return
+        savedProc.command = ["python3", py, "saved", action].concat(name ? [name] : [])
+        savedProc.running = true
     }
 
     function resetAll() {
@@ -115,13 +127,22 @@ Singleton {
 
     Process {
         id: setProc
-        onExited: root.flush()
+        onExited: {
+            // An edit on Default makes the active variant's tweaks live; re-read the list once so it shows.
+            if (root.saved.active === "default") root.refreshAfter = true
+            root.flush()
+        }
     }
 
     Process {
         id: resetProc
         command: ["python3", root.py, "reset"]
         onExited: root.refresh()
+    }
+
+    Process {
+        id: savedProc
+        onExited: { root.lastSnapshot = ""; root.refresh() }
     }
 
     Process {
@@ -146,6 +167,7 @@ Singleton {
                 root.waybarActive = data.waybar.active
                 root.caps = data.caps
                 root.pywalPalette = data.pywalPalette
+                root.saved = data.saved || { entries: [], active: "default" }
             }
         }
     }

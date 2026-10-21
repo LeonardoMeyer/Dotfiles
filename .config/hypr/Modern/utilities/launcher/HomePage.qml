@@ -1,6 +1,7 @@
 import QtQuick
 
-// Home: session and desktop actions on a dial, most used first at twelve o'clock.
+// Home: session and desktop actions on a dial. Home, Settings and Wallpaper always lead from twelve o'clock;
+// the rest follow, most used first.
 // Logging out, rebooting and powering off take a second press.
 Item {
     id: page
@@ -19,14 +20,15 @@ Item {
         { id: "screenshot", icon: "", label: "Screenshot", sub: "Select a region", after: true, cmd: "hyprshot -m region -o ~/Screenshots/" },
         { id: "home", icon: "", label: "Home", sub: "Home screen", after: true, cmd: util + "home.sh" },
         { id: "wallpaper", icon: "", label: "Wallpaper", sub: "Pick a wallpaper", after: true, cmd: util + "wallpaper.sh" },
-        { id: "waybar", icon: "", label: "Waybar", sub: "Change the bar style", after: true, cmd: util + "waybar-selector.sh" },
         { id: "settings", icon: "", label: "Settings", sub: "Hyprland settings", after: true, cmd: util + "settings.sh" }
     ]
-    // Usage order; ties keep the order above.
-    readonly property var entries: commands
+    readonly property var pinned: ["home", "settings", "wallpaper"]
+    // Pinned first in that order, then usage order; ties keep the order above.
+    readonly property var entries: pinned.map(id => commands.find(c => c.id === id)).concat(commands
+        .filter(c => !pinned.includes(c.id))
         .map((c, i) => ({ c: c, i: i, n: counts[c.id] || 0 }))
         .sort((a, b) => b.n - a.n || a.i - b.i)
-        .map(x => x.c)
+        .map(x => x.c))
 
     property int current: 0
     property int armed: -1

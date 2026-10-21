@@ -58,6 +58,8 @@ apply() {
         pkill -x waybar 2>/dev/null || true
         setsid -f waybar >/dev/null 2>&1
     fi
+    # The variant's live entry may carry its own color theme and waybar style.
+    python3 "$UTIL/hypr-settings.py" appearance
     notify-send "Hyprland Profile" "Loaded $style / $variant" 2>/dev/null || true
 }
 

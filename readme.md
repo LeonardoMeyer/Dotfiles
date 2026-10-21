@@ -1,12 +1,16 @@
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=30&letterSpacing=tiny&duration=2000&pause=3000&color=F7F7F7&center=true&vCenter=true&width=435&lines=Eli's+Dotfiles)](https://git.io/typing-svg)
 
+![tour](https://github.com/elifouts/Dotfiles/blob/main/images/v2/tour.gif)
+
+<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/rice-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/rice-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/rice-zen.png" width = "33%">
+
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice7.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice1.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice4.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice5.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice6.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice3.png" width = "50%">
 
 
 > [!TIP]
 > Check out [MyFetch](https://github.com/elifouts/MyFetch) now!
 
-This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprland** setup.
+This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprland** setup, built around **Quickshell**.
 
 ***ENJOY!!***
 
@@ -18,25 +22,38 @@ This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprl
 > All Configurations were meant to be used with `Pywal`
 >
 
-If you do not want this, **you can remove it in the given applications `style.css` and add valid color values.** Although I highly recommend `Pywal` It's Pretty cool!
+If you do not want this, **you can pick a fixed color scheme in the settings panel (`Alt+S` → Colors)** or remove it in the given applications `style.css` and add valid color values. Although I highly recommend `Pywal` It's Pretty cool!
+
+Every screenshot below is shown three times, once for each of my saved profiles: **Default** | **Glass** | **Zen**. Same configs, just a different profile picked in the settings panel.
 
 # Install
 
-> [!CAUTION]
-> 
-> This script is experimental and might not work properly. Please make sure you know what you are doing ***Please Please Please***
 <details>
-  <summary>Arch Install Script</summary>
+  <summary>📦 Arch Install Script</summary>
   
-- With this script you should be able to install everything together, or the applications and their configs individually.
-- Dont worry it only really installs what is needed unless you select the everything script.
-
   ```
   cd && git clone https://github.com/elifouts/Dotfiles.git
   cd ~/Dotfiles/InstallScripts
   chmod +x install.sh
   ./install.sh
   ```  
+
+  Pick `1. Full install` for everything, or install a single app and its config.
+
+  ### What the full install does
+  1. Asks which Hyprland style/variant you want (e.g. `Modern — desktop`).
+  2. **Automatic** (installs everything) or **Manual** (asks before every package).
+  3. Installs the packages, Bluetooth and PipeWire.
+  4. Links the dotfiles into `~/.config` and opens the wallpaper picker.
+  5. Optional: autologin, the [hyprglass](https://github.com/hyprnux/hyprglass) plugin (needed for the Glass look), extra apps, reboot.
+
+  ### Is it safe?
+  Yes. It doesn't delete anything:
+  - It asks to **back up** `~/.config`, `~/.icons`, `~/wallpapers` and `~/.bashrc` first (`~/.config_backup_<date>`, ...).
+  - Anything it would replace is **moved** to `~/.dotfiles_replaced_<date>`, never deleted.
+  - Packages are installed with `--needed`, so nothing you already have gets reinstalled.
+  - Every optional step asks first, and autologin and hyprglass both have an uninstall option.
+  - The configs are **symlinked** to `~/Dotfiles`, so `git pull` updates them and your edits show up in the repo.
 </details>
 
 ## Package Manager TUI
@@ -54,47 +71,165 @@ Use the arrow keys or `j`/`k` to scroll, `Enter` or `d` to uninstall, `r` to
 reinstall packages included in the full installer, and `q` to quit. For a
 non-interactive list, run `./.config/hypr/utilities/package-tui.sh --list`.
 
+## Styles, Variants & Profiles
+
+<details>
+  <summary>⚙️ How it all fits together</summary>
+
+  - **Style**: the whole look: Hyprland config, quickshells and waybars. Right now there is **one style: `Modern`**.
+  - **Variant**: a version of a style for a machine: `desktop` and `laptop` (monitors, startup, input).
+  - **Profile**: your tweaks on top of the variant, picked in the settings panel:
+    - **Default**: the variant exactly as it ships, no tweaks.
+    - **Desktop / Laptop**: the variant's own tweaks file.
+    - **Saved profiles**: named snapshots you make yourself. **Glass** and **Zen** are mine.
+
+  A saved profile remembers its tweaks **plus** the color theme, waybar style and wallpaper, so switching one changes the whole look.
+
+  ```
+  hypr/
+    Modern/                 <- a style
+      laptop/  desktop/     <- variants: hyprland.lua, startup.lua, style.lua, shortcuts.lua
+      utilities/            <- the style's quickshells
+      waybar/<name>/        <- waybar styles: config, style.css, preview.png
+    tweaks/                 <- your tweaks and saved profiles (profiles are never edited)
+    utilities/              <- shared scripts; the active style's quickshells are symlinked in here
+  ```
+
+  To add a style, copy `Modern` to `hypr/<Style>/` and restyle it. It shows up in the settings panel on its own.
+</details>
 
 ## My Applications
 
+<details>
+  <summary>✨ Quickshell</summary>
 
-
+  All of my widgets are [Quickshell](https://quickshell.org) shells. They stay running in the background, so they open instantly, follow your `Pywal` colors and Hyprland rounding, and open on the monitor you're using.
 
 <details>
-  
-  <summary>🚥 Waybar</summary>
-  
-![waybar1](https://github.com/elifouts/Dotfiles/blob/main/images/waybar1.png)
-![waybar2](https://github.com/elifouts/Dotfiles/blob/main/images/waybar6.png)
-![waybar3](https://github.com/elifouts/Dotfiles/blob/main/images/waybar4.png)
-![waybar4](https://github.com/elifouts/Dotfiles/blob/main/images/waybar3.png)
-![waybar5](https://github.com/elifouts/Dotfiles/blob/main/images/waybar2.png)
+  <summary>🚀 Launcher</summary>
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-zen.png" width = "33%">
 
+  ![launcher](https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher.gif)
+
+  - **Tap `Super`** to open it. It rises from the bottom of the screen.
+  - **Home**: a dial of session actions (home screen, settings, wallpaper, lock, screenshot, sleep, logout, reboot, power).
+  - **Apps**: a searchable app grid, sorted by what you use most.
+  - **Commands**: run any shell command.
+  - **Keybinds**: every shortcut, read live from `shortcuts.lua`.
+</details>
+
+<details>
+  <summary>🏠 Home Screen</summary>
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-zen.png" width = "33%">
+
+  ![home](https://github.com/elifouts/Dotfiles/blob/main/images/v2/home.gif)
+
+  - `Alt+Tab` opens a dashboard over a blurred wallpaper.
+  - Clock, now playing, calendar, CPU/RAM/GPU stats, volume, notification history and session buttons.
+</details>
+
+<details>
+  <summary>🎛️ Settings Panel</summary>
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-zen.png" width = "33%">
+
+  ![settings](https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings.gif)
+
+  `Alt+S` slides it in from the left. Everything applies **live**, and your profile files are never edited.
+
+  - **Profile**: pick the style and variant, switch or save profiles, and pick a waybar style.
+  - **Colors**: a wheel of color schemes. **Pywal** (default) follows your wallpaper, and every `*.json` in `~/.config/wal/colorschemes` shows up too.
+  - **Windows**: gaps, borders, rounding, a gradient border, tiling, opacity.
+  - **Effects**: blur, shadow, glow, dimming, and every **hyprglass** option (when the plugin is installed).
+  - **Animations**: presets, a Bézier curve editor with a live preview, and **Randomize**.
+  - **Input & cursor**: mouse, touchpad, gestures, keyboard, cursor theme and size.
+  - **System**: boot animation, display, and **Reset tweaks**.
+
+  ### Saving a custom profile
+  1. Tweak anything you want, including the wallpaper, colors and waybar.
+  2. Go to **Profile → Saved profiles**, type a name, and hit **Save** (**Overwrite** if the name is taken).
+  3. Click any profile to apply it. Click the trash icon twice to delete it.
+
+  ### Tips
+  - **Right-click** any setting to put it back to the profile's value.
+  - Drag the right edge to resize. `Esc`, clicking outside, or `Alt+S` closes it.
+  - `←/→` or `h/l` change page, `↑/↓` or `j/k` scroll, `Enter` applies.
+  - Options that wouldn't do anything (touchpad on a desktop, blur size with blur off) are hidden.
+</details>
+
+<details>
+  <summary>🎵 Music Player</summary>
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-zen.png" width = "33%">
+
+  ![music](https://github.com/elifouts/Dotfiles/blob/main/images/v2/music.gif)
+
+  - `Alt+M` drops a card out from under waybar.
+  - Follows Spotify, or whatever is playing. The chip in the top left switches players.
+  - Live `cava` visualizer. Drag the bottom edge to resize it.
+</details>
+
+<details>
+  <summary>🖼️ Wallpaper Picker</summary>
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-zen.png" width = "33%">
+
+  ![wallpaper](https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper.gif)
+
+  - `Alt+W` opens a 3D carousel of `~/wallpapers/library`, with the palette of each wallpaper.
+  - `←/→` browse, `Tab` changes category, `R` picks a random one, `Enter` applies.
+  - Applying sets the wallpaper with `awww`, regenerates the `Pywal` colors, and updates everything that uses them.
+</details>
+
+<details>
+  <summary>🔊 OSD</summary>
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-zen.png" width = "33%">
+
+  ![osd](https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd.gif)
+
+  - Volume, mic, brightness, caps lock and media keys pop up a pill at the bottom of the screen.
+</details>
+
+<details>
+  <summary>🔔 Notifications</summary>
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-zen.png" width = "33%">
+
+  ![notify](https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify.gif)
+
+  - Popups in the bottom left. The history lives in the home screen.
+</details>
+
+<details>
+  <summary>⚡ Boot Animation</summary>
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-zen.png" width = "33%">
+
+  ![boot](https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot.gif)
+
+  - Plays once when Hyprland starts. Turn it off or change the delay in **Settings → System**.
+</details>
+
+  ### *How To Install*
+1. **Install [Quickshell](https://quickshell.org)** (`yay -S quickshell`)
+2. Copy `Dotfiles/.config/hypr` into `~/.config` (or use the installer)
+3. `~/.config/hypr/utilities/shells.sh start` starts them all. `startup.lua` already does this.
+
+</details>
+
+<details>
+  <summary>🚥 Waybar</summary>
+
+  ![waybar-default](https://github.com/elifouts/Dotfiles/blob/main/images/v2/waybar-default.png)
+  ![waybar-glass](https://github.com/elifouts/Dotfiles/blob/main/images/v2/waybar-glass.png)
+  ![waybar-zen](https://github.com/elifouts/Dotfiles/blob/main/images/v2/waybar-zen.png)
   
   ## Overview
-  This is my minimal Waybar setup for Hyprland, designed to be clean and efficient. It includes all the essential features I wanted in Waybar. For additional needs like volume control, I use `swaync`, which can be triggered from Waybar. 
+  This is my minimal Waybar setup for Hyprland, designed to be clean and efficient. There are 4 styles (`default`, `experimental`, `line`, `zen`) in `hypr/Modern/waybar/`. Pick one in **Settings → Profile → Waybar**, and `Alt+A` reloads it.
 
   ## Workspaces
   I’ve configured the workspaces so that if there is content on a workspace, the dot appears darker. This helps you keep track of your open content! Inspiration from [Gbar](https://github.com/scorpion-26/gBar).
 
-  ![2025-01-04-030026_hyprshot](https://github.com/user-attachments/assets/31668572-b35d-4acb-8525-8cb0e5669101)
-  
   ## Expanding Waybar
-  In the screenshot below, you’ll see a method to hide and reveal certain widgets you don’t need all the time. You can easily add or remove widgets in `~/.config/waybar/config` under the `group/expand` section.
+  You can hide and reveal widgets you don’t need all the time. You can easily add or remove widgets in the style's `config` under the `group/expand` section.
   
-  - **Network Widget**: I’ve configured it to not display your IP by default (it did that for some reason). Clicking the network widget opens `nmtui` in `kitty`.
-  
+  - **Network Widget**: Clicking the network widget opens `nmtui` in `kitty`.
   - **Hyprpicker Widget**: This custom widget lets you use `hyprpicker`, display values when hovered, and copy the hex value to your clipboard.
-    
-    ![image](https://github.com/user-attachments/assets/f8c723c0-a9c9-4fa6-a3c8-bda06e81f81d)
-
-  ## Configuration
-  
-  ### *How To Install*
-1. **Install [Waybar](https://github.com/Alexays/Waybar)**
-2. Copy the `Dotfiles/.config/waybar` folder into `~/.config`
-
-***NOTE*** *Make sure you have a Pywal theme set or else waybar will not load*
 
   ### Dependencies
   ```
@@ -104,111 +239,22 @@ non-interactive list, run `./.config/hypr/utilities/package-tui.sh --list`.
   blueman
   bluez
   networkmanager
-  swaync
-  yay
-  ```
-
-  ### How to Add Blur
-
-  Add this to the end of your `hyprland.conf`:
-  
-  ```
-  layerrule = blur, waybar
-  layerrule = ignorezero, waybar
-  layerrule = ignorealpha 0.5, waybar
-  ```
-
-</details>
-
-
-<details>
-  <summary>🔍 Wofi</summary>
-    <img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi1.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi2.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi3.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi4.png" width = "35%">
-
-
-  ## Configuration
-
-  ### *How To Install*
-  
-1. **Install `Wofi`:**
-
-   ```
-    sudo pacman -S wofi
-   ```
-   
-2. Copy the `Dotfiles/.config/wofi` folder into `~/.config`
-3. **Launching Wofi**
-    - I launch wofi like this:
-   
-      ```config
-      wofi --show drun -n
-      ```
-
-### How to Add Blur to Wofi
-
-Add this to the end of your `hyprland.conf`:
-
-```
-layerrule = blur, wofi
-layerrule = ignorezero, wofi
-layerrule = ignorealpha 0.5, wofi
-```
-
-### `Pywal` with Wofi
-
-**If you want Pywal colors**
-- The install and apply scripts automatically update Wofi style imports to your Pywal cache path. If you copy the config manually, update the hostname in the `@import` path.
-**If you don't want Pywal colors**
-- You can remove the top line of your style.css and replace the colors at the top with your desired choice.
-</details>
-
-<details>
-  <summary>🔔 Swaync</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync1.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync2.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync3.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync4.png" width = "20%">
-
-
-  ## Configuration
-  
-  ### *How To Install*
-  
-1. **Install [Swaync](https://github.com/ErikReider/SwayNotificationCenter)**
-2. Copy the `Dotfiles/.config/swaync` folder into `~/.config`
-
-  ### Dependencies for `Swaync`
-  ```
-  swaync
-  pywal
-  gvfs
-  libnotify
-  ```
-  
-  ### How to Add Blur to Swaync
-  
-  Add this to the end of your `hyprland.conf`:
-  
-  ```
-  layerrule = blur, swaync-control-center
-  layerrule = blur, swaync-notification-window
-  layerrule = ignorezero, swaync-control-center
-  layerrule = ignorezero, swaync-notification-window
-  layerrule = ignorealpha 0.5, swaync-control-center
-  layerrule = ignorealpha 0.5, swaync-notification-window
   ```
 
 </details>
 
 <details>
   <summary>🔒 Hyprlock</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock1.PNG" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock2.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock3.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock4.png" width = "50%">
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock-zen.png" width = "33%">
+
+  ![lock](https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock.gif)
   
   ## Overview
     
-  - Hyprlock uses the current wallpaper from Pywal to generate a background, displays a greeting with your username, and applies Pywal colors.
-  - You can bind Hyprlock to a key, use it with `hypridle`, or configure it however you prefer.
-  - If you want to configure `hypridle` as well, I’ve included a `hypridle.conf` file in the same directory as Hyprlock.
+  - Hyprlock blurs your current wallpaper, greets you by username, and uses your Pywal colors.
+  - `Mod+L` locks. `hypridle.conf` is in the same folder if you want it to lock on idle.
+  - Each variant has its own `hyprlock.conf`.
 
-  ## Configuration
-  
   ### *How To Install*
 1. **Install [Hyprlock](https://github.com/hyprwm/hyprlock/)**
 2. Copy `Dotfiles/.config/hypr/hyprlock.conf` to `~/.config/hypr`
@@ -217,11 +263,12 @@ layerrule = ignorealpha 0.5, wofi
 
 <details>
   <summary>📝 Nvim</summary>
-<img src="https://github.com/elifouts/Dotfiles/blob/main/images/nvim1.png" width = "30%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/nvim2.png" width = "30%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/nvim3.png" width = "30%">
+<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/nvim-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/nvim-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/nvim-zen.png" width = "33%">
   
 ## Overview
 
 - This Neovim "rice" is a simplified version of Lazyvim, created with custom Lua files. It’s lightweight and includes only what you need. I just installed lazy and configured only the pluggins I wanted.
+- It uses the Pywal theme. **Relaunch nvim after you change the wallpaper or profile** to load the new colors.
 - It features:
   - Alpha-nvim
   - Pywal theme
@@ -232,13 +279,6 @@ layerrule = ignorealpha 0.5, wofi
   - Noice
   - Mini-icons
   - Snacks
-    - bigfile
-    - indent
-    - input
-    - quickfile
-    - scroll
-    - statuscolumn
-    - words
   - Neo-tree
   - Telescope
   - Treesitter
@@ -257,67 +297,27 @@ layerrule = ignorealpha 0.5, wofi
 </details>
 
 <details>
-  <summary>🚪 Wlogout</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout1.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout2.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout3.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout4.png" width = "40%">
-  
-### *How To Install*
-1. **Install `wlogout`:**
-   
-    ```bash
-    yay -S wlogout
-    ```
-2. Copy `Dotfiles/.config/wlogout` into `~/.config/`
-3. If not already set make sure you set a key bind in hyprland.conf to launch wlogout.
-</details>
+  <summary>🚀 Starship</summary>
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/starship-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/starship-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/starship-zen.png" width = "33%">
 
+## Overview
 
-<details>
-  <summary>🖼️ Wallpaper Solution/Pywal</summary>
-  
-  ![image](https://github.com/user-attachments/assets/7cbe58e3-7226-4537-8e69-bb316cdfaebc)
+  - This is a custom Starship config that is minimal but yet has everything you need/want from a terminal prompt.
 
+ ### *How To Install*
+1. **Install [Starship](https://github.com/starship/starship?tab=readme-ov-file#-installation)**
+2. Copy the `Dotfiles/.config/starship.toml` folder into `~/.config`
+3. Add this to your `.bashrc` file:
 
-
-
-
-## General Overview
-
-- The `wallpaper.sh` utility applies a wallpaper using `swww` and sets the `Pywal` theme. It also updates Kitty's color scheme, Cava, nvim (if configured), and any other application using `pywal`.
-- The script uses Wofi to select wallpapers. I have not been able to optimize the wallpaper loading so it might load slowly but it should work.
-
-### Dependencies
-
-- `swww`
-- `pywal`
-- `wofi`
-- `fd`
-
-### *How To Install*
-- Install dependencies:
-
-     ```bash
-     yay -S swww pywal wofi fd
-     ```
-     
-1. **Copy Configuration Files:**
-   - Copy `Dotfiles/.config/wal` to `~/.config/` to provide `pywal` with the necessary template for Hyprland.
-  - Copy `Dotfiles/.config/hypr/utilities/wallpaper.sh` to `~/.config/hypr/utilities/`.
-   - Copy `Dotfiles/.config/wofi` to `~/.config/`. ( Check the Wofi tab for how to configure blur )
-
-2. Bind the script to a key combination of your choice to easily change your wallpaper.
-
-3. Make sure to add the following line to your `hyprland.conf`:
-
-     ```bash
-     exec-once = swww-daemon
-     ```
-
-  
+   ```bash
+    eval "$(starship init bash)"
+   ```
+   - Or go [here](https://github.com/starship/starship?tab=readme-ov-file#step-2-set-up-your-shell-to-use-starship) to find what you need for your shell.
 </details>
 
 <details>
   <summary>🦊 Pywalfox</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/fox1.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/fox2.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/fox3.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/fox4.png" width = "40%">
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/fox-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/fox-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/fox-zen.png" width = "33%">
 
   ## Overview
 
@@ -340,38 +340,20 @@ layerrule = ignorealpha 0.5, wofi
 </details>
 
 <details>
-  <summary>🚀 Starship</summary>
-    <img src="https://github.com/elifouts/Dotfiles/blob/main/images/starship.png" width = "30%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/starship1.png" width = "30%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/starship2.png" width = "30%">
-
-## Overview
-
-  - This is a custom Starship config that is minimal but yet has everything you need/want from a terminal prompt.
-
- ### *How To Install*
-1. **Install [Starship](https://github.com/starship/starship?tab=readme-ov-file#-installation)**
-2. Copy the `Dotfiles/.config/starship.toml` folder into `~/.config`
-3. Add this to your `.bashrc` file:
-
-   ```bash
-    eval "$(starship init bash)"
-   ```
-   - Or go [here](https://github.com/starship/starship?tab=readme-ov-file#step-2-set-up-your-shell-to-use-starship) to find what you need for your shell.
-</details>
-
-<details>
   <summary>🎨 GTK Themes</summary>
   
   ### I use these GTK themes
   
   - Widget Theme: Materia-dark
   - Icon Theme: Qogir-dark
+  - Cursor: Bibata-Modern-Ice (change it in **Settings → Input & cursor**)
 </details>
 
 ## Keybinds
 
 `Mod+Q` - Open Terminal
 
-`Mod+R` - Open App Launcher (Wofi)
+`Super` (tap) - App Launcher
 
 `Mod+M` - Quit Hyprland
  
@@ -381,49 +363,26 @@ layerrule = ignorealpha 0.5, wofi
 
 `Mod+V` - Popout
 
+`Mod+L` - Lock
+
 `Mod+Space` - Terminal Scratch Pad
 
 `Mod-E` - Opens Thunar
 
-`Alt+B` - Waybar Style Selector (Wofi)
+`Alt+Tab` - Home Screen
 
-`Alt+A` - Toggle Waybar
+`Alt+S` - Settings Panel
 
-`Alt+R` - Reload Swaync
+`Alt+W` - Wallpaper Picker
 
-`Alt+W` - Wallpaper Selector (Wofi)
+`Alt+Enter` - Music Player
 
-`Alt+S` - Hyprland Settings (left-edge panel: profile, colors, windows, effects, animations, input, cursor, system)
-
-`Alt+Tab` - wlogout
+`Alt+A` - Reload Waybar
 
 > [!NOTE]
 > This isnt every Keybind. Just some highlighted ones.
 > 
-> More can be found and changed in `~/.confing/hypr/hyprland.conf`
-
-## Hyprland Styles & Settings Panel
-
-`Alt+S` opens a settings sheet that slides in from the left edge, below waybar (about a third of the screen width). Drag its right edge to resize it; the width is remembered. Drag it far left, press `Esc`, click outside it, or press `Alt+S` again to close. Keys: `←/→` or `h/l` change tab, `↑/↓` or `j/k` turn the wheel (or scroll the page), `Enter` applies the wheel's selection.
-
-The panel never edits a profile. Every style/variant keeps its own tweaks in `~/.config/hypr/tweaks/<Style>-<variant>.json`; the active one is written to `settings.lua`, which `overrides.lua` applies on top of the profile (live, through `hyprctl eval`). Switching profile swaps in that profile's own tweaks, so laptop and desktop stay independent, and **Reset tweaks** (System page) only resets the active one. **Right-click any setting** to put it back to the profile's own value. Rows only appear when they would do something: dependent options (blur size when blur is on, gradient angle when the gradient is on) and hardware options (touchpad, multi-monitor) are hidden otherwise.
-
-- **Colors** is a wheel: scroll to browse, click or Enter to apply. **Pywal** (default) follows the wallpaper, and every `*.json` in `~/.config/wal/colorschemes/dark` (or `light`) shows up as a fixed palette.
-- **Windows** includes the borders: width, rounding, and a gradient border (pywal palette slots) with an angle.
-- **Animations** has presets plus a Bézier editor: drag the two handles, watch the preview, or **Randomize** the curve, speed and window/workspace styles. **Copy line** puts a Hyprland `bezier = ...` line on the clipboard.
-
-Profiles are folders under `~/.config/hypr`:
-
-```
-hypr/
-  Modern/                 <- a style
-    laptop/  desktop/     <- variants: hyprland.lua, startup.lua, style.lua, shortcuts.lua
-    utilities/            <- the style's quickshells (boot, osd, home-screen, wallpaper-picker, settings)
-    waybar/<name>/        <- waybar styles: config, style.css, preview.png (shown in the panel's Profile page)
-  utilities/              <- shared scripts; the active style's quickshells are symlinked in here
-```
-
-To add a style, create `hypr/<Style>/<variant>/` (copy a variant from `Modern`) and `hypr/<Style>/utilities/` (copy `Modern/utilities` and restyle). It appears in the panel's Profile page automatically; deleting the folder removes it. The Waybar section only appears for styles that have a `waybar/` folder, and `Alt+B` opens the same list in Wofi. Choices with five or more options (color themes, cursors) are shown as dropdowns.
+> Tap `Super` → **Keybinds** to see all of them, or change them in `~/.config/hypr/shortcuts.lua`
 
 ## Help
 
@@ -469,11 +428,91 @@ Instead of those colors, you can use whichever color is needed by the style.css 
 
 </details>
 
+## Deprecated
 
+<details>
+  <summary>🗄️ Old stuff (no longer used)</summary>
+
+  These were replaced by the Quickshell utilities. Their configs are still in `.config/archive` (and `.config/wofi`) if you want them, but nothing launches them anymore.
+
+<details>
+  <summary>🔍 Wofi (replaced by the Launcher and Wallpaper Picker)</summary>
+    <img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi1.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi2.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi3.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi4.png" width = "35%">
+
+  - Was `Mod+R` (app menu), `Alt+W` (wallpapers) and `Alt+B` (waybar styles). These binds are removed now.
+  - Installer option `3. Wofi (deprecated)` still installs it.
+
+  ### How to Add Blur to Wofi
+
+  ```
+  layerrule = blur, wofi
+  layerrule = ignorezero, wofi
+  layerrule = ignorealpha 0.5, wofi
+  ```
+</details>
+
+<details>
+  <summary>🔔 Swaync (replaced by Notifications and the Home Screen)</summary>
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync1.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync2.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync3.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync4.png" width = "20%">
+
+  - Config is in `.config/archive/swaync`. Dependencies: `swaync pywal gvfs libnotify`.
+</details>
+
+<details>
+  <summary>🔊 SwayOSD (replaced by the OSD)</summary>
+
+  - Config is in `.config/archive/swayosd`.
+</details>
+
+<details>
+  <summary>🚪 Wlogout (replaced by the Launcher's Home dial)</summary>
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout1.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout2.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout3.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout4.png" width = "40%">
+
+  - Config is in `.config/archive/wlogout`.
+</details>
+
+<details>
+  <summary>🖼️ Old Wallpaper Solution (wofi + swww)</summary>
+  
+  ![image](https://github.com/user-attachments/assets/7cbe58e3-7226-4537-8e69-bb316cdfaebc)
+
+  - Picked wallpapers in Wofi and applied them with `swww` + `Pywal`. Replaced by the Wallpaper Picker.
+</details>
+
+<details>
+  <summary>📸 Old Screenshots</summary>
+
+  **Waybar**
+
+  ![waybar1](https://github.com/elifouts/Dotfiles/blob/main/images/waybar1.png)
+  ![waybar2](https://github.com/elifouts/Dotfiles/blob/main/images/waybar6.png)
+  ![waybar3](https://github.com/elifouts/Dotfiles/blob/main/images/waybar4.png)
+  ![waybar4](https://github.com/elifouts/Dotfiles/blob/main/images/waybar3.png)
+  ![waybar5](https://github.com/elifouts/Dotfiles/blob/main/images/waybar2.png)
+  ![2025-01-04-030026_hyprshot](https://github.com/user-attachments/assets/31668572-b35d-4acb-8525-8cb0e5669101)
+  ![image](https://github.com/user-attachments/assets/f8c723c0-a9c9-4fa6-a3c8-bda06e81f81d)
+
+  **Hyprlock**
+
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock1.PNG" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock2.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock3.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock4.png" width = "50%">
+
+  **Nvim**
+
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/nvim1.png" width = "30%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/nvim2.png" width = "30%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/nvim3.png" width = "30%">
+
+  **Starship**
+
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/starship.png" width = "30%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/starship1.png" width = "30%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/starship2.png" width = "30%">
+
+  **Pywalfox**
+
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/fox1.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/fox2.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/fox3.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/fox4.png" width = "40%">
+</details>
+
+</details>
 
 ## Notes
-- If you want Cava to work with `Pywal`, it is already in the wallpaper.sh, but find the section needed and copy the config file I have into your `~/.config` directory.
-- Am about to start working on an eww dashboard so look out for that
+- Cava follows `Pywal` too. The config is in `.config/cava`.
 <details>
   <summary>📥 Download Suggestions</summary>
   
@@ -481,7 +520,7 @@ Instead of those colors, you can use whichever color is needed by the style.css 
     
 ```txt
 git
-wlogout
+quickshell
 nvim
 zip unzip
 pipewire
@@ -489,12 +528,12 @@ hyprpicker
 hypridle
 hyprlock
 hyprshot
+pyprland
 code
-bpytop
-nerdfetch
+bottom
+myfetch
 yay
 wl-clipboard
-wl-copy
 nerd-fonts
 starship
 thunar
@@ -505,10 +544,9 @@ discord
 Firefox
 spotify ncspot
 pacman-contrib
-swaync
-pywal
+python-pywal16
 waybar
-swww
+awww
 blueman
 bluez
 networkmanager
@@ -517,8 +555,7 @@ libnotify
 pavucontrol
 pipewire-pulse
 nwg-look
-wofi
-s-tui
+cava
 python-pywalfox
 auto-cpufreq
 powertop
@@ -533,6 +570,8 @@ materia-dark-gtk
   
   ```
   asciiquarium
+  pipes-rs
+  clock-rs
   libcaca
   cowsay
   snake
@@ -547,6 +586,5 @@ materia-dark-gtk
   waypaper
   ranger
   howdoi
-  bottom
   ```
 </details>

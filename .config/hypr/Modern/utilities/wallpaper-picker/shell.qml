@@ -29,6 +29,9 @@ ShellRoot {
     // Chosen wallpaper until wallpaper-apply.sh has written it to the cache.
     property string pendingPath: ""
 
+    // Hyprland's live rounding (override or profile default) for the wallpaper cards.
+    Rounding { id: roundingWatch }
+
     // The stage lays out in a fixed 1600x900 space and is scaled to the screen; portrait fits 1100 units across instead.
     readonly property real u: unitFor(win.screen)
 
@@ -111,6 +114,7 @@ ShellRoot {
     }
 
     function show() {
+        roundingWatch.refresh()
         watchdog.stop()
         if ((shown && !leaving) || locating) return
         // Hyprland.focusedMonitor can be stale until the first focus event after startup, so ask for the cursor directly.
@@ -428,46 +432,65 @@ ShellRoot {
                 onWheel: wheel => root.go(root.cur + (wheel.angleDelta.y + wheel.angleDelta.x < 0 ? 1 : -1))
             }
 
-            // Theme chips
-            Row {
-                id: chips
+            // Theme chips: one highlight glides between them, like the launcher's and settings' tabs.
+            Item {
+                id: chipBar
                 anchors.top: parent.top
                 anchors.topMargin: 56
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 8
+                width: chips.width
+                height: chips.height
                 opacity: Math.max(0.001, root.seg(0))
                 transform: Translate { y: (1 - root.seg(0)) * -18 }
-                Repeater {
-                    model: root.themes
-                    delegate: Item {
-                        id: chip
-                        required property string modelData
-                        readonly property bool active: root.theme === modelData
-                        width: label.implicitWidth + 36
-                        height: 36
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 18
-                            color: chip.active ? "#33ffffff" : "transparent"
-                            border.width: 1
-                            border.color: chip.active ? "#55ffffff" : "transparent"
-                            Behavior on color { ColorAnimation { duration: 250 } }
-                        }
-                        Text {
-                            id: label
-                            anchors.centerIn: parent
-                            text: chip.modelData
-                            font.family: "CodeNewRoman Nerd Font Propo"
-                            font.pixelSize: 14
-                            color: chip.active ? "#ffffff" : "#99ffffff"
-                            Behavior on color { ColorAnimation { duration: 250 } }
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: { root.theme = chip.modelData; root.rebuild() }
+
+                property Item sel: null
+                // The first placement after (re)building the chips lands without sliding in from the left.
+                property bool settled: false
+
+                Rectangle {
+                    visible: !!chipBar.sel
+                    x: chipBar.sel ? chipBar.sel.x : 0
+                    width: chipBar.sel ? chipBar.sel.width : 0
+                    height: 36
+                    radius: 18
+                    color: "#33ffffff"
+                    border.width: 1
+                    border.color: "#55ffffff"
+                    Behavior on x { enabled: chipBar.settled; NumberAnimation { duration: 280; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.2, 0.9, 0.3, 1, 1, 1] } }
+                    Behavior on width { enabled: chipBar.settled; NumberAnimation { duration: 280; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.2, 0.9, 0.3, 1, 1, 1] } }
+                }
+
+                Row {
+                    id: chips
+                    spacing: 8
+                    Repeater {
+                        model: root.themes
+                        onItemAdded: { chipBar.settled = false; settleChips.restart() }
+                        delegate: Item {
+                            id: chip
+                            required property string modelData
+                            readonly property bool active: root.theme === modelData
+                            onActiveChanged: if (active) chipBar.sel = chip
+                            Component.onCompleted: if (active) chipBar.sel = chip
+                            width: label.implicitWidth + 36
+                            height: 36
+                            Text {
+                                id: label
+                                anchors.centerIn: parent
+                                text: chip.modelData
+                                font.family: "CodeNewRoman Nerd Font Propo"
+                                font.pixelSize: 14
+                                color: chip.active ? "#ffffff" : "#99ffffff"
+                                Behavior on color { ColorAnimation { duration: 250 } }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: { root.theme = chip.modelData; root.rebuild() }
+                            }
                         }
                     }
                 }
+                Timer { id: settleChips; interval: 50; onTriggered: chipBar.settled = true }
             }
 
             // Coverflow wheel: cards turn about the vertical axis and recede front to back.
@@ -525,7 +548,8 @@ ShellRoot {
                         Component {
                             id: frame
                             ClippingRectangle {
-                                radius: 17
+                                // The stage is scaled by u, so this undoes it to land on Hyprland's own pixels.
+                                radius: roundingWatch.value / root.u
                                 color: "#1fffffff"
                                 border.width: 1
                                 border.color: card.ad < 0.5 ? "#80ffffff" : "#40ffffff"
@@ -534,7 +558,7 @@ ShellRoot {
                                 ClippingRectangle {
                                     anchors.fill: parent
                                     anchors.margins: 1
-                                    radius: 17
+                                    radius: Math.max(0, roundingWatch.value / root.u - 1)
                                     color: "#22000000"
 
                                     Image {

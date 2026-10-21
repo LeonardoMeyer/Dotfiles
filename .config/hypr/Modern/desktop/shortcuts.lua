@@ -2,14 +2,12 @@
 
 local terminal = "kitty"
 local fileManager = "thunar"
-local menu = "wofi -n"
 local mainMod = "SUPER"
 
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + B", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 -- Tapping Super on its own; release binds only fire when no other key was pressed with it.
 hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("~/.config/hypr/utilities/launcher.sh"), { release = true })
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
@@ -55,8 +53,8 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 hl.bind("ALT + TAB", hl.dsp.exec_cmd("~/.config/hypr/utilities/home.sh"))
 hl.bind("ALT + w", hl.dsp.exec_cmd("~/.config/hypr/utilities/wallpaper.sh"))
 hl.bind("ALT + a", hl.dsp.exec_cmd("~/.config/waybar/scripts/refresh.sh"))
-hl.bind("ALT + B", hl.dsp.exec_cmd("~/.config/hypr/utilities/waybar-selector.sh"))
 hl.bind("ALT + S", hl.dsp.exec_cmd("~/.config/hypr/utilities/settings.sh"))
+hl.bind("ALT + M", hl.dsp.exec_cmd("~/.config/hypr/utilities/music.sh"))
 hl.bind(mainMod .. " + M", hl.dsp.exit())
 hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("pypr toggle packages"))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("pypr toggle term"))

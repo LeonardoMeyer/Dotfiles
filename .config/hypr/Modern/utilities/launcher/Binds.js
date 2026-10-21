@@ -32,8 +32,8 @@ const OSD = {
 }
 
 const SCRIPTS = {
-    "home": "Home screen", "wallpaper": "Wallpaper picker", "settings": "Settings panel",
-    "waybar-selector": "Waybar style", "refresh": "Reload Waybar", "launcher": "App launcher"
+    "home": "Home screen", "wallpaper": "Wallpaper picker", "settings": "Settings panel", "music": "Music player",
+    "refresh": "Reload Waybar", "launcher": "App launcher"
 }
 
 const NAMED = { terminal: "Terminal", fileManager: "File manager", menu: "App menu", browser: "Browser" }

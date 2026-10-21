@@ -17,6 +17,12 @@ ShellRoot {
     readonly property string home: Quickshell.env("HOME")
     readonly property bool portrait: win.screen ? win.screen.height > win.screen.width : false
     readonly property real u: unitFor(win.screen)
+    // Hyprland's live rounding (override or profile default): the cards take it as is, and smaller pieces
+    // designed against its default 10px scale along with it.
+    Rounding { id: roundingWatch }
+    readonly property real rounding: roundingWatch.value
+    function rr(v) { return v * rounding / 10 * u }
+
     // Portrait screens stack the tiles two per row, so their column is wider.
     readonly property real sysW: portrait ? 352 : 330
 
@@ -120,6 +126,7 @@ ShellRoot {
     }
 
     function show() {
+        roundingWatch.refresh()
         startTimer.stop()
         watchdog.stop()
         closing = false
@@ -394,7 +401,7 @@ ShellRoot {
 
         Rectangle {
             anchors.fill: parent
-            radius: 10 * root.u
+            radius: root.rounding
             color: root.glass
         }
 
@@ -498,7 +505,7 @@ ShellRoot {
 
         Rectangle {
             anchors.fill: parent
-            radius: 20 * root.u
+            radius: root.rr(20)
             color: dma.containsMouse ? "#2effffff" : "#14ffffff"
             Behavior on color { ColorAnimation { duration: 150 } }
         }
@@ -784,7 +791,7 @@ ShellRoot {
                             id: art
                             width: 100 * root.u
                             height: 100 * root.u
-                            radius: 18 * root.u
+                            radius: root.rr(18)
                             color: "#22ffffff"
                             Image {
                                 anchors.fill: parent
@@ -971,7 +978,7 @@ ShellRoot {
                         Rectangle {
                             width: (parent.width - parent.spacing) / 2
                             height: parent.height
-                            radius: 8 * root.u
+                            radius: root.rr(8)
                             color: "#12ffffff"
 
                             Text {
@@ -1020,7 +1027,7 @@ ShellRoot {
                         Rectangle {
                             width: (parent.width - parent.spacing) / 2
                             height: parent.height
-                            radius: 8 * root.u
+                            radius: root.rr(8)
                             color: "#12ffffff"
 
                             Text {
