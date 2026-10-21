@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // Vertical wheel: scroll (or arrow keys) to turn it, click or Enter to apply.
 // entries: [{ id, name, sub, colors?: [hex...], image?: url }]. Colors render as discrete swatch pills

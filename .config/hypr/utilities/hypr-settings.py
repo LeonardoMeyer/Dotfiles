@@ -219,7 +219,7 @@ def profiles():
     for style in sorted(HYPR.iterdir()):
         if not (style / "utilities").is_dir():
             continue
-        variants = sorted(v.name for v in style.iterdir() if (v / "hyprland.lua").is_file())
+        variants = sorted(v.name for v in style.iterdir() if (v / "machine.lua").is_file())
         if variants:
             found[style.name] = variants
     active = PROFILE_FILE.read_text().strip() if PROFILE_FILE.exists() else ""

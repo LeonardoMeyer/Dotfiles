@@ -303,7 +303,7 @@ This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprl
   <summary>⚙️ How it all fits together</summary>
 
   - **Style**: the whole look: Hyprland config, quickshells and waybars. Right now there is **one style: `Modern`**.
-  - **Variant**: a version of a style for a machine: `desktop` and `laptop` (monitors, startup, input).
+  - **Variant**: a machine running a style: `desktop` and `laptop`. All variants share the style's `base/` files; a variant only holds a `machine.lua` (monitors, mouse sensitivity, boot and cursor defaults), plus any base file it wants to replace.
   - **Profile**: your tweaks on top of the variant, picked in the settings panel:
     - **Default**: the variant exactly as it ships, no tweaks.
     - **Desktop / Laptop**: the variant's own tweaks file.
@@ -314,8 +314,9 @@ This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprl
   ```
   hypr/
     Modern/                 <- a style
-      laptop/  desktop/     <- variants: hyprland.lua, startup.lua, style.lua, shortcuts.lua
-      utilities/            <- the style's quickshells
+      base/                 <- shared by every variant: hyprland.lua, startup.lua, style.lua, shortcuts.lua, ...
+      laptop/  desktop/     <- variants: machine.lua (+ any base file to replace for that machine)
+      utilities/            <- the style's quickshells (common/ holds the shared Theme and Rounding)
       waybar/<name>/        <- waybar styles: config, style.css, preview.png
     tweaks/                 <- your tweaks and saved profiles (profiles are never edited)
     utilities/              <- shared scripts; the active style's quickshells are symlinked in here
@@ -337,6 +338,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
   1. **Install [Quickshell](https://quickshell.org)** (`yay -S quickshell`)
   2. Copy `Dotfiles/.config/hypr` into `~/.config` (or use the installer)
   3. `~/.config/hypr/utilities/shells.sh start` starts them all. `startup.lua` already does this.
+  4. `shells.sh <utility> [call]` opens one (`shells.sh music`, `shells.sh launcher tab apps`, ...). Every folder in `utilities/` with a `shell.qml` is loaded, so a new utility is just a new folder.
 </details>
 
 <details>
@@ -396,7 +398,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 
 ![music](https://github.com/elifouts/Dotfiles/blob/main/images/v2/music.gif)
 
-- `Alt+M` drops a card out from under waybar.
+- `Alt+Enter` drops a card out from under waybar.
 - Follows Spotify, or whatever is playing. The chip in the top left switches players.
 - Live `cava` visualizer. Drag the bottom edge to resize it.
 </details>
@@ -588,7 +590,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 <details>
   <summary>🗄️ Old stuff (no longer used)</summary>
 
-  These were replaced by the Quickshell utilities. Their configs are still in `.config/archive` (and `.config/wofi`) if you want them, but nothing launches them anymore.
+  These were replaced by the Quickshell utilities. Their configs are still in `archive/` if you want them, but nothing launches them anymore.
 
 <details>
   <summary>🔍 Wofi (replaced by the Launcher and Wallpaper Picker)</summary>
@@ -610,20 +612,20 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
   <summary>🔔 Swaync (replaced by Notifications and the Home Screen)</summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync1.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync2.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync3.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync4.png" width = "20%">
 
-  - Config is in `.config/archive/swaync`. Dependencies: `swaync pywal gvfs libnotify`.
+  - Config is in `archive/swaync`. Dependencies: `swaync pywal gvfs libnotify`.
 </details>
 
 <details>
   <summary>🔊 SwayOSD (replaced by the OSD)</summary>
 
-  - Config is in `.config/archive/swayosd`.
+  - Config is in `archive/swayosd`.
 </details>
 
 <details>
   <summary>🚪 Wlogout (replaced by the Launcher's Home dial)</summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout1.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout2.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout3.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout4.png" width = "40%">
 
-  - Config is in `.config/archive/wlogout`.
+  - Config is in `archive/wlogout`.
 </details>
 
 <details>

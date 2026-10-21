@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // Home: session and desktop actions on a dial. Home, Settings and Wallpaper always lead from twelve o'clock;
 // the rest follow, most used first.
@@ -18,9 +19,9 @@ Item {
         { id: "reboot", icon: "", label: "Reboot", sub: "Restart the machine", confirm: "reboot", cmd: "systemctl reboot || loginctl reboot" },
         { id: "poweroff", icon: "", label: "Power off", sub: "Shut down", confirm: "power off", cmd: "systemctl poweroff || loginctl poweroff" },
         { id: "screenshot", icon: "", label: "Screenshot", sub: "Select a region", after: true, cmd: "hyprshot -m region -o ~/Screenshots/" },
-        { id: "home", icon: "", label: "Home", sub: "Home screen", after: true, cmd: util + "home.sh" },
-        { id: "wallpaper", icon: "", label: "Wallpaper", sub: "Pick a wallpaper", after: true, cmd: util + "wallpaper.sh" },
-        { id: "settings", icon: "", label: "Settings", sub: "Hyprland settings", after: true, cmd: util + "settings.sh" }
+        { id: "home", icon: "", label: "Home", sub: "Home screen", after: true, cmd: util + "shells.sh home" },
+        { id: "wallpaper", icon: "", label: "Wallpaper", sub: "Pick a wallpaper", after: true, cmd: util + "shells.sh wallpaper" },
+        { id: "settings", icon: "", label: "Settings", sub: "Hyprland settings", after: true, cmd: util + "shells.sh settings" }
     ]
     readonly property var pinned: ["home", "settings", "wallpaper"]
     // Pinned first in that order, then usage order; ties keep the order above.

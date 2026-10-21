@@ -86,7 +86,8 @@ function describeCmd(cmd, expr) {
         return { cat: "shots", desc: desc }
     }
     if ((m = cmd.match(/pypr\s+toggle\s+(\S+)/))) return { cat: "scratch", desc: cap(m[1]) + " scratchpad" }
-    if ((m = cmd.match(/([\w-]+)\.sh\b/)) && SCRIPTS[m[1]])
+    // shells.sh <utility> opens a quickshell utility; other scripts are known by their own name.
+    if ((m = cmd.match(/shells\.sh\s+([\w-]+)/) || cmd.match(/([\w-]+)\.sh\b/)) && SCRIPTS[m[1]])
         return { cat: m[1] === "launcher" ? "apps" : "system", desc: SCRIPTS[m[1]] }
     if (/^(pidof hyprlock \|\| )?hyprlock\b/.test(cmd)) return { cat: "system", desc: "Lock screen" }
     const prog = cmd.split(/\s+/)[0].split("/").pop()

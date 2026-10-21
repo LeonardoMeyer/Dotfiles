@@ -4,6 +4,9 @@ local terminal = "kitty"
 local fileManager = "thunar"
 local mainMod = "SUPER"
 
+hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
+hl.bind(mainMod .. " + B", hl.dsp.window.close())
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 -- Popping a window out floats it at a tidy size centered on its monitor (16:10 at 60% width on landscape,
 -- 4:5 at 85% width on portrait); popping it back in re-tiles it.
 local function pop_out()
@@ -31,12 +34,9 @@ local function pop_out()
     hl.dispatch(hl.dsp.window.resize({ x = math.floor(width), y = math.floor(height), relative = false, window = target }))
     hl.dispatch(hl.dsp.window.center({ window = target }))
 end
-hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
-hl.bind(mainMod .. " + B", hl.dsp.window.close())
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + V", pop_out)
 -- Tapping Super on its own; release binds only fire when no other key was pressed with it.
-hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("~/.config/hypr/utilities/launcher.sh"), { release = true })
+hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh launcher"), { release = true })
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 
@@ -77,11 +77,11 @@ hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:mag
 
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
-hl.bind("ALT + TAB", hl.dsp.exec_cmd("~/.config/hypr/utilities/home.sh"))
-hl.bind("ALT + w", hl.dsp.exec_cmd("~/.config/hypr/utilities/wallpaper.sh"))
+hl.bind("ALT + TAB", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh home"))
+hl.bind("ALT + w", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh wallpaper"))
 hl.bind("ALT + a", hl.dsp.exec_cmd("~/.config/waybar/scripts/refresh.sh"))
-hl.bind("ALT + S", hl.dsp.exec_cmd("~/.config/hypr/utilities/settings.sh"))
-hl.bind("ALT + M", hl.dsp.exec_cmd("~/.config/hypr/utilities/music.sh"))
+hl.bind("ALT + S", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh settings"))
+hl.bind("ALT + RETURN", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh music"))
 hl.bind(mainMod .. " + M", hl.dsp.exit())
 hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("pypr toggle packages"))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("pypr toggle term"))

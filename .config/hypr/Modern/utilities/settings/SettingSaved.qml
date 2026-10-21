@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // The list the live settings come from: Default (no overrides, can't be deleted), each variant's own
 // tweaks (desktop, laptop, ...) and named saved profiles. Style folders are presets and never change.

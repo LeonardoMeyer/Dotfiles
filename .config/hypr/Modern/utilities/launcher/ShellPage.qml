@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Io
+import "../common"
 
 // Every bash command (PATH executables plus .bashrc aliases and functions) on a vertical wheel.
 // Enter runs the centered one in kitty, Shift+Enter runs it in the background. Typing arguments offers the

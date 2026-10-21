@@ -6,8 +6,9 @@ import Quickshell.Wayland
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 import Quickshell.Widgets
+import "../common"
 
-// Music player: a square that drops out from under waybar at the top center, toggled with Alt+M (see music.sh).
+// Music player: a square that drops out from under waybar at the top center, toggled with Alt+Enter (see shells.sh).
 // It follows Spotify when that's running, else whichever player is playing; the chip top left switches players.
 // It never takes focus or closes on outside clicks: only the card itself takes input, and keys work once it's clicked.
 // The bottom edge drags to resize (it stays square and centered); the size is remembered between sessions.

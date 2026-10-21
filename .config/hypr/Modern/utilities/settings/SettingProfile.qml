@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // Style (the look: quickshells, animation, layer rules) and variant (laptop, desktop, ...).
 // Both come from folders under ~/.config/hypr, so adding a style needs no code.

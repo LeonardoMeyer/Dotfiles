@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../common"
 
 // A small cava spectrum: rounded bars rising from the bottom, colored along the pywal gradient.
 // cava only runs while `running` is set, so a closed player costs nothing.

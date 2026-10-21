@@ -1,16 +1,9 @@
--- Monitors, programs, autostart, and environment variables.
+-- Programs, autostart, and environment variables. Monitors and per-machine defaults are in machine.lua.
 
--- Profile defaults; the settings panel overrides them through settings.lua.
-local defaults = {
-    boot = { enabled = true, black_ms = 2500 },
-    cursor = { theme = "Bibata-Modern-Ice", size = 12 },
-}
+local defaults = require("machine").defaults
 local saved = require("settings")
 local boot = saved.boot or defaults.boot
 local cursor = saved.cursor or defaults.cursor
-
-hl.monitor({ output = "DP-4", mode = "1920x1080@74.97", position = "1480x64", scale = 1.00, transform = 1 })
-hl.monitor({ output = "DP-5", mode = "1920x1080@239.96", position = "2560x480", scale = 1.00 })
 
 hl.on("hyprland.start", function()
     if boot.enabled ~= false then
@@ -38,6 +31,7 @@ end)
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
 hl.env("LIBVA_DRIVER_NAME", "nvidia")
 hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+hl.env("XCURSOR_THEME", cursor.theme or defaults.cursor.theme)
 hl.env("XCURSOR_SIZE", tostring(cursor.size or defaults.cursor.size))
 
 hl.device({ name = "epic-mouse-v1", sensitivity = 0 })

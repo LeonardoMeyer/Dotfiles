@@ -1,20 +1,21 @@
 #!/bin/bash
 # Save the live root config back into the active profile.
-# Reads .active-profile (relative path like "Modern/laptop") and copies
-# root .lua files plus hyprlock.conf into that profile folder.
+# Reads .active-profile (e.g. "Modern/laptop"). machine.lua, and any file the variant already overrides,
+# go back to the variant folder; every other .lua file and hyprlock.conf go to the style's shared base/.
 
 set -euo pipefail
 
 HYPR_DIR="${HYPR_DIR:-$HOME/.config/hypr}"
-EXCLUDE=("overrides.lua" "settings.lua")   # add "settings.lua" here to skip the panel-generated file too
+EXCLUDE=("overrides.lua" "settings.lua")   # owned by the settings panel, not by a profile
 
 [[ -f "$HYPR_DIR/.active-profile" ]] || { echo "No .active-profile in $HYPR_DIR" >&2; exit 1; }
 
 profile="$(tr -d '[:space:]' < "$HYPR_DIR/.active-profile")"
-dest="$HYPR_DIR/$profile"
-
 [[ -n "$profile" ]] || { echo ".active-profile is empty" >&2; exit 1; }
-[[ -d "$dest" ]] || { echo "Profile directory not found: $dest" >&2; exit 1; }
+
+variant_dir="$HYPR_DIR/$profile"
+base_dir="$HYPR_DIR/${profile%%/*}/base"
+[[ -d "$variant_dir" && -d "$base_dir" ]] || { echo "Profile not found: $profile" >&2; exit 1; }
 
 echo "Active profile: $profile"
 
@@ -26,8 +27,13 @@ for file in "$HYPR_DIR"/*.lua "$HYPR_DIR"/hyprlock.conf; do
         [[ "$name" == "$ex" ]] && skip=true
     done
     $skip && { echo "skip  $name"; continue; }
+    if [[ "$name" == machine.lua || -f "$variant_dir/$name" ]]; then
+        dest="$variant_dir"
+    else
+        dest="$base_dir"
+    fi
     cp -f "$file" "$dest/$name"
-    echo "copy  $name"
+    echo "copy  $name -> ${dest#"$HYPR_DIR"/}"
 done
 
 echo "Done."

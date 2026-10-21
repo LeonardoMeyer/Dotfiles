@@ -1,9 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-# Activates a Hyprland profile: hypr/<style>/<variant>/*.lua become the active config and
-# hypr/<style>/utilities/* become the active quickshells (symlinked into hypr/utilities/).
-# Adding a style is just a new folder: <style>/{laptop,desktop,...}/ with hyprland.lua, plus <style>/utilities/.
+# Activates a Hyprland profile: hypr/<style>/base/*.lua plus hypr/<style>/<variant>/*.lua become the active
+# config (a variant file named like a base file replaces it), and hypr/<style>/utilities/* become the active
+# quickshells (symlinked into hypr/utilities/).
+# Adding a style is just a new folder: <style>/base/, <style>/utilities/ and a <style>/<variant>/machine.lua
+# per machine (monitors, input, boot and cursor defaults).
 #
 # usage: hypr-profile.sh apply <style> <variant> [--offline]
 #        hypr-profile.sh list
@@ -17,7 +19,7 @@ list() {
         [ -d "$style/utilities" ] || continue
         for variant in "$style"/*/; do
             variant="${variant%/}"
-            [ -f "$variant/hyprland.lua" ] && printf '%s/%s\n' "${style##*/}" "${variant##*/}"
+            [ -f "$variant/machine.lua" ] && printf '%s/%s\n' "${style##*/}" "${variant##*/}"
         done
     done
 }
@@ -26,7 +28,7 @@ apply() {
     local style="${1:?style}" variant="${2:?variant}" offline="${3:-}"
     local src="$HYPR/$style/$variant" d
 
-    [ -f "$src/hyprland.lua" ] && [ -d "$HYPR/$style/utilities" ] || {
+    [ -f "$src/machine.lua" ] && [ -f "$HYPR/$style/base/hyprland.lua" ] && [ -d "$HYPR/$style/utilities" ] || {
         echo "Profile not found: $style/$variant" >&2
         exit 1
     }
@@ -37,6 +39,7 @@ apply() {
 
     # settings.lua and overrides.lua belong to the settings panel, not to a profile (settings.lua is rewritten below).
     find "$HYPR" -maxdepth 1 -type f -name '*.lua' ! -name overrides.lua ! -name settings.lua -delete
+    cp -a "$HYPR/$style/base"/*.lua "$HYPR/"
     cp -a "$src"/*.lua "$HYPR/"
 
     find "$UTIL" -maxdepth 1 -type l -delete

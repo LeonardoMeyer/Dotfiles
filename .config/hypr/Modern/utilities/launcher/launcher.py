@@ -2,9 +2,10 @@
 """Desktop-entry facts Quickshell doesn't expose, plus the shared usage caches.
 
 usage:
-  launcher.py apps                 JSON: {"hide": [ids wofi's drun would skip], "paths": {id: desktop file}}
+  launcher.py apps                 JSON: {"hide": [ids a drun launcher would skip], "paths": {id: desktop file}}
   launcher.py commands             JSON: [{"n": name, "k": alias|function|bin, "d": detail}] for every bash command
-  launcher.py bump <cache> <key>   add one use of <key> to a wofi-format cache ("<count> <key>" per line)
+  launcher.py init <cache>...      create any missing usage cache (empty) so the launcher can watch it
+  launcher.py bump <cache> <key>   add one use of <key> to a usage cache ("<count> <key>" per line)
 """
 import json
 import os
@@ -51,7 +52,7 @@ def tryexec_ok(v):
     return shutil.which(v) is not None
 
 
-# Same rules as GLib's g_app_info_should_show plus the TryExec check, which is what wofi's drun list uses.
+# Same rules as GLib's g_app_info_should_show plus the TryExec check, which is what drun launchers use.
 def hidden(entry, desktops):
     if entry.get("Hidden", "").lower() == "true" or entry.get("NoDisplay", "").lower() == "true":
         return True
@@ -122,6 +123,12 @@ def commands():
     json.dump(sorted(out.values(), key=lambda e: e["n"].lower()), sys.stdout)
 
 
+def init(caches):
+    for cache in caches:
+        os.makedirs(os.path.dirname(cache) or ".", exist_ok=True)
+        open(cache, "a").close()
+
+
 def bump(cache, key):
     counts = {}
     try:
@@ -147,6 +154,8 @@ if __name__ == "__main__":
         apps()
     elif args[:1] == ["commands"]:
         commands()
+    elif args[:1] == ["init"]:
+        init(args[1:])
     elif args[:1] == ["bump"] and len(args) == 3:
         bump(args[1], args[2])
     else:

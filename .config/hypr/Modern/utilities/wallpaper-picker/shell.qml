@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Widgets
+import "../common"
 
 ShellRoot {
     id: root

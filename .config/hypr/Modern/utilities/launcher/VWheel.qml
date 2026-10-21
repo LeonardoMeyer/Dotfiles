@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // Vertical wheel in the style of the settings sheet's Waybar and color wheels: the centered entry is full size on
 // an accent plate, neighbours shrink and fade with distance. Built for thousands of entries: only the rows near the

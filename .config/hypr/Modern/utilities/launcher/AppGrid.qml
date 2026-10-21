@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Widgets
+import "../common"
 
 // Every app keeps one icon for the life of the shell. Filtering only hands out slots: an icon that still matches
 // stays fully drawn and glides to its new slot, an icon that stops matching fades where it stands, and one that

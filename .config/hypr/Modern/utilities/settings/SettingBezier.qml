@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import "Schema.js" as Schema
+import "../common"
 
 // Animation curve tuning: drag the handles, watch the preview, or roll the dice.
 // The preview plays the real curve at the real duration (never shorter than 0.6 s, so it stays readable).

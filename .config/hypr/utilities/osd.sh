@@ -7,12 +7,7 @@ set -uo pipefail
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 show() {
-    qs -p "$DIR" ipc call osd notify "$@" >/dev/null 2>&1 && return
-    qs -p "$DIR" --daemonize --no-duplicate >/dev/null 2>&1
-    for _ in $(seq 1 60); do
-        sleep 0.05
-        qs -p "$DIR" ipc call osd notify "$@" >/dev/null 2>&1 && return
-    done
+    "$DIR/shells.sh" osd notify "$@"
 }
 
 # Prints "<volume 0-1> <muted true|false>" for a wpctl node.

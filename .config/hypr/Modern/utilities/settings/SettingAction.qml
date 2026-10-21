@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // Drops every tweak and returns to the active profile's own values; needs a second click to confirm.
 Item {

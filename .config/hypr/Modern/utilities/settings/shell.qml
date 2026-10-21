@@ -4,8 +4,9 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import "Schema.js" as Schema
+import "../common"
 
-// Hyprland settings sheet: slides in from the left edge below waybar, toggled with Alt+S (see settings.sh).
+// Hyprland settings sheet: slides in from the left edge below waybar, toggled with Alt+S (see shells.sh).
 // The right edge drags to resize; the width is remembered between sessions.
 ShellRoot {
     id: root
@@ -50,7 +51,7 @@ ShellRoot {
         return Quickshell.screens.find(s => s.name === mon?.name) ?? Quickshell.screens[0]
     }
 
-    // settings.sh passes the monitor under the cursor; Hyprland's focused monitor is only the fallback.
+    // shells.sh passes the monitor under the cursor; Hyprland's focused monitor is only the fallback.
     function screenNamed(name) {
         return Quickshell.screens.find(s => s.name === name) ?? focusedScreen()
     }
@@ -181,7 +182,7 @@ ShellRoot {
         target: root
         property: "t"
         onFinished: {
-            // Stay resident and hidden (settings.sh reopens over IPC); fully closed lets the next open pick a monitor.
+            // Stay resident and hidden (shells.sh reopens over IPC); fully closed lets the next open pick a monitor.
             if (root.leaving) { root.active = false; root.leaving = false }
             else Store.refresh()
         }

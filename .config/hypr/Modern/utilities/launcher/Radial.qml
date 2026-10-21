@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // Buttons on a circle, starting at twelve o'clock and going clockwise. One highlight travels the ring along the
 // shortest arc to the current entry; children sit in the middle of the ring.

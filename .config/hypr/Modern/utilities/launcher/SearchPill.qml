@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // One shape that is a search button when closed and the search field when open: the width grows with a fixed
 // half-height radius, so the circle stretches into an oval instead of being swapped for another widget.

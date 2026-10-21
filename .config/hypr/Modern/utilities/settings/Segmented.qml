@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // Equal-width pill selector with a sliding highlight, for up to four options.
 Item {

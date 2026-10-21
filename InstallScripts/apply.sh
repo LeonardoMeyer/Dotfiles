@@ -7,10 +7,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/fullinstall.sh"
-source "$SCRIPT_DIR/wofi-paths.sh"
 
 [[ -d "$DOTFILES_DIR" ]] || { error "Dotfiles directory not found: $DOTFILES_DIR"; exit 1; }
 
 select_hyprland_style
 apply_dotfiles
-fix_wofi_paths

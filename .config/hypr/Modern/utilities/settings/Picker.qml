@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // One labelled choice: a dropdown for five or more options, otherwise a pill selector
 // (inline beside the label for two, full width below it for three or four).

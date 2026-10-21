@@ -4,6 +4,7 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Widgets
+import "../common"
 
 ShellRoot {
     id: root
@@ -30,21 +31,12 @@ ShellRoot {
     // Width progress starts after the dot has begun rising; may overshoot a touch on enter.
     readonly property real w: Math.max(0, (t - 0.2) / 0.8)
 
-    FileView {
-        id: walFile
-        path: root.home + "/.cache/wal/colors.json"
-        watchChanges: true
-        onFileChanged: reload()
-    }
-    readonly property var wal: {
-        try { return JSON.parse(walFile.text()) } catch (e) { return null }
-    }
-    // Same palette roles as waybar: color9 accent, color7 text, background at 0.6.
-    readonly property color accent: wal ? wal.colors.color9 : "#8fd3ff"
-    readonly property color fg: wal ? wal.colors.color7 : "#c7c6c2"
-    readonly property color bright: wal ? wal.colors.color15 : "#ffffff"
-    readonly property color dim: wal ? wal.colors.color8 : "#716e5d"
-    readonly property color bg: wal ? wal.special.background : "#101418"
+    // The shared palette (common/Theme.qml); background drawn at 0.6.
+    readonly property color accent: Theme.accent
+    readonly property color fg: Theme.fg
+    readonly property color bright: Theme.bright
+    readonly property color dim: Theme.dim
+    readonly property color bg: Theme.bg
 
     readonly property bool hasBar: kind === "volume" || kind === "brightness"
     readonly property bool off: kind === "volume" ? flag : false

@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 Picker {
     id: control

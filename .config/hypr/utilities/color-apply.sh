@@ -60,7 +60,7 @@ horizontal_gradient_color_5 = '$(walc color14)'
 
 [smoothing]
 noise_reduction = 72
-CAVA 
+CAVA
 # USR1 reloads the whole config (USR2 only re-reads colors).
 pkill -USR1 cava 2>/dev/null || true
 

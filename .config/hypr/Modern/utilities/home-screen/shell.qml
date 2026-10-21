@@ -10,6 +10,7 @@ import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 import "../music" as Music
 import Quickshell.Services.Notifications
+import "../common"
 
 ShellRoot {
     id: root

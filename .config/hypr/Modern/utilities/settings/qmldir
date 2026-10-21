@@ -1,4 +1,3 @@
-singleton Theme 1.0 Theme.qml
 singleton Store 1.0 Store.qml
 Segmented 1.0 Segmented.qml
 Dropdown 1.0 Dropdown.qml

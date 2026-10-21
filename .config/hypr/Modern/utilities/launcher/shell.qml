@@ -3,22 +3,24 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
+import "../common"
 
-// App launcher: a panel rising from the bottom edge, toggled by tapping Super (see launcher.sh).
-// Apps are a searchable icon grid ranked by wofi's own usage cache, Home is a dial of session actions,
+// App launcher: a panel rising from the bottom edge, toggled by tapping Super (see shells.sh).
+// Apps are a searchable icon grid ranked by how often you open them, Home is a dial of session actions,
 // Commands is every bash command on a wheel, and Keybinds reads the live shortcuts.lua.
 ShellRoot {
     id: root
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string helper: Quickshell.shellPath("launcher/launcher.py")
-    // Same terminal wofi is configured with (term=kitty) for Terminal=true entries and shell commands.
+    // Terminal for Terminal=true entries and shell commands.
     readonly property string terminal: "kitty"
-    // wofi's drun history, shared so either launcher ranks apps the same; the other tabs keep theirs alongside it.
-    readonly property string appCache: home + "/.cache/wofi-drun"
-    readonly property string homeCache: home + "/.cache/wofi-launcher-commands"
-    readonly property string shellCache: home + "/.cache/wofi-launcher-shell"
-    readonly property string bindCache: home + "/.cache/wofi-launcher-keybinds"
+    // Usage counts per tab ("<count> <key>" per line), created on first start.
+    readonly property string cacheDir: home + "/.cache/launcher"
+    readonly property string appCache: cacheDir + "/apps"
+    readonly property string homeCache: cacheDir + "/commands"
+    readonly property string shellCache: cacheDir + "/shell"
+    readonly property string bindCache: cacheDir + "/keybinds"
 
     // The window stays mapped (empty input region) so opening never waits on surface creation.
     property bool active: false
@@ -109,6 +111,18 @@ ShellRoot {
         onFileChanged: reload()
     }
 
+    // A FileView only watches a file that existed when it loaded, so create missing caches, then reload.
+    Process {
+        running: true
+        command: ["python3", root.helper, "init", root.appCache, root.homeCache, root.shellCache, root.bindCache]
+        onExited: {
+            appCacheFile.reload()
+            homeCacheFile.reload()
+            shellCacheFile.reload()
+            bindCacheFile.reload()
+        }
+    }
+
     FileView {
         id: appCacheFile
         path: root.appCache
@@ -179,7 +193,7 @@ ShellRoot {
         return 0
     }
 
-    // Most used first (wofi's order), then by name; a query ranks by match quality first.
+    // Most used first, then by name; a query ranks by match quality first.
     function refresh() {
         const q = query.trim().toLowerCase()
         const hits = []

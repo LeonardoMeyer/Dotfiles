@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "Binds.js" as Binds
+import "../common"
 
 // The live shortcuts.lua, grouped: a small dial picks the category, its binds list underneath.
 // Categories you end up on most often move to the top of the dial.

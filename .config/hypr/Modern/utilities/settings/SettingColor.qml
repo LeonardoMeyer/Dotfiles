@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // A 0xRRGGBBAA color: type the hex, or pick a palette swatch (which keeps the current alpha).
 Item {

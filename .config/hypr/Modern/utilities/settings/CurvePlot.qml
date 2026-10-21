@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // Interactive cubic Bézier plot (time on x, progress on y). Drag the two handles; y may leave 0..1 to overshoot.
 // `t` and `p` place a moving dot on the curve while a preview plays.

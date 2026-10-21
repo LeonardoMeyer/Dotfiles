@@ -6,7 +6,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/fullinstall-packages.sh"
-source "$SCRIPT_DIR/wofi-paths.sh"
 
 RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'
 CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; RESET=$'\033[0m'
@@ -115,7 +114,7 @@ apply_dotfiles() {
     for entry in "$src"/*; do
         link_entry "$entry" "$HOME/.config/${entry##*/}" "$backup/.config"
     done
-    for name in wallpapers .icons .bashrc; do
+    for name in wallpapers .bashrc; do
         [[ -e "$DOTFILES_DIR/$name" ]] && link_entry "$DOTFILES_DIR/$name" "$HOME/$name" "$backup"
     done
     shopt -u nullglob dotglob
@@ -128,17 +127,16 @@ apply_dotfiles() {
         "$src/hypr/utilities/hypr-profile.sh" apply "${HYPRLAND_STYLE_DIR%%/*}" "${HYPRLAND_STYLE_DIR#*/}" --offline
     fi
 
-    fix_wofi_paths
     success "Dotfiles linked."
     nohup bash -c 'sleep 1; hyprctl reload' >/dev/null 2>&1 &
 }
 
 run_wallpaper_selector() {
-    local script="$HOME/.config/hypr/utilities/wallpaper.sh"
+    local script="$HOME/.config/hypr/utilities/shells.sh"
 
     if [[ -x "$script" ]]; then
         section "Selecting Wallpaper"
-        "$script"
+        "$script" wallpaper open
     else
         warn "Wallpaper selector not found."
     fi

@@ -1,0 +1,18 @@
+{
+  "config": {
+    "general": {
+      "border_size": 0
+    },
+    "plugin": {
+      "hyprglass": {
+        "enabled": false,
+        "layers": {
+          "enabled": false
+        }
+      }
+    }
+  },
+  "wallpaper": {
+    "path": "/home/ws-73/wallpapers/library/nature/nat-39.jpg"
+  }
+}

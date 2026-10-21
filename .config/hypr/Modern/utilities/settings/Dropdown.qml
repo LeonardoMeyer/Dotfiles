@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 // Collapsed row that expands in place into a list; used when there are five or more options.
 // options: [{ v, l, swatch?: [colors], image?: url }]
