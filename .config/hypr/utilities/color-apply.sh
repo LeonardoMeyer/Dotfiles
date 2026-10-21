@@ -33,12 +33,36 @@ fi
 cat ~/.cache/wal/colors-kitty.conf > ~/.config/kitty/current-theme.conf
 pywalfox update >/dev/null 2>&1 || true
 
-color1=$(awk 'match($0, /color2=\47(.*)\47/,a) { print a[1] }' ~/.cache/wal/colors.sh)
-color2=$(awk 'match($0, /color3=\47(.*)\47/,a) { print a[1] }' ~/.cache/wal/colors.sh)
-cava_config="$HOME/.config/cava/config"
-sed -i "s/^gradient_color_1 = .*/gradient_color_1 = '$color1'/" "$cava_config"
-sed -i "s/^gradient_color_2 = .*/gradient_color_2 = '$color2'/" "$cava_config"
-pkill -USR2 cava 2>/dev/null || true
+# Terminal cava mirrors the music player's visualizer: the same left-to-right pywal gradient
+# (Theme.spectrum) and the same feed settings as music/cava.conf.
+walc() { awk -v k="$1" 'match($0, "^" k "=\47(.*)\47", a) { print a[1] }' ~/.cache/wal/colors.sh; }
+cat > "$HOME/.config/cava/config" <<CAVA
+[general]
+framerate = 60
+autosens = 1
+lower_cutoff_freq = 50
+higher_cutoff_freq = 12000
+bar_width = 2
+bar_spacing = 1
+
+[output]
+channels = mono
+mono_option = average
+
+[color]
+horizontal_gradient = 1
+horizontal_gradient_count = 5
+horizontal_gradient_color_1 = '$(walc color4)'
+horizontal_gradient_color_2 = '$(walc color9)'
+horizontal_gradient_color_3 = '$(walc color13)'
+horizontal_gradient_color_4 = '$(walc color12)'
+horizontal_gradient_color_5 = '$(walc color14)'
+
+[smoothing]
+noise_reduction = 72
+CAVA 
+# USR1 reloads the whole config (USR2 only re-reads colors).
+pkill -USR1 cava 2>/dev/null || true
 
 # style.lua reads the palette at load time, so borders need a config reload to follow.
 hyprctl reload config-only >/dev/null 2>&1 || true

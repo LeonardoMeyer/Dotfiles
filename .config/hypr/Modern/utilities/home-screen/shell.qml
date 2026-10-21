@@ -8,6 +8,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
+import "../music" as Music
 import Quickshell.Services.Notifications
 
 ShellRoot {
@@ -877,6 +878,15 @@ ShellRoot {
                             IconButton { size: 52 * root.u; glyph: "\uf048"; onClicked: media.pl.previous() }
                             IconButton { size: 52 * root.u; glyph: media.pl && media.pl.isPlaying ? "\uf04c" : "\uf04b"; onClicked: media.pl.togglePlaying() }
                             IconButton { size: 52 * root.u; glyph: "\uf051"; onClicked: media.pl.next() }
+                        }
+
+                        // The music player's cava visualizer; it only runs while the home screen is up.
+                        Music.Visualizer {
+                            anchors.bottom: parent.bottom
+                            width: parent.width
+                            height: 34 * root.u
+                            running: root.shown && !root.closing && media.pl !== null
+                            intro: root.seg(0.2)
                         }
                     }
                 }

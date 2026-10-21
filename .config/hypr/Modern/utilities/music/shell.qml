@@ -4,6 +4,7 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.Mpris
+import Quickshell.Services.Pipewire
 import Quickshell.Widgets
 
 // Music player: a square that drops out from under waybar at the top center, toggled with Alt+M (see music.sh).
@@ -135,17 +136,31 @@ ShellRoot {
         player.position = Math.max(0, Math.min(player.length, player.position + s))
     }
 
-    // Focus Spotify if it's running, else start it.
+    // Same as the home screen's: focus an existing Spotify window; reveal it via pypr if it sits in the scratchpad;
+    // otherwise launch the scratchpad.
     function openSpotify() {
-        if (spotify) {
-            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "class:(?i)spotify"])
-        } else {
-            const e = DesktopEntries.byId("spotify-launcher") ?? DesktopEntries.byId("spotify") ?? DesktopEntries.byId("com.spotify.Client")
-            if (e) e.execute()
-            else Quickshell.execDetached(["spotify-launcher"])
-        }
+        Quickshell.execDetached(["sh", "-c",
+            "c=$(hyprctl clients -j | jq -c '[.[] | select(.class | test(\"^spotify$\"; \"i\"))][0] // empty'); " +
+            "if [ -z \"$c\" ]; then pypr show spotify; " +
+            "elif echo \"$c\" | jq -e '.workspace.name | startswith(\"special\")' >/dev/null; then pypr show spotify; " +
+            "else hyprctl dispatch focuswindow address:$(echo \"$c\" | jq -r .address); fi"])
         close()
     }
+
+    // ---- Volume -----------------------------------------------------------------------------------------------
+
+    readonly property var sink: Pipewire.defaultAudioSink
+    readonly property real volume: sink && sink.audio ? sink.audio.volume : 0
+    readonly property bool muted: sink && sink.audio ? sink.audio.muted : false
+    PwObjectTracker { objects: [Pipewire.defaultAudioSink] }
+
+    function setVolume(v) {
+        if (!sink || !sink.audio) return
+        sink.audio.volume = Math.max(0, Math.min(1, v))
+        // Moving the volume while muted would otherwise change nothing audible.
+        if (v > 0 && sink.audio.muted) sink.audio.muted = false
+    }
+    function toggleMute() { if (sink && sink.audio) sink.audio.muted = !muted }
 
     function clock(s) {
         if (!(s > 0)) return "0:00"
@@ -292,6 +307,9 @@ ShellRoot {
                 else if (k === Qt.Key_Space || k === Qt.Key_K) { playButton.bump(); root.toggle() }
                 else if (k === Qt.Key_Left || k === Qt.Key_H) root.seekBy(-5)
                 else if (k === Qt.Key_Right || k === Qt.Key_L) root.seekBy(5)
+                else if (k === Qt.Key_Up) root.setVolume(root.volume + 0.05)
+                else if (k === Qt.Key_Down) root.setVolume(root.volume - 0.05)
+                else if (k === Qt.Key_M) root.toggleMute()
                 else if (k === Qt.Key_N || k === Qt.Key_Period) { nextButton.bump(); root.next() }
                 else if (k === Qt.Key_P || k === Qt.Key_Comma) { prevButton.bump(); root.previous() }
                 else { event.accepted = false; return }
@@ -400,6 +418,13 @@ ShellRoot {
                             glyphSize: root.px(19)
                             tint: root.spotify ? Theme.accent : Theme.fg
                             onClicked: root.openSpotify()
+                        }
+
+                        Volume {
+                            anchors.right: spotifyButton.left
+                            anchors.rightMargin: root.px(8)
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: root.px(116)
                         }
                     }
 
@@ -681,6 +706,67 @@ ShellRoot {
                 btn.bump()
                 btn.clicked()
             }
+        }
+    }
+
+    // The home screen's volume bar, pill-sized: click or drag along it, wheel over it, the speaker toggles mute.
+    component Volume: Item {
+        id: vb
+        height: root.px(24)
+        readonly property real level: root.muted ? 0 : root.volume
+
+        Rectangle {
+            anchors.fill: parent
+            radius: height / 2
+            color: Theme.alpha(Theme.fg, volDrag.containsMouse || volDrag.pressed ? 0.14 : 0.08)
+            clip: true
+            Behavior on color { ColorAnimation { duration: Theme.fast } }
+
+            Rectangle {
+                height: parent.height
+                width: Math.max(parent.height, parent.width * vb.level)
+                radius: height / 2
+                color: root.muted ? Theme.dim : Theme.accent
+                // Follows the pointer exactly while dragging, eases otherwise.
+                Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: Theme.fast } }
+            }
+        }
+
+        Text {
+            x: root.px(8)
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.muted || root.volume === 0 ? "\uf026" : "\uf028"
+            font.family: Theme.sans
+            font.pixelSize: root.px(12)
+            color: Theme.bg
+        }
+
+        Text {
+            anchors.right: parent.right
+            anchors.rightMargin: root.px(9)
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.muted ? "Muted" : Math.round(root.volume * 100) + "%"
+            font.family: Theme.sans
+            font.pixelSize: root.px(10)
+            color: vb.level > 0.8 ? Theme.bg : Theme.fg
+        }
+
+        MouseArea {
+            id: volDrag
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            preventStealing: true
+            onPressed: mouse => root.setVolume(mouse.x / width)
+            onPositionChanged: mouse => { if (pressed) root.setVolume(mouse.x / width) }
+            onWheel: wheel => root.setVolume(root.volume + wheel.angleDelta.y / 120 * 0.03)
+        }
+        MouseArea {
+            width: parent.height
+            height: parent.height
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.toggleMute()
         }
     }
 

@@ -48,7 +48,8 @@ Item {
 
     Process {
         running: viz.running
-        command: ["cava", "-p", Quickshell.shellPath("music/cava.conf")]
+        // Next to this file, so it works wherever the visualizer is used (the music player, the home screen).
+        command: ["cava", "-p", decodeURIComponent(Qt.resolvedUrl("cava.conf").toString().replace(/^file:\/\//, ""))]
         stdout: SplitParser {
             onRead: line => {
                 const parts = line.split(";")

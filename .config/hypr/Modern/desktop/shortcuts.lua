@@ -4,10 +4,37 @@ local terminal = "kitty"
 local fileManager = "thunar"
 local mainMod = "SUPER"
 
+-- Popping a window out floats it at a tidy size centered on its monitor (16:10 at 60% width on landscape,
+-- 4:5 at 85% width on portrait); popping it back in re-tiles it.
+local function pop_out()
+    local w = hl.get_active_window()
+    if not w then return end
+    local target = "address:" .. w.address
+    if w.floating then
+        hl.dispatch(hl.dsp.window.float({ action = "disable", window = target }))
+        return
+    end
+    hl.dispatch(hl.dsp.window.float({ action = "enable", window = target }))
+    local m = w.monitor
+    if not m then return end
+    -- Monitor sizes are before rotation and scaling; window sizes are after.
+    local sw, sh = m.width / m.scale, m.height / m.scale
+    if m.transform % 2 == 1 then sw, sh = sh, sw end
+    local width, height
+    if sw >= sh then
+        width = sw * 0.6
+        height = math.min(width * 10 / 16, sh * 0.7)
+    else
+        width = sw * 0.85
+        height = math.min(width * 5 / 4, sh * 0.6)
+    end
+    hl.dispatch(hl.dsp.window.resize({ x = math.floor(width), y = math.floor(height), relative = false, window = target }))
+    hl.dispatch(hl.dsp.window.center({ window = target }))
+end
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + B", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
-hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + V", pop_out)
 -- Tapping Super on its own; release binds only fire when no other key was pressed with it.
 hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("~/.config/hypr/utilities/launcher.sh"), { release = true })
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
