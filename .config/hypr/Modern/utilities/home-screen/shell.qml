@@ -325,7 +325,7 @@ ShellRoot {
     Process {
         id: walPath
         running: true
-        command: [Quickshell.shellPath("home-wall.sh")]
+        command: [Quickshell.shellPath("home-screen/home-wall.sh")]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (!root.shown) return
@@ -356,7 +356,7 @@ ShellRoot {
 
     Process {
         id: stats
-        command: [Quickshell.shellPath("home-stats.sh")]
+        command: [Quickshell.shellPath("home-screen/home-stats.sh")]
         stdout: StdioCollector { onStreamFinished: root.parseStats(text) }
     }
     Timer {

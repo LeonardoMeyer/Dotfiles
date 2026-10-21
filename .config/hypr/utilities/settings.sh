@@ -1,7 +1,7 @@
 #!/bin/bash
 set -uo pipefail
 
-DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/settings"
+DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 # The monitor under the cursor (not just the focused one), in layout coordinates: a rotated
 # monitor swaps width and height, and scale shrinks both.

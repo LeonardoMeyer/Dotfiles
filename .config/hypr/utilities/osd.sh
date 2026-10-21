@@ -4,7 +4,7 @@ set -uo pipefail
 # Applies a volume/brightness/caps/media action, then shows it on the Quickshell OSD.
 # usage: osd.sh vol-up|vol-down|vol-mute|mic-mute|bright-up|bright-down|caps|play|next|prev
 
-DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/osd"
+DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 show() {
     qs -p "$DIR" ipc call osd notify "$@" >/dev/null 2>&1 && return

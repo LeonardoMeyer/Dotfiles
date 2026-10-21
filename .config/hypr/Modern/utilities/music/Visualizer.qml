@@ -48,7 +48,7 @@ Item {
 
     Process {
         running: viz.running
-        command: ["cava", "-p", Quickshell.shellPath("cava.conf")]
+        command: ["cava", "-p", Quickshell.shellPath("music/cava.conf")]
         stdout: SplitParser {
             onRead: line => {
                 const parts = line.split(";")

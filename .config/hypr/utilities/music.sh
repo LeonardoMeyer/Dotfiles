@@ -2,7 +2,7 @@
 set -uo pipefail
 
 # Toggles the music player (Alt+M); music.sh open|close does just that.
-DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/music"
+DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 call="${1:-toggle}"
 
 # The shell stays resident and hidden, so opening is an IPC call rather than a launch.

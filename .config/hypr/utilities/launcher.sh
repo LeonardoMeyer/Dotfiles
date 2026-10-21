@@ -2,7 +2,7 @@
 set -uo pipefail
 
 # Toggles the app launcher (opens on Home); launcher.sh apps|home|commands|keybinds opens straight to that tab.
-DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/launcher"
+DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 if [ -n "${1:-}" ]; then
     call=(tab "$1")

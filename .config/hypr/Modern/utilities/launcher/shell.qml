@@ -11,7 +11,7 @@ ShellRoot {
     id: root
 
     readonly property string home: Quickshell.env("HOME")
-    readonly property string helper: Quickshell.shellPath("launcher.py")
+    readonly property string helper: Quickshell.shellPath("launcher/launcher.py")
     // Same terminal wofi is configured with (term=kitty) for Terminal=true entries and shell commands.
     readonly property string terminal: "kitty"
     // wofi's drun history, shared so either launcher ranks apps the same; the other tabs keep theirs alongside it.

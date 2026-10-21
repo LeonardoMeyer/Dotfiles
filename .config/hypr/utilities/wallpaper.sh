@@ -1,7 +1,7 @@
 #!/bin/bash
 set -uo pipefail
 
-DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/wallpaper-picker"
+DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 # The shell stays resident and hidden, so opening is an IPC call rather than a launch.
 qs -p "$DIR" ipc call wallpaper toggle 2>/dev/null && exit 0
