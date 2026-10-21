@@ -1,7 +1,5 @@
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=30&letterSpacing=tiny&duration=2000&pause=3000&color=F7F7F7&center=true&vCenter=true&width=435&lines=Eli's+Dotfiles)](https://git.io/typing-svg)
 
-
-
 <table>
   <tr>
     <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/rice-default.png" width="100%"></td>
@@ -36,14 +34,17 @@ This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprl
 -Eli F.
 
 
-> [!WARNING] 
->  
-> All Configurations were meant to be used with `Pywal`
+> [!WARNING]
+> All configurations are designed to work with `Pywal`.
 >
-
-If you do not want this, **you can pick a fixed color scheme in the settings panel (`Alt+S` → Colors)** or remove it in the given applications `style.css` and add valid color values. Although I highly recommend `Pywal` It's Pretty cool!
-
-Every screenshot below is shown three times, once for each of my saved profiles: **Default** | **Glass** | **Zen**. Same configs, just a different profile picked in the settings panel.
+> <details>
+>   <summary>More information about color schemes and screenshots</summary>
+>
+>   If you don't want to use `Pywal`, you can select a fixed color scheme in the settings panel (`Alt+S` → Colors), or edit the relevant application's `style.css` and replace the dynamic colors with valid fixed color values.
+>
+>   I highly recommend `Pywal`, though — it's pretty cool!
+  
+> </details>
 
 # Install
 
@@ -120,6 +121,8 @@ Every screenshot below is shown three times, once for each of my saved profiles:
 </details>
 
 ## My Applications
+
+Every screenshot below is shown three times, once for each saved profile: **Default** | **Glass** | **Zen**. The configurations are the same; only the selected profile in the settings panel changes.
 
 <details>
   <summary>✨ Quickshell</summary>
