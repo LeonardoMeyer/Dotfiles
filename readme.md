@@ -18,13 +18,13 @@
 
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Desktop%20Tour-1e1e2e?style=for-the-badge&logo=hyprland&logoColor=white" alt="Desktop Tour"></summary>
+  <summary><img src="images/badges/desktop-tour.svg" alt="Desktop Tour" align="absmiddle"></summary>
   <br>
   <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/tour.gif" width="75%">
 </details>
 
 <details>
-<summary><img src="https://img.shields.io/badge/Gallery-1e1e2e?style=for-the-badge" alt="Gallery"></summary>
+<summary><img src="images/badges/gallery.svg" alt="Gallery" align="absmiddle"></summary>
 
 ### Desktop Profiles
 
@@ -242,7 +242,7 @@ This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprl
 > All configurations are designed to work with `Pywal`.
 >
 > <details>
->   <summary><img src="https://img.shields.io/badge/Color%20Schemes-more%20info-45475a?style=for-the-badge&labelColor=1e1e2e" alt="Color Schemes (more info)"></summary>
+>   <summary><img src="images/badges/color-schemes-more-info.svg" alt="Color Schemes (more info)" align="absmiddle"></summary>
 >
 >   If you don't want to use `Pywal`, you can select a fixed color scheme in the settings panel (`Alt+S` → Colors), or edit the relevant application's `style.css` and replace the dynamic colors with valid fixed color values.
 >
@@ -253,7 +253,7 @@ This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprl
 # Install
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Arch%20Install%20Script-1e1e2e?style=for-the-badge&logo=archlinux&logoColor=white" alt="Arch Install Script"></summary>
+  <summary><img src="images/badges/arch-install-script.svg" alt="Arch Install Script" align="absmiddle"></summary>
   
   ```
   cd && git clone https://github.com/elifouts/Dotfiles.git
@@ -281,7 +281,7 @@ This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprl
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Package%20Manager%20TUI-1e1e2e?style=for-the-badge&logo=archlinux&logoColor=white" alt="Package Manager TUI"></summary>
+  <summary><img src="images/badges/package-manager-tui.svg" alt="Package Manager TUI" align="absmiddle"></summary>
 
   The package manager tool shows explicitly installed applications and packages
   from the full installer, including AUR packages, source, installed status, and
@@ -300,7 +300,7 @@ This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprl
 ## Styles, Variants & Profiles
 
 <details>
-  <summary><img src="https://img.shields.io/badge/How%20It%20All%20Fits%20Together-1e1e2e?style=for-the-badge" alt="How It All Fits Together"></summary>
+  <summary><img src="images/badges/how-it-all-fits-together.svg" alt="How It All Fits Together" align="absmiddle"></summary>
 
   - **Style**: the whole look: Hyprland config, quickshells and waybars. Right now there is **one style: `Modern`**.
   - **Variant**: a machine running a style: `desktop` and `laptop`. All variants share the style's `base/` files; a variant only holds a `machine.lua` (monitors, mouse sensitivity, boot and cursor defaults), plus any base file it wants to replace.
@@ -330,7 +330,7 @@ This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprl
 Every screenshot below is shown three times, once for each saved profile: **Default** | **Glass** | **Zen**. The configurations are the same; only the selected profile in the settings panel changes.
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Quickshell-1e1e2e?style=for-the-badge&logo=qt&logoColor=white" alt="Quickshell"></summary>
+  <summary><img src="images/badges/quickshell.svg" alt="Quickshell" align="absmiddle"></summary>
 
   All of my widgets are [Quickshell](https://quickshell.org) shells. They stay running in the background, so they open instantly, follow your `Pywal` colors and Hyprland rounding, and open on the monitor you're using.
   
@@ -342,7 +342,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-<summary><img src="https://img.shields.io/badge/Launcher-1e1e2e?style=for-the-badge" alt="Launcher"></summary>
+<summary><img src="images/badges/launcher.svg" alt="Launcher" align="absmiddle"></summary>
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-zen.png" width = "33%">
 
 ![launcher](https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher.gif)
@@ -355,7 +355,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-<summary><img src="https://img.shields.io/badge/Home%20Screen-1e1e2e?style=for-the-badge" alt="Home Screen"></summary>
+<summary><img src="images/badges/home-screen.svg" alt="Home Screen" align="absmiddle"></summary>
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-zen.png" width = "33%">
 
 ![home](https://github.com/elifouts/Dotfiles/blob/main/images/v2/home.gif)
@@ -365,7 +365,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-<summary><img src="https://img.shields.io/badge/Settings%20Panel-1e1e2e?style=for-the-badge" alt="Settings Panel"></summary>
+<summary><img src="images/badges/settings-panel.svg" alt="Settings Panel" align="absmiddle"></summary>
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-zen.png" width = "33%">
 
 ![settings](https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings.gif)
@@ -393,7 +393,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-<summary><img src="https://img.shields.io/badge/Music%20Player-1e1e2e?style=for-the-badge" alt="Music Player"></summary>
+<summary><img src="images/badges/music-player.svg" alt="Music Player" align="absmiddle"></summary>
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-default.jpg" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-glass.jpg" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-zen.jpg" width = "33%">
 
 ![music](https://github.com/elifouts/Dotfiles/blob/main/images/v2/music.gif)
@@ -404,7 +404,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-<summary><img src="https://img.shields.io/badge/Wallpaper%20Picker-1e1e2e?style=for-the-badge" alt="Wallpaper Picker"></summary>
+<summary><img src="images/badges/wallpaper-picker.svg" alt="Wallpaper Picker" align="absmiddle"></summary>
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-zen.png" width = "33%">
 
 ![wallpaper](https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper.gif)
@@ -415,7 +415,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-<summary><img src="https://img.shields.io/badge/OSD-1e1e2e?style=for-the-badge" alt="OSD"></summary>
+<summary><img src="images/badges/osd.svg" alt="OSD" align="absmiddle"></summary>
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-zen.png" width = "33%">
 
 ![osd](https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd.gif)
@@ -424,7 +424,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-<summary><img src="https://img.shields.io/badge/Notifications-1e1e2e?style=for-the-badge" alt="Notifications"></summary>
+<summary><img src="images/badges/notifications.svg" alt="Notifications" align="absmiddle"></summary>
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-zen.png" width = "33%">
 
 ![notify](https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify.gif)
@@ -433,7 +433,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-<summary><img src="https://img.shields.io/badge/Boot%20Animation-1e1e2e?style=for-the-badge" alt="Boot Animation"></summary>
+<summary><img src="images/badges/boot-animation.svg" alt="Boot Animation" align="absmiddle"></summary>
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-zen.png" width = "33%">
 
 ![boot](https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot.gif)
@@ -446,7 +446,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Waybar-1e1e2e?style=for-the-badge&logo=wayland&logoColor=white" alt="Waybar"></summary>
+  <summary><img src="images/badges/waybar.svg" alt="Waybar" align="absmiddle"></summary>
 
   ![waybar-default](https://github.com/elifouts/Dotfiles/blob/main/images/v2/waybar-default.png)
   ![waybar-glass](https://github.com/elifouts/Dotfiles/blob/main/images/v2/waybar-glass.png)
@@ -482,7 +482,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Hyprlock-1e1e2e?style=for-the-badge&logo=hyprland&logoColor=white" alt="Hyprlock"></summary>
+  <summary><img src="images/badges/hyprlock.svg" alt="Hyprlock" align="absmiddle"></summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock-zen.png" width = "33%">
 
   ![lock](https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock.gif)
@@ -500,7 +500,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Nvim-1e1e2e?style=for-the-badge&logo=neovim&logoColor=white" alt="Nvim"></summary>
+  <summary><img src="images/badges/nvim.svg" alt="Nvim" align="absmiddle"></summary>
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/nvim-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/nvim-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/nvim-zen.png" width = "33%">
   
 ## Overview
@@ -538,7 +538,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Starship-1e1e2e?style=for-the-badge&logo=starship&logoColor=white" alt="Starship"></summary>
+  <summary><img src="images/badges/starship.svg" alt="Starship" align="absmiddle"></summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/starship-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/starship-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/starship-zen.png" width = "33%">
 
 ## Overview
@@ -557,7 +557,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Pywalfox-1e1e2e?style=for-the-badge&logo=firefoxbrowser&logoColor=white" alt="Pywalfox"></summary>
+  <summary><img src="images/badges/pywalfox.svg" alt="Pywalfox" align="absmiddle"></summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/fox-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/fox-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/fox-zen.png" width = "33%">
 
   ## Overview
@@ -581,7 +581,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/GTK%20Themes-1e1e2e?style=for-the-badge&logo=gtk&logoColor=white" alt="GTK Themes"></summary>
+  <summary><img src="images/badges/gtk-themes.svg" alt="GTK Themes" align="absmiddle"></summary>
   
   ### I use these GTK themes
   
@@ -591,12 +591,12 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Old%20Stuff-no%20longer%20used-45475a?style=for-the-badge&labelColor=1e1e2e" alt="Old Stuff (no longer used)"></summary>
+  <summary><img src="images/badges/old-stuff-no-longer-used.svg" alt="Old Stuff (no longer used)" align="absmiddle"></summary>
 
   These were replaced by the Quickshell utilities. Their configs are still in `archive/` if you want them, but nothing launches them anymore.
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Wofi-replaced%20by%20the%20Launcher%20and%20Wallpaper%20Picker-45475a?style=for-the-badge&labelColor=1e1e2e" alt="Wofi (replaced by the Launcher and Wallpaper Picker)"></summary>
+  <summary><img src="images/badges/wofi-replaced-by-the-launcher-and-wallpaper-picker.svg" alt="Wofi (replaced by the Launcher and Wallpaper Picker)" align="absmiddle"></summary>
     <img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi1.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi2.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi3.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi4.png" width = "35%">
 
   - Was `Mod+R` (app menu), `Alt+W` (wallpapers) and `Alt+B` (waybar styles). These binds are removed now.
@@ -612,27 +612,27 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Swaync-replaced%20by%20Notifications%20and%20the%20Home%20Screen-45475a?style=for-the-badge&labelColor=1e1e2e" alt="Swaync (replaced by Notifications and the Home Screen)"></summary>
+  <summary><img src="images/badges/swaync-replaced-by-notifications-and-the-home-screen.svg" alt="Swaync (replaced by Notifications and the Home Screen)" align="absmiddle"></summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync1.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync2.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync3.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync4.png" width = "20%">
 
   - Config is in `archive/swaync`. Dependencies: `swaync pywal gvfs libnotify`.
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/SwayOSD-replaced%20by%20the%20OSD-45475a?style=for-the-badge&labelColor=1e1e2e" alt="SwayOSD (replaced by the OSD)"></summary>
+  <summary><img src="images/badges/swayosd-replaced-by-the-osd.svg" alt="SwayOSD (replaced by the OSD)" align="absmiddle"></summary>
 
   - Config is in `archive/swayosd`.
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Wlogout-replaced%20by%20the%20Launcher%27s%20Home%20dial-45475a?style=for-the-badge&labelColor=1e1e2e" alt="Wlogout (replaced by the Launcher's Home dial)"></summary>
+  <summary><img src="images/badges/wlogout-replaced-by-the-launcher-s-home-dial.svg" alt="Wlogout (replaced by the Launcher's Home dial)" align="absmiddle"></summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout1.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout2.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout3.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout4.png" width = "40%">
 
   - Config is in `archive/wlogout`.
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Old%20Wallpaper%20Solution-wofi%20%2B%20swww-45475a?style=for-the-badge&labelColor=1e1e2e" alt="Old Wallpaper Solution (wofi + swww)"></summary>
+  <summary><img src="images/badges/old-wallpaper-solution-wofi-swww.svg" alt="Old Wallpaper Solution (wofi + swww)" align="absmiddle"></summary>
   
   ![image](https://github.com/user-attachments/assets/7cbe58e3-7226-4537-8e69-bb316cdfaebc)
 
@@ -640,7 +640,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Old%20Screenshots-1e1e2e?style=for-the-badge" alt="Old Screenshots"></summary>
+  <summary><img src="images/badges/old-screenshots.svg" alt="Old Screenshots" align="absmiddle"></summary>
 
   **Waybar**
 
@@ -709,7 +709,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 ## Help
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Apps%20Fuzzy%20or%20Blurry%3F-1e1e2e?style=for-the-badge&logo=electron&logoColor=white" alt="Apps Fuzzy or Blurry?"></summary>
+  <summary><img src="images/badges/apps-fuzzy-or-blurry.svg" alt="Apps Fuzzy or Blurry?" align="absmiddle"></summary>
   
   #### This may be because they need to be run with Wayland or are Electron applications
   
@@ -725,7 +725,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 </details>
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Cant%20Find%20a%20file%20that%20is%20in%20.cache%3F-1e1e2e?style=for-the-badge" alt="Cant Find a file that is in .cache?"></summary>
+  <summary><img src="images/badges/cant-find-a-file-that-is-in-cache.svg" alt="Cant Find a file that is in .cache?" align="absmiddle"></summary>
 
 ### You may be looking for a file that looks something like this:
 
@@ -755,7 +755,7 @@ Instead of those colors, you can use whichever color is needed by the style.css 
 ## Notes
 - Cava follows `Pywal` too. The config is in `.config/cava`.
 <details>
-  <summary><img src="https://img.shields.io/badge/Download%20Suggestions-1e1e2e?style=for-the-badge&logo=archlinux&logoColor=white" alt="Download Suggestions"></summary>
+  <summary><img src="images/badges/download-suggestions.svg" alt="Download Suggestions" align="absmiddle"></summary>
   
   - This is everything I think is essential to have. At least for me. I would suggest doing your own research before blindly downloading everything here. This is here just so if I break my computer which we all know I will, I can remember what I need/want!
     
