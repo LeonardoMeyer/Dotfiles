@@ -1,6 +1,6 @@
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=30&letterSpacing=tiny&duration=2000&pause=3000&color=F7F7F7&center=true&vCenter=true&width=435&lines=Eli's+Dotfiles)](https://git.io/typing-svg)
 
-![tour](https://github.com/elifouts/Dotfiles/blob/main/images/v2/tour.gif)
+
 
 <table>
   <tr>
@@ -19,6 +19,12 @@
     <td width="33.33%"><img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice3.png" width="100%"></td>
   </tr>
 </table>
+
+<details>
+  <summary>View Desktop Tour</summary>
+  <br>
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/tour.gif" width="75%">
+</details>
 
 > [!TIP]
 > Check out [MyFetch](https://github.com/elifouts/MyFetch) now!
