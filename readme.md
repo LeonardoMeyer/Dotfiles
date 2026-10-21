@@ -6,7 +6,6 @@
 
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice7.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice1.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice4.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice5.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice6.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/rice3.png" width = "50%">
 
-
 > [!TIP]
 > Check out [MyFetch](https://github.com/elifouts/MyFetch) now!
 
@@ -56,20 +55,22 @@ Every screenshot below is shown three times, once for each of my saved profiles:
   - The configs are **symlinked** to `~/Dotfiles`, so `git pull` updates them and your edits show up in the repo.
 </details>
 
-## Package Manager TUI
+<details>
+  <summary>📦 Package Manager TUI</summary>
 
-The package manager tool shows explicitly installed applications and packages
-from the full installer, including AUR packages, source, installed status, and
-disk size:
-
-```bash
-cd ~/Dotfiles
-./.config/hypr/utilities/package-tui.sh
-```
-
-Use the arrow keys or `j`/`k` to scroll, `Enter` or `d` to uninstall, `r` to
-reinstall packages included in the full installer, and `q` to quit. For a
-non-interactive list, run `./.config/hypr/utilities/package-tui.sh --list`.
+  The package manager tool shows explicitly installed applications and packages
+  from the full installer, including AUR packages, source, installed status, and
+  disk size:
+  
+  ```bash
+  cd ~/Dotfiles
+  ./.config/hypr/utilities/package-tui.sh
+  ```
+  
+  Use the arrow keys or `j`/`k` to scroll, `Enter` or `d` to uninstall, `r` to
+  reinstall packages included in the full installer, and `q` to quit. For a
+  non-interactive list, run `./.config/hypr/utilities/package-tui.sh --list`.
+</details>
 
 ## Styles, Variants & Profiles
 
@@ -104,113 +105,116 @@ non-interactive list, run `./.config/hypr/utilities/package-tui.sh --list`.
   <summary>✨ Quickshell</summary>
 
   All of my widgets are [Quickshell](https://quickshell.org) shells. They stay running in the background, so they open instantly, follow your `Pywal` colors and Hyprland rounding, and open on the monitor you're using.
-
-<details>
-  <summary>🚀 Launcher</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-zen.png" width = "33%">
-
-  ![launcher](https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher.gif)
-
-  - **Tap `Super`** to open it. It rises from the bottom of the screen.
-  - **Home**: a dial of session actions (home screen, settings, wallpaper, lock, screenshot, sleep, logout, reboot, power).
-  - **Apps**: a searchable app grid, sorted by what you use most.
-  - **Commands**: run any shell command.
-  - **Keybinds**: every shortcut, read live from `shortcuts.lua`.
-</details>
-
-<details>
-  <summary>🏠 Home Screen</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-zen.png" width = "33%">
-
-  ![home](https://github.com/elifouts/Dotfiles/blob/main/images/v2/home.gif)
-
-  - `Alt+Tab` opens a dashboard over a blurred wallpaper.
-  - Clock, now playing, calendar, CPU/RAM/GPU stats, volume, notification history and session buttons.
-</details>
-
-<details>
-  <summary>🎛️ Settings Panel</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-zen.png" width = "33%">
-
-  ![settings](https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings.gif)
-
-  `Alt+S` slides it in from the left. Everything applies **live**, and your profile files are never edited.
-
-  - **Profile**: pick the style and variant, switch or save profiles, and pick a waybar style.
-  - **Colors**: a wheel of color schemes. **Pywal** (default) follows your wallpaper, and every `*.json` in `~/.config/wal/colorschemes` shows up too.
-  - **Windows**: gaps, borders, rounding, a gradient border, tiling, opacity.
-  - **Effects**: blur, shadow, glow, dimming, and every **hyprglass** option (when the plugin is installed).
-  - **Animations**: presets, a Bézier curve editor with a live preview, and **Randomize**.
-  - **Input & cursor**: mouse, touchpad, gestures, keyboard, cursor theme and size.
-  - **System**: boot animation, display, and **Reset tweaks**.
-
-  ### Saving a custom profile
-  1. Tweak anything you want, including the wallpaper, colors and waybar.
-  2. Go to **Profile → Saved profiles**, type a name, and hit **Save** (**Overwrite** if the name is taken).
-  3. Click any profile to apply it. Click the trash icon twice to delete it.
-
-  ### Tips
-  - **Right-click** any setting to put it back to the profile's value.
-  - Drag the right edge to resize. `Esc`, clicking outside, or `Alt+S` closes it.
-  - `←/→` or `h/l` change page, `↑/↓` or `j/k` scroll, `Enter` applies.
-  - Options that wouldn't do anything (touchpad on a desktop, blur size with blur off) are hidden.
-</details>
-
-<details>
-  <summary>🎵 Music Player</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-zen.png" width = "33%">
-
-  ![music](https://github.com/elifouts/Dotfiles/blob/main/images/v2/music.gif)
-
-  - `Alt+M` drops a card out from under waybar.
-  - Follows Spotify, or whatever is playing. The chip in the top left switches players.
-  - Live `cava` visualizer. Drag the bottom edge to resize it.
-</details>
-
-<details>
-  <summary>🖼️ Wallpaper Picker</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-zen.png" width = "33%">
-
-  ![wallpaper](https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper.gif)
-
-  - `Alt+W` opens a 3D carousel of `~/wallpapers/library`, with the palette of each wallpaper.
-  - `←/→` browse, `Tab` changes category, `R` picks a random one, `Enter` applies.
-  - Applying sets the wallpaper with `awww`, regenerates the `Pywal` colors, and updates everything that uses them.
-</details>
-
-<details>
-  <summary>🔊 OSD</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-zen.png" width = "33%">
-
-  ![osd](https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd.gif)
-
-  - Volume, mic, brightness, caps lock and media keys pop up a pill at the bottom of the screen.
-</details>
-
-<details>
-  <summary>🔔 Notifications</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-zen.png" width = "33%">
-
-  ![notify](https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify.gif)
-
-  - Popups in the bottom left. The history lives in the home screen.
-</details>
-
-<details>
-  <summary>⚡ Boot Animation</summary>
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-zen.png" width = "33%">
-
-  ![boot](https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot.gif)
-
-  - Plays once when Hyprland starts. Turn it off or change the delay in **Settings → System**.
-</details>
-
+  
   ### *How To Install*
-1. **Install [Quickshell](https://quickshell.org)** (`yay -S quickshell`)
-2. Copy `Dotfiles/.config/hypr` into `~/.config` (or use the installer)
-3. `~/.config/hypr/utilities/shells.sh start` starts them all. `startup.lua` already does this.
-
+  1. **Install [Quickshell](https://quickshell.org)** (`yay -S quickshell`)
+  2. Copy `Dotfiles/.config/hypr` into `~/.config` (or use the installer)
+  3. `~/.config/hypr/utilities/shells.sh start` starts them all. `startup.lua` already does this.
 </details>
+
+<details>
+<summary>🚀 Launcher</summary>
+<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher-zen.png" width = "33%">
+
+![launcher](https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher.gif)
+
+- **Tap `Super`** to open it. It rises from the bottom of the screen.
+- **Home**: a dial of session actions (home screen, settings, wallpaper, lock, screenshot, sleep, logout, reboot, power).
+- **Apps**: a searchable app grid, sorted by what you use most.
+- **Commands**: run any shell command.
+- **Keybinds**: every shortcut, read live from `shortcuts.lua`.
+</details>
+
+<details>
+<summary>🏠 Home Screen</summary>
+<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-zen.png" width = "33%">
+
+![home](https://github.com/elifouts/Dotfiles/blob/main/images/v2/home.gif)
+
+- `Alt+Tab` opens a dashboard over a blurred wallpaper.
+- Clock, now playing, calendar, CPU/RAM/GPU stats, volume, notification history and session buttons.
+</details>
+
+<details>
+<summary>🎛️ Settings Panel</summary>
+<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings-zen.png" width = "33%">
+
+![settings](https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings.gif)
+
+`Alt+S` slides it in from the left. Everything applies **live**, and your profile files are never edited.
+
+- **Profile**: pick the style and variant, switch or save profiles, and pick a waybar style.
+- **Colors**: a wheel of color schemes. **Pywal** (default) follows your wallpaper, and every `*.json` in `~/.config/wal/colorschemes` shows up too.
+- **Windows**: gaps, borders, rounding, a gradient border, tiling, opacity.
+- **Effects**: blur, shadow, glow, dimming, and every **hyprglass** option (when the plugin is installed).
+- **Animations**: presets, a Bézier curve editor with a live preview, and **Randomize**.
+- **Input & cursor**: mouse, touchpad, gestures, keyboard, cursor theme and size.
+- **System**: boot animation, display, and **Reset tweaks**.
+
+### Saving a custom profile
+1. Tweak anything you want, including the wallpaper, colors and waybar.
+2. Go to **Profile → Saved profiles**, type a name, and hit **Save** (**Overwrite** if the name is taken).
+3. Click any profile to apply it. Click the trash icon twice to delete it.
+
+### Tips
+- **Right-click** any setting to put it back to the profile's value.
+- Drag the right edge to resize. `Esc`, clicking outside, or `Alt+S` closes it.
+- `←/→` or `h/l` change page, `↑/↓` or `j/k` scroll, `Enter` applies.
+- Options that wouldn't do anything (touchpad on a desktop, blur size with blur off) are hidden.
+</details>
+
+<details>
+<summary>🎵 Music Player</summary>
+<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-default.jpg" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-glass.jpg" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/music-zen.jpg" width = "33%">
+
+![music](https://github.com/elifouts/Dotfiles/blob/main/images/v2/music.gif)
+
+- `Alt+M` drops a card out from under waybar.
+- Follows Spotify, or whatever is playing. The chip in the top left switches players.
+- Live `cava` visualizer. Drag the bottom edge to resize it.
+</details>
+
+<details>
+<summary>🖼️ Wallpaper Picker</summary>
+<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-zen.png" width = "33%">
+
+![wallpaper](https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper.gif)
+
+- `Alt+W` opens a 3D carousel of `~/wallpapers/library`, with the palette of each wallpaper.
+- `←/→` browse, `Tab` changes category, `R` picks a random one, `Enter` applies.
+- Applying sets the wallpaper with `awww`, regenerates the `Pywal` colors, and updates everything that uses them.
+</details>
+
+<details>
+<summary>🔊 OSD</summary>
+<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd-zen.png" width = "33%">
+
+![osd](https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd.gif)
+
+- Volume, mic, brightness, caps lock and media keys pop up a pill at the bottom of the screen.
+</details>
+
+<details>
+<summary>🔔 Notifications</summary>
+<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify-zen.png" width = "33%">
+
+![notify](https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify.gif)
+
+- Popups in the bottom left. The history lives in the home screen.
+</details>
+
+<details>
+<summary>⚡ Boot Animation</summary>
+<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot-zen.png" width = "33%">
+
+![boot](https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot.gif)
+
+- Plays once when Hyprland starts. Turn it off or change the delay in **Settings → System**.
+</details>
+
+
+
+
 
 <details>
   <summary>🚥 Waybar</summary>
@@ -218,6 +222,11 @@ non-interactive list, run `./.config/hypr/utilities/package-tui.sh --list`.
   ![waybar-default](https://github.com/elifouts/Dotfiles/blob/main/images/v2/waybar-default.png)
   ![waybar-glass](https://github.com/elifouts/Dotfiles/blob/main/images/v2/waybar-glass.png)
   ![waybar-zen](https://github.com/elifouts/Dotfiles/blob/main/images/v2/waybar-zen.png)
+  ![waybar1](https://github.com/elifouts/Dotfiles/blob/main/images/waybar1.png)
+  ![waybar2](https://github.com/elifouts/Dotfiles/blob/main/images/waybar6.png)
+  ![waybar3](https://github.com/elifouts/Dotfiles/blob/main/images/waybar4.png)
+  ![waybar4](https://github.com/elifouts/Dotfiles/blob/main/images/waybar3.png)
+  ![waybar5](https://github.com/elifouts/Dotfiles/blob/main/images/waybar2.png)
   
   ## Overview
   This is my minimal Waybar setup for Hyprland, designed to be clean and efficient. There are 4 styles (`default`, `experimental`, `line`, `zen`) in `hypr/Modern/waybar/`. Pick one in **Settings → Profile → Waybar**, and `Alt+A` reloads it.
@@ -349,87 +358,6 @@ non-interactive list, run `./.config/hypr/utilities/package-tui.sh --list`.
   - Cursor: Bibata-Modern-Ice (change it in **Settings → Input & cursor**)
 </details>
 
-## Keybinds
-
-`Mod+Q` - Open Terminal
-
-`Super` (tap) - App Launcher
-
-`Mod+M` - Quit Hyprland
- 
-`Mod+B` - Close
-
-`Mod+F` - Fullscreen
-
-`Mod+V` - Popout
-
-`Mod+L` - Lock
-
-`Mod+Space` - Terminal Scratch Pad
-
-`Mod-E` - Opens Thunar
-
-`Alt+Tab` - Home Screen
-
-`Alt+S` - Settings Panel
-
-`Alt+W` - Wallpaper Picker
-
-`Alt+Enter` - Music Player
-
-`Alt+A` - Reload Waybar
-
-> [!NOTE]
-> This isnt every Keybind. Just some highlighted ones.
-> 
-> Tap `Super` → **Keybinds** to see all of them, or change them in `~/.config/hypr/shortcuts.lua`
-
-## Help
-
-<details>
-  <summary>Apps Fuzzy or Blurry?</summary>
-  
-  #### This may be because they need to be run with Wayland or are Electron applications
-  
-  - The solution I found is to add the following to `/usr/share/applications/{app}.desktop` after `exec=/app/executable/app`
-  - Works on `Spotify` `Discord`
-  
-  ```
-  --enable-features=UseOzonePlatform --ozone-platform=wayland --uri=%U
-  ```
-
-  - ***NOTE*** This gets removed if the app is redownloaded! I'm not sure how to make this a global thing. I have tried and failed. Help?
-
-</details>
-
-<details>
-  <summary>Cant Find a file that is in .cache?</summary>
-
-### You may be looking for a file that looks something like this:
-
-`@import url('/home/eli/.cache/wal/colors-waybar.css');`
-
-That file is one of many that is created by `Pywal`. Try replacing eli with your $USER and see if that works. Alternatively, you can do one of the following:
-
-- create your own file which would look something like this:
-```
-@define-color background <Replace>;
-@define-color color0 <Replace>;
-@define-color color9 <Repace>;
-```
-Instead of those colors, you can use whichever color is needed by the style.css file.
-
-- create the colors manually in the style.css files you took those paths from. 
-```
-@define-color <ColorName> <Color>;
-```
-
-- Find the sections of that file that are calling the missing file, such as `$color2` or `@color2` and replace it with a valid value.
-
-</details>
-
-## Deprecated
-
 <details>
   <summary>🗄️ Old stuff (no longer used)</summary>
 
@@ -510,6 +438,87 @@ Instead of those colors, you can use whichever color is needed by the style.css 
 </details>
 
 </details>
+
+## Keybinds
+
+`Mod+Q` - Open Terminal
+
+`Super` (tap) - App Launcher
+
+`Mod+M` - Quit Hyprland
+ 
+`Mod+B` - Close
+
+`Mod+F` - Fullscreen
+
+`Mod+V` - Popout
+
+`Mod+L` - Lock
+
+`Mod+Space` - Terminal Scratch Pad
+
+`Mod-E` - Opens Thunar
+
+`Alt+Tab` - Home Screen
+
+`Alt+S` - Settings Panel
+
+`Alt+W` - Wallpaper Picker
+
+`Alt+Enter` - Music Player
+
+`Alt+A` - Reload Waybar
+
+> [!NOTE]
+> This isnt every Keybind. Just some highlighted ones.
+> 
+> Tap `Super` → **Keybinds** to see all of them, or change them in `~/.config/hypr/shortcuts.lua`
+
+## Help
+
+<details>
+  <summary>Apps Fuzzy or Blurry?</summary>
+  
+  #### This may be because they need to be run with Wayland or are Electron applications
+  
+  - The solution I found is to add the following to `/usr/share/applications/{app}.desktop` after `exec=/app/executable/app`
+  - Works on `Spotify` `Discord`
+  
+  ```
+  --enable-features=UseOzonePlatform --ozone-platform=wayland --uri=%U
+  ```
+
+  - ***NOTE*** This gets removed if the app is redownloaded! I'm not sure how to make this a global thing. I have tried and failed. Help?
+
+</details>
+
+<details>
+  <summary>Cant Find a file that is in .cache?</summary>
+
+### You may be looking for a file that looks something like this:
+
+`@import url('/home/eli/.cache/wal/colors-waybar.css');`
+
+That file is one of many that is created by `Pywal`. Try replacing eli with your $USER and see if that works. Alternatively, you can do one of the following:
+
+- create your own file which would look something like this:
+```
+@define-color background <Replace>;
+@define-color color0 <Replace>;
+@define-color color9 <Repace>;
+```
+Instead of those colors, you can use whichever color is needed by the style.css file.
+
+- create the colors manually in the style.css files you took those paths from. 
+```
+@define-color <ColorName> <Color>;
+```
+
+- Find the sections of that file that are calling the missing file, such as `$color2` or `@color2` and replace it with a valid value.
+
+</details>
+
+
 
 ## Notes
 - Cava follows `Pywal` too. The config is in `.config/cava`.
