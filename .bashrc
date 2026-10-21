@@ -100,3 +100,4 @@ lol() {
 }
 # Uncomment to enable command-result sounds
 # PROMPT_COMMAND='lol'
+export PATH="$HOME/.local/bin:$PATH"

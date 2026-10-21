@@ -84,4 +84,9 @@ if hl.plugin.hyprglass then
         preset = "apple_extreme",
         mask_threshold = 0.01,
     })
+
+    hg.layer("app-drawer", {
+        preset = "apple_extreme",
+        mask_threshold = 0.01,
+    })
 end
