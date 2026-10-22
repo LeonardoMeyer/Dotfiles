@@ -25,3 +25,8 @@ __pycache__/
 # cava writes its default shaders and themes back on every start
 .config/cava/shaders/
 .config/cava/themes/
+
+# Regenerated from the current wallpaper on each machine
+.config/cava/config
+.config/kitty/current-theme.conf
+wallpapers/pywallpaper.jpg
