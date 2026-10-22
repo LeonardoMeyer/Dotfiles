@@ -856,9 +856,10 @@ ShellRoot {
                     radius: parent.radius
                     width: Math.max(height, parent.width * sk.frac)
                     color: Theme.accent
-                    // Glides to a new spot (a new track, a seek) but tracks the playhead and the pointer directly.
+                    // Glides to a new spot while paused, but tracks the playhead and the pointer directly: the playhead
+                    // moves every frame, which would restart the animation before it ever advanced and freeze the fill.
                     Behavior on width {
-                        enabled: !sk.seeking
+                        enabled: !sk.seeking && !root.playing
                         NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
                     }
                 }

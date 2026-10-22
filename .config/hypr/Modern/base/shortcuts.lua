@@ -89,4 +89,9 @@ hl.bind(mainMod .. " + G", hl.dsp.exec_cmd("pypr toggle music"))
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("pypr toggle taskbar"))
 hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("pypr toggle spotify"))
 
+-- OBS can't see keys while unfocused on Wayland, so these are passed straight to it, and still reach the focused app (OBS → Settings → Hotkeys).
+local obs = hl.dsp.pass({ window = "class:com.obsproject.Studio" })
+hl.bind("CTRL + bracketleft", obs, { non_consuming = true }) -- OBS: start recording
+hl.bind("CTRL + bracketright", obs, { non_consuming = true }) -- OBS: stop recording
+
 hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
