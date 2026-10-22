@@ -57,8 +57,6 @@ pacorphans() {
     [[ "$confirm" == [yY] ]] && sudo pacman -Rns $packages
 }
 
-# Test
-
 # System diagnostics
 alias ports='ss -tulpn'
 alias mem='free -h'
