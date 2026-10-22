@@ -31,6 +31,7 @@ pywal, the style's "default" waybar and whatever wallpaper is up, which is what 
 """
 import json
 import os
+import re
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -135,13 +136,21 @@ def write_lua(settings):
                  if settings else "return {}\n")
 
 
+def portable(settings):
+    """Wallpaper paths are kept as /home/$USER/... so the tweaks files work under any account."""
+    path = dig(settings, "wallpaper.path")
+    if isinstance(path, str):
+        settings["wallpaper"]["path"] = re.sub(r"^/home/[^/]+/", "/home/$USER/", path)
+    return settings
+
+
 def save(settings):
     """An edit lands in the live entry and it stays live; on Default it goes to the active variant's own file."""
     entry = live_entry()
     if entry == "default":
         entry = own_variant()
     # Written even when empty, so a profile whose last tweak was removed stays listed and selected.
-    write_atomic(entry_file(entry), json.dumps(settings, indent=2, sort_keys=True) + "\n")
+    write_atomic(entry_file(entry), json.dumps(portable(settings), indent=2, sort_keys=True) + "\n")
     set_live_entry(entry)
     write_lua(settings)
 
@@ -459,7 +468,7 @@ def cmd_appearance():
     own, else the one already up), which also regenerates the palette; waybar only restarts when it changes."""
     settings = live_settings()
     theme = dig(settings, "colors.theme") or DEFAULT_THEME
-    wallpaper = real_wallpaper(dig(settings, "wallpaper.path")) or real_wallpaper(current_wallpaper())
+    wallpaper = real_wallpaper(os.path.expandvars(dig(settings, "wallpaper.path") or "")) or real_wallpaper(current_wallpaper())
     if wallpaper:
         # wallpaper-apply.sh regenerates the palette with the saved theme, so set that first. Re-running it
         # is not a new pick, so it must not be recorded (on Default that would switch to the variant).
@@ -492,7 +501,7 @@ def cmd_saved(args):
             snapshot.setdefault("wallpaper", {})["path"] = current_wallpaper()
         if waybar()["active"]:
             snapshot.setdefault("waybar", {})["style"] = waybar()["active"]
-        write_atomic(saved_dir() / f"{name}.json", json.dumps(snapshot, indent=2, sort_keys=True) + "\n")
+        write_atomic(saved_dir() / f"{name}.json", json.dumps(portable(snapshot), indent=2, sort_keys=True) + "\n")
         set_live_entry("saved:" + name)
     elif action == "apply":
         path = entry_file(raw)

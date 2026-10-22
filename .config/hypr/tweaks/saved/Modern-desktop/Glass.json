@@ -38,7 +38,7 @@
     "theme": "Qogir-Dark"
   },
   "wallpaper": {
-    "path": "/home/ws-73/wallpapers/library/cars/car-08.jpg"
+    "path": "/home/$USER/wallpapers/library/cars/car-08.jpg"
   },
   "waybar": {
     "style": "experimental"

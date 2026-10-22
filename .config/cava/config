@@ -13,11 +13,11 @@ mono_option = average
 [color]
 horizontal_gradient = 1
 horizontal_gradient_count = 5
-horizontal_gradient_color_1 = '#61412c'
-horizontal_gradient_color_2 = '#4F4D4E'
-horizontal_gradient_color_3 = '#857A76'
-horizontal_gradient_color_4 = '#82573B'
-horizontal_gradient_color_5 = '#838081'
+horizontal_gradient_color_1 = '#a2724d'
+horizontal_gradient_color_2 = '#BC643A'
+horizontal_gradient_color_3 = '#668F88'
+horizontal_gradient_color_4 = '#D89867'
+horizontal_gradient_color_5 = '#DBB99A'
 
 [smoothing]
 noise_reduction = 72

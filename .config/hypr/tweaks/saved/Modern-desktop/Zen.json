@@ -50,7 +50,7 @@
     }
   },
   "wallpaper": {
-    "path": "/home/ws-73/wallpapers/library/nature/nat-17.jpg"
+    "path": "/home/$USER/wallpapers/library/nature/nat-17.jpg"
   },
   "waybar": {
     "style": "zen"

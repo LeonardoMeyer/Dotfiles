@@ -61,7 +61,7 @@
     }
   },
   "wallpaper": {
-    "path": "/home/eli/wallpapers/library/abstract/abs-02.jpg"
+    "path": "/home/$USER/wallpapers/library/abstract/abs-02.jpg"
   },
   "waybar": {
     "style": "line"
