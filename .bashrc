@@ -91,6 +91,22 @@ alias bye='sudo shutdown -h now'
 alias loop='sudo reboot'
 # Dotfiles
 dotpull() { git -C ~/Dotfiles pull && hyprplugins; }
+# Show changes, prompt for a commit message, then commit and push everything
+dotpush() {
+    local dir=~/Dotfiles msg
+    [[ -z "$(git -C "$dir" status --porcelain)" ]] && {
+        echo "Nothing to commit."
+        return 0
+    }
+    echo "Files changed:"
+    git -C "$dir" status --short
+    read -r -p "Commit message (empty to cancel): " msg
+    [[ -z "$msg" ]] && {
+        echo "Cancelled."
+        return 1
+    }
+    git -C "$dir" add -A && git -C "$dir" commit -m "$msg" && git -C "$dir" push
+}
 alias InstallDots='~/Dotfiles/InstallScripts/install.sh'
 alias reload='source "$HOME/.bashrc"'
 alias Dotfiles='cd ~/Dotfiles/ && nvim'
