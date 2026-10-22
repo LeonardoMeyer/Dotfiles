@@ -56,6 +56,9 @@ pacorphans() {
     read -r -p "Remove these packages? [y/N] " confirm
     [[ "$confirm" == [yY] ]] && sudo pacman -Rns $packages
 }
+
+# Test
+
 # System diagnostics
 alias ports='ss -tulpn'
 alias mem='free -h'
