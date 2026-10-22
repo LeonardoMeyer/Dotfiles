@@ -1,7 +1,8 @@
 #!/bin/bash
 # Symlink everything in the dotfiles repo into $HOME. Edits on either side are
 # the same files, so no syncing is needed; new top-level entries are picked up
-# by re-running this script.
+# by re-running this script. Plugins are rebuilt too, since pulled configs may
+# use options only a newer plugin release knows.
 
 set -euo pipefail
 
@@ -12,3 +13,4 @@ source "$SCRIPT_DIR/fullinstall.sh"
 
 select_hyprland_style
 apply_dotfiles
+update_plugins

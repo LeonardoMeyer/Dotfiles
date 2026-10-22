@@ -38,6 +38,7 @@ hl.bind(mainMod .. " + V", pop_out)
 -- Tapping Super on its own; release binds only fire when no other key was pressed with it.
 hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh launcher"), { release = true })
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
+hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- Toggle split direction
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 
 hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }))

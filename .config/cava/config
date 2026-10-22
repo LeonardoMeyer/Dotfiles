@@ -1,5 +1,23 @@
+[general]
+framerate = 60
+autosens = 1
+lower_cutoff_freq = 50
+higher_cutoff_freq = 12000
+bar_width = 2
+bar_spacing = 1
+
+[output]
+channels = mono
+mono_option = average
+
 [color]
-gradient = 1
-gradient_count = 2
-gradient_color_1 = '#4a4542'
-gradient_color_2 = '#535050'
+horizontal_gradient = 1
+horizontal_gradient_count = 5
+horizontal_gradient_color_1 = '#61412c'
+horizontal_gradient_color_2 = '#4F4D4E'
+horizontal_gradient_color_3 = '#857A76'
+horizontal_gradient_color_4 = '#82573B'
+horizontal_gradient_color_5 = '#838081'
+
+[smoothing]
+noise_reduction = 72

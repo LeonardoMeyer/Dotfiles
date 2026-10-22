@@ -103,6 +103,7 @@ function describe(dsp, args, locals, loop) {
     case "window.float": return { cat: "windows", desc: "Toggle floating" }
     case "window.pseudo": return { cat: "windows", desc: "Toggle pseudotile" }
     case "window.fullscreen": return { cat: "windows", desc: "Fullscreen" }
+    case "layout": return { cat: "windows", desc: "Layout " + evalExpr(args, locals, loop) }
     case "window.drag": return { cat: "windows", desc: "Drag window" }
     case "window.resize": return { cat: "windows", desc: "Resize window" }
     case "window.move":

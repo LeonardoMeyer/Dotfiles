@@ -198,15 +198,28 @@ autologin() {
         *) error "Invalid option."; return 1 ;;
     esac
 }
+# hyprpm builds plugins against the running Hyprland, so they have to be rebuilt whenever
+# Hyprland updates or the config starts using options from a newer plugin release.
+update_plugins() {
+    command -v hyprpm >/dev/null || return 0
+    hyprpm list 2>/dev/null | grep -qi hyprglass || return 0
+
+    info "Updating Hyprland plugins..."
+    hyprpm update || { warn "hyprpm update failed; run it manually."; return 0; }
+    hyprpm reload -n >/dev/null 2>&1 || true
+    success "Hyprland plugins up to date."
+}
+
 glass_install() {
-    yay -S hyprpm
+    yay -S --needed hyprpm
     hyprpm update
-    hyprpm add https://github.com/hyprnux/hyprglass
+    hyprpm list 2>/dev/null | grep -qi hyprglass ||
+        hyprpm add https://github.com/hyprnux/hyprglass
     hyprpm enable hyprglass
-    success "hyprglass plugin Installed"
+    hyprpm reload -n >/dev/null 2>&1 || true
+    success "hyprglass plugin installed"
 }
 glass_uninstall() {
-    hyprpm update
     hyprpm disable hyprglass
     hyprpm remove https://github.com/hyprnux/hyprglass
     success "hyprglass plugin removed"

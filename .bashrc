@@ -36,7 +36,14 @@ alias pacq='pacman -Qs'
 alias pacinfo='pacman -Qi'
 alias pacfiles='pacman -Ql'
 alias pacclean='sudo paccache -r'
-alias pacup='sudo pacman -Syu'
+# Hyprland plugins are built against the installed Hyprland, so rebuild them
+# after anything that can change either side.
+hyprplugins() {
+    command -v hyprpm >/dev/null || return 0
+    hyprpm list 2>/dev/null | grep -qi hyprglass || return 0
+    hyprpm update && hyprpm reload -n >/dev/null
+}
+pacup() { sudo pacman -Syu "$@" && hyprplugins; }
 # Remove orphaned packages
 pacorphans() {
     local packages
@@ -82,12 +89,12 @@ alias bashrc='n .bashrc'
 alias bye='sudo shutdown -h now'
 alias loop='sudo reboot'
 # Dotfiles
-alias dotpull='git -C ~/Dotfiles pull'
-alias InstallDots='./Dotfiles/InstallScripts/install.sh'
+dotpull() { git -C ~/Dotfiles pull && hyprplugins; }
+alias InstallDots='~/Dotfiles/InstallScripts/install.sh'
 alias reload='source "$HOME/.bashrc"'
 alias Dotfiles='cd ~/Dotfiles/ && nvim'
-alias UpdateLocal='./Dotfiles/InstallScripts/apply.sh'
-alias Savepro='./.config/hypr/utilities/save-profile.sh'
+alias UpdateLocal='~/Dotfiles/InstallScripts/apply.sh'
+alias Savepro='~/.config/hypr/utilities/save-profile.sh'
 alias Nvim='cd ~/.config/nvim/ && nvim'
 
 # Optional command-result sounds
