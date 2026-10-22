@@ -53,6 +53,6 @@
     "path": "/home/ws-73/wallpapers/library/nature/nat-41.jpg"
   },
   "waybar": {
-    "style": "zen"
+    "style": "experimental"
   }
 }
