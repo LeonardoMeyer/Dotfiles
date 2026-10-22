@@ -16,7 +16,7 @@
   <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/rice3.png" width="32%">
 </p>
 
-
+ 
 <details>
   <summary><picture><img src="images/badges/desktop-tour-v2.svg" alt="Desktop Tour" align="absmiddle"></picture></summary>
   <br>
