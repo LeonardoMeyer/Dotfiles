@@ -1,10 +1,11 @@
 {
     "left": [],
-    "center": ["user", "workspaces", "|", "media", "date", "timer", "clock", "|", "tray", "|", "updates", "network", "audio", "battery", "|", "power"],
+    "center": ["user", "workspaces", "media", "date", "timer", "clock", "battery", "updates", "network", "audio", "power", "|", "tray"],
     "right": [],
     "strip": false,
     "background": true,
     "height": 30,
     "gap": 6,
-    "shape": "capsule"
+    "shape": "round",
+    "attached": true
 }

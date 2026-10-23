@@ -1,15 +1,15 @@
 {
   "animation": {
     "curve": [
-      0.3,
-      1,
-      0.4,
+      0.31,
+      0.9,
+      0.85,
       1
     ],
-    "preset": "snappy",
-    "speed": 1.7,
+    "preset": "custom",
+    "speed": 2.5,
     "window": "popin 60%",
-    "workspace": "slide"
+    "workspace": "slidefadevert"
   },
   "bar": {
     "kind": "quickshell"
@@ -22,22 +22,16 @@
       "enabled": true
     },
     "decoration": {
-      "active_opacity": 1,
+      "active_opacity": 0.85,
       "blur": {
-        "brightness": 0.75,
-        "contrast": 0.75,
-        "enabled": true,
-        "noise": 0.055,
-        "passes": 8,
-        "size": 20,
-        "vibrancy": 0
+        "enabled": true
       },
       "dim_inactive": true,
       "dim_strength": 0.25,
       "glow": {
         "enabled": false
       },
-      "inactive_opacity": 1,
+      "inactive_opacity": 0.7,
       "motion_blur": {
         "enabled": false
       },
@@ -76,13 +70,13 @@
     "quickshell": true
   },
   "quickshell": {
-    "style": "attached"
+    "style": "experimental"
   },
   "utilities": {
     "animations": false
   },
   "wallpaper": {
-    "path": "/home/$USER/wallpapers/library/industrial/ind-07.jpg"
+    "path": "/home/$USER/wallpapers/library/nature/nat-06.jpg"
   },
   "waybar": {
     "style": "default"

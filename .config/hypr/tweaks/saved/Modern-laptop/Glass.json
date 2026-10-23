@@ -1,4 +1,7 @@
 {
+  "bar": {
+    "kind": "quickshell"
+  },
   "border": {
     "gradient": false
   },
@@ -37,10 +40,13 @@
     "size": 12,
     "theme": "Qogir-Dark"
   },
+  "quickshell": {
+    "style": "attached"
+  },
   "wallpaper": {
     "path": "/home/$USER/wallpapers/library/cars/car-08.jpg"
   },
   "waybar": {
-    "style": "experimental"
+    "style": "default"
   }
 }

@@ -6,5 +6,5 @@
     "background": true,
     "height": 30,
     "gap": 6,
-    "shape": "capsule"
+    "shape": "round"
 }

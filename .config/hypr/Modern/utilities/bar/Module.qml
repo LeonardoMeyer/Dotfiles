@@ -372,7 +372,7 @@ Item {
         Chip {
             pill: mod.pill
             page: "power"
-            glyph: "󰐥"
+            glyph: ""
             glyphColor: lit ? Theme.warn : Theme.bright
         }
     }
