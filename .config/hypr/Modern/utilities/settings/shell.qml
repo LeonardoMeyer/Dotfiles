@@ -164,14 +164,14 @@ ShellRoot {
         keyRoot.forceActiveFocus()
     }
 
-    // Expo-out in, a quick ease-in out: the sheet decelerates into place and leaves briskly.
+    // On Hyprland's curves: in the way windows open, out the way they close.
     function animateTo(target) {
         tween.stop()
         tween.from = t
         tween.to = target
-        tween.duration = target === 1 ? 380 : 240
+        tween.duration = Theme.ms(target === 1 ? 380 : 240)
         tween.easing.type = Easing.BezierSpline
-        tween.easing.bezierCurve = target === 1 ? [0.16, 1, 0.3, 1, 1, 1] : [0.5, 0, 0.75, 0, 1, 1]
+        tween.easing.bezierCurve = target === 1 ? Theme.settle : Theme.leave
         tween.start()
     }
 
@@ -200,7 +200,8 @@ ShellRoot {
 
     // Rows appear only when they would do something: a dependency is met, the hardware exists, styles are present.
     function controlShown(c, values, caps, waybar) {
-        if (c.type === "waybar" && (waybar.styles || []).length === 0) return false
+        // The style list follows whichever bar is up.
+        if (c.type === "waybar" && ((Store.bar === "quickshell" ? Store.quickshell : waybar).styles || []).length === 0) return false
         return Schema.shown(c, values, caps)
     }
 
@@ -328,8 +329,8 @@ ShellRoot {
 
                         ParallelAnimation {
                             id: titleAnim
-                            NumberAnimation { target: title; property: "opacity"; from: 0; to: 1; duration: 320; easing.type: Easing.OutCubic }
-                            NumberAnimation { target: titleShift; property: "x"; from: 14 * root.pageDir; to: 0; duration: 380; easing.type: Easing.OutCubic }
+                            NumberAnimation { target: title; property: "opacity"; from: 0; to: 1; duration: Theme.ms(320); easing.type: Easing.OutCubic }
+                            NumberAnimation { target: titleShift; property: "x"; from: 14 * root.pageDir; to: 0; duration: Theme.ms(380); easing.type: Easing.OutCubic }
                         }
                     }
 
@@ -358,7 +359,7 @@ ShellRoot {
                             radius: 9
                             x: tabs.index * (tabs.cell + tabs.gap)
                             color: Theme.alpha(Theme.accent, 0.42)
-                            Behavior on x { NumberAnimation { duration: 340; easing.type: Easing.OutCubic } }
+                            Behavior on x { NumberAnimation { duration: Theme.ms(340); easing.type: Easing.OutCubic } }
                         }
 
                         Repeater {
@@ -387,7 +388,7 @@ ShellRoot {
                                     font.pixelSize: 15
                                     scale: tab.on ? 1.12 : 1
                                     color: tab.on || tabArea.containsMouse ? Theme.bright : Theme.fg
-                                    Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
+                                    Behavior on scale { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutBack } }
                                     Behavior on color { ColorAnimation { duration: Theme.fast } }
                                 }
 
@@ -421,7 +422,7 @@ ShellRoot {
                             function onPageChanged() { scroller.contentY = 0 }
                         }
 
-                        NumberAnimation { id: scrollAnim; target: scroller; property: "contentY"; duration: 140; easing.type: Easing.OutCubic }
+                        NumberAnimation { id: scrollAnim; target: scroller; property: "contentY"; duration: Theme.ms(140); easing.type: Easing.OutCubic }
 
                         Column {
                             id: body
@@ -447,8 +448,8 @@ ShellRoot {
                                     SequentialAnimation {
                                         id: enterAnim
                                         PropertyAction { target: sec; property: "enter"; value: 0 }
-                                        PauseAnimation { duration: 40 + Math.min(sec.index, 6) * 70 }
-                                        NumberAnimation { target: sec; property: "enter"; to: 1; duration: 460; easing.type: Easing.OutCubic }
+                                        PauseAnimation { duration: Theme.ms(40 + Math.min(sec.index, 6) * 70) }
+                                        NumberAnimation { target: sec; property: "enter"; to: 1; duration: Theme.ms(460); easing.type: Easing.OutCubic }
                                     }
                                     Component.onCompleted: enterAnim.start()
                                     Connections {
@@ -469,8 +470,7 @@ ShellRoot {
                                         width: sec.width
                                         height: rows.height
                                         radius: 12
-                                        color: sec.modelData.controls.length === 1 && sec.modelData.controls[0].type === "action"
-                                            ? "transparent" : Theme.alpha(Theme.fg, 0.055)
+                                        color: Theme.alpha(Theme.fg, 0.055)
 
                                         Column {
                                             id: rows
@@ -487,15 +487,15 @@ ShellRoot {
                                                     readonly property int lead: root.firstShown(sec.modelData.controls, Store.values, Store.caps, Store.waybar)
                                                     // Animating a 0..1 amount (not the height) keeps live resizes, like an expanding dropdown, immediate.
                                                     property real reveal: on ? 1 : 0
-                                                    Behavior on reveal { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                                                    Behavior on reveal { NumberAnimation { duration: Theme.ms(220); easing.type: Easing.OutCubic } }
 
                                                     // Each control fades up a beat after the one above it.
                                                     property real rowEnter: 0
                                                     SequentialAnimation {
                                                         id: rowAnim
                                                         PropertyAction { target: row; property: "rowEnter"; value: 0 }
-                                                        PauseAnimation { duration: 140 + Math.min(sec.index, 6) * 70 + Math.min(row.index, 8) * 45 }
-                                                        NumberAnimation { target: row; property: "rowEnter"; to: 1; duration: 420; easing.type: Easing.OutCubic }
+                                                        PauseAnimation { duration: Theme.ms(140 + Math.min(sec.index, 6) * 70 + Math.min(row.index, 8) * 45) }
+                                                        NumberAnimation { target: row; property: "rowEnter"; to: 1; duration: Theme.ms(420); easing.type: Easing.OutCubic }
                                                     }
                                                     Component.onCompleted: rowAnim.start()
                                                     Connections {
@@ -548,7 +548,7 @@ ShellRoot {
                         active: root.current.wheel === true
                         source: "ColorWheel.qml"
                         onLoaded: wheelFade.restart()
-                        NumberAnimation { id: wheelFade; target: wheelHost; property: "opacity"; from: 0; to: 1; duration: 240; easing.type: Easing.OutCubic }
+                        NumberAnimation { id: wheelFade; target: wheelHost; property: "opacity"; from: 0; to: 1; duration: Theme.ms(240); easing.type: Easing.OutCubic }
                     }
                 }
 
@@ -566,7 +566,7 @@ ShellRoot {
                         height: grabArea.containsMouse || grabArea.pressed ? 64 : 40
                         radius: 2
                         color: Theme.alpha(grabArea.containsMouse || grabArea.pressed ? Theme.accent : Theme.fg, grabArea.containsMouse || grabArea.pressed ? 0.85 : 0.25)
-                        Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        Behavior on height { NumberAnimation { duration: Theme.ms(200); easing.type: Easing.OutCubic } }
                         Behavior on color { ColorAnimation { duration: Theme.fast } }
                     }
 

@@ -114,7 +114,7 @@ Item {
             color: grabbed ? Theme.bright : Theme.accent
             border.width: 2
             border.color: Theme.alpha(Theme.bg, 0.6)
-            Behavior on width { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            Behavior on width { NumberAnimation { duration: Theme.ms(120); easing.type: Easing.OutCubic } }
             HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
         }
     }

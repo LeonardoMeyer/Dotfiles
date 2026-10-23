@@ -1,0 +1,10 @@
+{
+    "left": [],
+    "center": ["workspaces", "constdate", "clock"],
+    "right": [],
+    "strip": false,
+    "background": true,
+    "height": 30,
+    "gap": 6,
+    "shape": "capsule"
+}

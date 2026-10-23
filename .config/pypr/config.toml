@@ -28,7 +28,9 @@ offset = "200%"
 [scratchpads.spotify]
 animation = "fromTop"
 command = "spotify-launcher"
-class = "Spotify"
+class = "re:(?i)^spotify$"
+match_by = "class"
+process_tracking = false
 position = "15% 20%"
 size = "70% 60%"
 offset = "200%"

@@ -1,14 +1,4 @@
 #!/usr/bin/python
-"""pypr with runtime fixes for Hyprland dropping its IPC socket mid plugin load.
-
-Installed as ~/.local/bin/pypr (ahead of /usr/bin on PATH), so both the daemon and
-`pypr toggle ...` clients go through it. Patches at runtime instead of editing
-/usr/lib, so pyprland updates keep working.
-
-Upstream bug: hyprctl_connection's cleanup raises OSError(107) from wait_closed(),
-masking the ConnectionResetError, so retry_on_reset never retries; the error
-notification then fails the same way and kills the daemon.
-"""
 
 import asyncio
 import re

@@ -35,7 +35,6 @@ local function pop_out()
     hl.dispatch(hl.dsp.window.center({ window = target }))
 end
 hl.bind(mainMod .. " + V", pop_out)
--- Tapping Super on its own; release binds only fire when no other key was pressed with it.
 hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh launcher"), { release = true })
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- Toggle split direction
@@ -63,24 +62,22 @@ hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(osd .. "bright-down"), { locked
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd(osd .. "play"), { locked = true })
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd(osd .. "next"), { locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd(osd .. "prev"), { locked = true })
-
 hl.bind("ALT + left", hl.dsp.window.move({ direction = "left" }))
 hl.bind("ALT + right", hl.dsp.window.move({ direction = "right" }))
 hl.bind("ALT + up", hl.dsp.window.move({ direction = "up" }))
 hl.bind("ALT + down", hl.dsp.window.move({ direction = "down" }))
-
 hl.bind("CTRL + Print", hl.dsp.exec_cmd("hyprshot -m region -o ~/Screenshots/"))
 hl.bind("Print", hl.dsp.exec_cmd("hyprshot -m window -o ~/Screenshots/"))
 hl.bind("ALT + Print", hl.dsp.exec_cmd("hyprshot -m active -m output -o ~/Screenshots/"))
 hl.bind(mainMod .. " + l", hl.dsp.exec_cmd("hyprlock"))
 hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
-
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 hl.bind("ALT + TAB", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh home"))
 hl.bind("ALT + w", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh wallpaper"))
-hl.bind("ALT + a", hl.dsp.exec_cmd("~/.config/waybar/scripts/refresh.sh"))
+hl.bind("ALT + a", hl.dsp.exec_cmd("~/.config/hypr/utilities/bar.sh toggle"))
+hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd("~/.config/hypr/utilities/bar.sh overview"))
 hl.bind("ALT + S", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh settings"))
 hl.bind("ALT + RETURN", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh music"))
 hl.bind(mainMod .. " + M", hl.dsp.exit())
@@ -88,11 +85,10 @@ hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("pypr toggle packages"))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("pypr toggle term"))
 hl.bind(mainMod .. " + G", hl.dsp.exec_cmd("pypr toggle music"))
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("pypr toggle taskbar"))
-hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("pypr toggle spotify"))
+hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("~/.config/hypr/utilities/common/spotify.sh toggle"))
 
--- OBS can't see keys while unfocused on Wayland, so these are passed straight to it, and still reach the focused app (OBS → Settings → Hotkeys).
-local obs = hl.dsp.pass({ window = "class:com.obsproject.Studio" })
-hl.bind("CTRL + bracketleft", obs, { non_consuming = true }) -- OBS: start recording
-hl.bind("CTRL + bracketright", obs, { non_consuming = true }) -- OBS: stop recording
+--local obs = hl.dsp.pass({ window = "class:com.obsproject.Studio" })
+--hl.bind("CTRL + bracketleft", obs, { non_consuming = true })
+--hl.bind("CTRL + bracketright", obs, { non_consuming = true })
 
 hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })

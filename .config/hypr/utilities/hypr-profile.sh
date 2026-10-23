@@ -1,14 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Activates a Hyprland profile: hypr/<style>/base/*.lua plus hypr/<style>/<variant>/*.lua become the active
-# config (a variant file named like a base file replaces it), and hypr/<style>/utilities/* become the active
-# quickshells (symlinked into hypr/utilities/).
-# Adding a style is just a new folder: <style>/base/, <style>/utilities/ and a <style>/<variant>/machine.lua
-# per machine (monitors, input, boot and cursor defaults).
-#
-# usage: hypr-profile.sh apply <style> <variant> [--offline]
-#        hypr-profile.sh list
 HYPR="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")"
 UTIL="$HYPR/utilities"
 
@@ -57,11 +49,10 @@ apply() {
     hyprctl reload >/dev/null 2>&1 || true
     python3 "$UTIL/hypr-settings.py" cursor
     "$UTIL/shells.sh" start
-    if grep -qi 'waybar' "$HYPR/startup.lua" 2>/dev/null; then
-        pkill -x waybar 2>/dev/null || true
-        setsid -f waybar >/dev/null 2>&1
+    if grep -q 'bar.sh' "$HYPR/startup.lua" 2>/dev/null; then
+        "$UTIL/bar.sh" start
     fi
-    # The variant's live entry may carry its own color theme and waybar style.
+    # The variant's live entry may carry its own color theme, bar and waybar style.
     python3 "$UTIL/hypr-settings.py" appearance
     notify-send "Hyprland Profile" "Loaded $style / $variant" 2>/dev/null || true
 }

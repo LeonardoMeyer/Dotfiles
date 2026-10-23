@@ -27,27 +27,15 @@ Item {
         Behavior on color { ColorAnimation { duration: Theme.fast } }
     }
 
-    Rectangle {
+    Switch {
         id: knobTrack
         anchors.right: parent.right
         anchors.rightMargin: Theme.pad
         anchors.verticalCenter: parent.verticalCenter
-        width: 38
-        height: 22
-        radius: 11
-        color: control.on ? Theme.alpha(Theme.accent, 0.85) : Theme.alpha(Theme.fg, 0.16)
-        Behavior on color { ColorAnimation { duration: 180 } }
-
-        Rectangle {
-            y: 3
-            x: control.on ? parent.width - width - 3 : 3
-            width: 16
-            height: 16
-            radius: 8
-            color: control.on ? Theme.bg : Theme.fg
-            Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-            Behavior on color { ColorAnimation { duration: 180 } }
-        }
+        checked: control.on
+        hot: control.hot
+        // The whole row takes the click.
+        enabled: false
     }
 
     MouseArea {

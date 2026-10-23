@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.Notifications
+import "../common"
 
 // Floating pop-ups for new notifications, bottom left of the focused monitor; hidden while the home screen is open.
 PanelWindow {
@@ -38,7 +39,7 @@ PanelWindow {
     // Only the cards take clicks; the rest of the strip passes input through.
     mask: Region { item: list }
 
-    Timer { id: linger; interval: 600; onTriggered: win.alive = false }
+    Timer { id: linger; interval: Theme.ms(600); onTriggered: win.alive = false }
 
     ListView {
         id: list
@@ -76,7 +77,7 @@ PanelWindow {
                 property: "reveal"
                 from: 0
                 to: 1
-                duration: 560
+                duration: Theme.ms(560)
                 easing.type: Easing.OutBack
                 easing.overshoot: 1.2 
             }
@@ -89,7 +90,7 @@ PanelWindow {
                     target: slot
                     property: "reveal"
                     to: 0
-                    duration: 300
+                    duration: Theme.ms(300)
                     easing.type: Easing.InOutCubic
                 }
                 PropertyAction { target: slot; property: "ListView.delayRemove"; value: false }
@@ -122,7 +123,7 @@ PanelWindow {
                     popup: true
                     progress: slot.sticky ? -1 : slot.remain
                     scale: hover.hovered ? 1.015 : 1
-                    Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                    Behavior on scale { NumberAnimation { duration: Theme.ms(180); easing.type: Easing.OutCubic } }
                 }
             }
 

@@ -1,0 +1,10 @@
+{
+    "left": [],
+    "center": ["user", "workspaces", "|", "media", "date", "timer", "clock", "|", "tray", "|", "updates", "network", "audio", "battery", "|", "power"],
+    "right": [],
+    "strip": false,
+    "background": true,
+    "height": 30,
+    "gap": 6,
+    "shape": "capsule"
+}

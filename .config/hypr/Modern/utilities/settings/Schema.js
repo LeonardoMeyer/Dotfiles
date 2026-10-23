@@ -46,7 +46,7 @@ var PAGES = [
         sections: [
             section("Style", [{ type: "profile" }]),
             section("Saved profiles", [{ type: "saved" }]),
-            section("Waybar", [{ type: "waybar" }])
+            section("Bar", [{ type: "bar" }, { type: "waybar" }])
         ]
     },
     {
@@ -228,6 +228,8 @@ var PAGES = [
         sections: [
             section("Motion", [
                 toggle("config.animations.enabled", "Animations"),
+                // Off: the quickshells follow Hyprland's curve and speed, and stand still when it does.
+                toggle("utilities.animations", "Default quickshell animations"),
                 { type: "animpreset", when: { key: "config.animations.enabled", eq: true } },
                 slider("animation.speed", "Speed", 0.3, 2.5, 0.05, "×", { when: NOT_THEME }),
                 choice("animation.window", "Windows", [
@@ -309,8 +311,7 @@ var PAGES = [
                 toggle("config.misc.key_press_enables_dpms", "Wake on key press"),
                 toggle("config.misc.enable_anr_dialog", "Warn about frozen apps"),
                 toggle("config.misc.mouse_move_focuses_monitor", "Mouse moves focus between monitors", { cap: "multimonitor" })
-            ]),
-            section("Tweaks", [{ type: "action" }])
+            ])
         ]
     }
 ];

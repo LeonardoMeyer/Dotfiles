@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Widgets
 import "../common"
@@ -31,7 +30,6 @@ ShellRoot {
     property string pendingPath: ""
 
     // Hyprland's live rounding (override or profile default) for the wallpaper cards.
-    Rounding { id: roundingWatch }
 
     // The stage lays out in a fixed 1600x900 space and is scaled to the screen; portrait fits 1100 units across instead.
     readonly property real u: unitFor(win.screen)
@@ -57,8 +55,8 @@ ShellRoot {
         return 0.2126 * q.r + 0.7152 * q.g + 0.0722 * q.b
     }
 
-    Behavior on pos { id: posBehavior; NumberAnimation { duration: 380; easing.type: Easing.OutCubic } }
-    Behavior on accent { ColorAnimation { duration: 350 } }
+    Behavior on pos { id: posBehavior; NumberAnimation { duration: Theme.ms(380); easing.type: Easing.OutCubic } }
+    Behavior on accent { ColorAnimation { duration: Theme.ms(350) } }
 
     // Last applied wallpaper; read synchronously so the open never jumps mid-animation.
     FileView {
@@ -115,18 +113,11 @@ ShellRoot {
     }
 
     function show() {
-        roundingWatch.refresh()
+        Theme.refresh()
         watchdog.stop()
         if ((shown && !leaving) || locating) return
-        // Hyprland.focusedMonitor can be stale until the first focus event after startup, so ask for the cursor directly.
         locating = true
-        cursorQuery.running = true
-    }
-
-    function screenAt(x, y) {
-        return Quickshell.screens.find(s => x >= s.x && x < s.x + s.width && y >= s.y && y < s.y + s.height)
-            ?? Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
-            ?? Quickshell.screens[0]
+        Theme.locate(open)
     }
 
     function open(screen) {
@@ -144,19 +135,6 @@ ShellRoot {
         startTimer.restart()
         waitTimer.restart()
         Qt.callLater(() => stage.forceActiveFocus())
-    }
-
-    Process {
-        id: cursorQuery
-        command: ["hyprctl", "-j", "cursorpos"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                let c = null
-                try { c = JSON.parse(text) } catch (e) {}
-                root.open(c ? root.screenAt(c.x, c.y) : root.screenAt(-1, -1))
-            }
-        }
-        onExited: (code, status) => { if (code !== 0 && root.locating) root.open(root.screenAt(-1, -1)) }
     }
 
     function toggle() {
@@ -178,13 +156,13 @@ ShellRoot {
     }
 
     // Last resort: a stalled close must never leave the full-screen surface grabbing input.
-    Timer { id: watchdog; interval: 1200; onTriggered: root.finish() }
+    Timer { id: watchdog; interval: Theme.ms(1200) + 100; onTriggered: root.finish() }
 
     function animateTo(target) {
         tween.stop()
         tween.from = t
         tween.to = target
-        tween.duration = target === 1 ? 900 : 320
+        tween.duration = Theme.ms(target === 1 ? 900 : 320)
         tween.easing.type = target === 1 ? Easing.OutCubic : Easing.InOutCubic
         tween.start()
     }
@@ -288,7 +266,7 @@ ShellRoot {
             img.z = ++zTop
             img.opacity = 0
             fade.target = img
-            fade.duration = instant ? 0 : 220
+            fade.duration = Theme.ms(instant ? 0 : 220)
             fade.restart()
             front = img
         }
@@ -304,7 +282,7 @@ ShellRoot {
             }
         }
 
-        NumberAnimation { id: fade; property: "opacity"; from: 0; to: 1; duration: 220; easing.type: Easing.OutCubic }
+        NumberAnimation { id: fade; property: "opacity"; from: 0; to: 1; duration: Theme.ms(220); easing.type: Easing.OutCubic }
 
         Image {
             id: imgA
@@ -457,8 +435,8 @@ ShellRoot {
                     color: "#33ffffff"
                     border.width: 1
                     border.color: "#55ffffff"
-                    Behavior on x { enabled: chipBar.settled; NumberAnimation { duration: 280; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.2, 0.9, 0.3, 1, 1, 1] } }
-                    Behavior on width { enabled: chipBar.settled; NumberAnimation { duration: 280; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.2, 0.9, 0.3, 1, 1, 1] } }
+                    Behavior on x { enabled: chipBar.settled; NumberAnimation { duration: Theme.ms(280); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                    Behavior on width { enabled: chipBar.settled; NumberAnimation { duration: Theme.ms(280); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
                 }
 
                 Row {
@@ -482,7 +460,7 @@ ShellRoot {
                                 font.family: "CodeNewRoman Nerd Font Propo"
                                 font.pixelSize: 14
                                 color: chip.active ? "#ffffff" : "#99ffffff"
-                                Behavior on color { ColorAnimation { duration: 250 } }
+                                Behavior on color { ColorAnimation { duration: Theme.ms(250) } }
                             }
                             MouseArea {
                                 anchors.fill: parent
@@ -530,6 +508,7 @@ ShellRoot {
                            + (ad <= 1 ? d * width * 0.78
                                       : (d < 0 ? -1 : 1) * (width * 0.78 + (ad - 1) * width * 0.24))
                         z: 100 - ad * 10
+                        antialiasing: true
                         scale: 1.08 - 0.22 * Math.min(ad, 1) - 0.05 * Math.min(Math.max(ad - 1, 0), 3)
                         opacity: Math.max(0, 1 - 0.28 * Math.max(ad - 1, 0))
 
@@ -550,16 +529,22 @@ ShellRoot {
                             id: frame
                             ClippingRectangle {
                                 // The stage is scaled by u, so this undoes it to land on Hyprland's own pixels.
-                                radius: roundingWatch.value / root.u
+                                radius: Theme.rounding / root.u
+                                // Drawn once with multisampling and then scaled and turned as a smooth texture, so the
+                                // thin border stays clean instead of breaking up into jagged pixels.
+                                layer.enabled: true
+                                layer.smooth: true
+                                layer.samples: 4
+                                antialiasing: true
                                 color: "#1fffffff"
                                 border.width: 1
                                 border.color: card.ad < 0.5 ? "#80ffffff" : "#40ffffff"
-                                Behavior on border.color { ColorAnimation { duration: 250 } }
+                                Behavior on border.color { ColorAnimation { duration: Theme.ms(250) } }
 
                                 ClippingRectangle {
                                     anchors.fill: parent
                                     anchors.margins: 1
-                                    radius: Math.max(0, roundingWatch.value / root.u - 1)
+                                    radius: Math.max(0, Theme.rounding / root.u - 1)
                                     color: "#22000000"
 
                                     Image {
@@ -571,7 +556,7 @@ ShellRoot {
                                         asynchronous: true
                                         cache: true
                                         opacity: status === Image.Ready ? 1 : 0
-                                        Behavior on opacity { NumberAnimation { duration: 300 } }
+                                        Behavior on opacity { NumberAnimation { duration: Theme.ms(300) } }
                                     }
                                     Rectangle {
                                         anchors.fill: parent
@@ -655,7 +640,7 @@ ShellRoot {
                             property: "opacity"
                             from: 0.35
                             to: 1
-                            duration: 260
+                            duration: Theme.ms(260)
                             easing.type: Easing.OutCubic
                         }
                         Connections {

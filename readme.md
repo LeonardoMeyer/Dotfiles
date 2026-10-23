@@ -318,8 +318,9 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
     Modern/                 <- a style
       base/                 <- shared by every variant: hyprland.lua, startup.lua, style.lua, shortcuts.lua, ...
       laptop/  desktop/     <- variants: machine.lua (+ any base file to replace for that machine)
-      utilities/            <- the style's quickshells (common/ holds the shared Theme and Rounding)
+      utilities/            <- the style's quickshells (common/ holds what they share)
       waybar/<name>/        <- waybar styles: config, style.css, preview.png
+      quickshell/<name>/    <- quickshell bar styles: config.json, preview.svg
     tweaks/                 <- your tweaks and saved profiles (profiles are never edited)
     utilities/              <- shared scripts; the active style's quickshells are symlinked in here
   ```
@@ -341,6 +342,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
   2. Copy `Dotfiles/.config/hypr` into `~/.config` (or use the installer)
   3. `~/.config/hypr/utilities/shells.sh start` starts them all. `startup.lua` already does this.
   4. `shells.sh <utility> [call]` opens one (`shells.sh music`, `shells.sh launcher tab apps`, ...). Every folder in `utilities/` with a `shell.qml` is loaded, so a new utility is just a new folder.
+  5. A new utility is self-contained: `import "../common"` gives it the palette and Hyprland's own look and motion through `Theme` (`Theme.rounding`, the `Theme.settle`/`Theme.leave` curves, and `Theme.ms(280)` for any duration, which follows Hyprland's speed, stops when its animations are off and honors *Default quickshell animations*), plus the shared `Switch`, `Slider`, `PlayPause` and `Theme.openSpotify()`. Blur and glass are opt-in per window namespace, one line each in `style.lua` and `hyprglass.lua`.
 </details>
 
 <details>
@@ -374,7 +376,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 
 `Alt+S` slides it in from the left. Everything applies **live**, and your profile files are never edited.
 
-- **Profile**: pick the style and variant, switch or save profiles, and pick a waybar style.
+- **Profile**: pick the style and variant, switch or save profiles, and pick the bar, **Waybar** or the **Quickshell bar**, and its style (with a preview of each layout). The quickshell bar's pills grow into workspaces, media, network, sound and session cards on hover (inspired by [NabyScape](https://github.com/BillyNabil/nabyscape)). Each style's bars live in `<style>/waybar/` and `<style>/quickshell/`, and a new folder there shows up in the list. `Alt+A` stops or starts whichever bar is up.
 - **Colors**: a wheel of color schemes. **Pywal** (default) follows your wallpaper, and every `*.json` in `~/.config/wal/colorschemes/<dark|light>/` shows up too.
 - **Windows**: gaps, borders, rounding, a gradient border, tiling, opacity.
 - **Effects**: blur, shadow, glow, dimming, and every **hyprglass** option (when the plugin is installed).

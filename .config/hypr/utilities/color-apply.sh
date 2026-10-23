@@ -1,9 +1,6 @@
 #!/bin/bash
 set -uo pipefail
 
-# Regenerates the desktop palette. Theme "pywal" (the default) derives it from the wallpaper;
-# anything else is a scheme from ~/.config/wal/colorschemes/<dark|light>/<name>.json.
-# usage: color-apply.sh [theme] [wallpaper]   (theme "" keeps the saved one)
 HYPR="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")"
 STATE="$HYPR/.color-theme"
 SCHEMES="$HOME/.config/wal/colorschemes"

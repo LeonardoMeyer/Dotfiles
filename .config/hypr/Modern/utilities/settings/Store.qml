@@ -22,6 +22,10 @@ Singleton {
     property var cursors: []
     property var waybar: ({ styles: [], active: "" })
     property string waybarActive: ""
+    // waybar or quickshell, and the quickshell bar's styles.
+    property string bar: "waybar"
+    property var quickshell: ({ styles: [], active: "" })
+    property string quickshellActive: ""
     property var caps: ({})
     property var pywalPalette: []
     // The profile page's list: Default, each variant's tweaks, saved snapshots; and which one is live.
@@ -95,7 +99,7 @@ Singleton {
         Quickshell.execDetached(["setsid", "-f", util + "/hypr-profile.sh", "apply", style, variant])
     }
 
-    // Colors and waybar are part of the applied profile entry too, recorded like any other edit.
+    // Colors, the bar and waybar are part of the applied profile entry too, recorded like any other edit.
     function applyTheme(id) {
         colorTheme = id
         Quickshell.execDetached(["setsid", "-f", util + "/color-apply.sh", id])
@@ -108,15 +112,27 @@ Singleton {
         setMany({ "waybar.style": id })
     }
 
+    function applyQuickshell(id) {
+        quickshellActive = id
+        Quickshell.execDetached(["env", "HYPR_SETTINGS_NO_RECORD=1", "setsid", "-f", util + "/bar.sh", "style", id])
+        setMany({ "quickshell.style": id })
+    }
+
+    function applyBar(id) {
+        bar = id
+        Quickshell.execDetached(["env", "HYPR_SETTINGS_NO_RECORD=1", "setsid", "-f", util + "/bar.sh", "apply", id])
+        // bar.sh puts waybar back to its default style while the quickshell bar is up.
+        if (id === "quickshell") {
+            waybarActive = "default"
+            setMany({ "bar.kind": id, "waybar.style": "default" })
+        } else setMany({ "bar.kind": id })
+    }
+
     // action: save NAME | apply ID | delete ID | wipe. Runs one at a time; the panel re-reads everything afterwards.
     function savedRun(action, name) {
         if (savedProc.running) return
         savedProc.command = ["python3", py, "saved", action].concat(name ? [name] : [])
         savedProc.running = true
-    }
-
-    function resetAll() {
-        if (!resetProc.running) resetProc.running = true
     }
 
     function saveUi(key, value) {
@@ -132,12 +148,6 @@ Singleton {
             if (root.saved.active === "default") root.refreshAfter = true
             root.flush()
         }
-    }
-
-    Process {
-        id: resetProc
-        command: ["python3", root.py, "reset"]
-        onExited: root.refresh()
     }
 
     Process {
@@ -165,6 +175,9 @@ Singleton {
                 root.cursors = data.cursors
                 root.waybar = data.waybar
                 root.waybarActive = data.waybar.active
+                root.bar = data.bar || "waybar"
+                root.quickshell = data.quickshell || { styles: [], active: "" }
+                root.quickshellActive = root.quickshell.active
                 root.caps = data.caps
                 root.pywalPalette = data.pywalPalette
                 root.saved = data.saved || { entries: [], active: "default" }

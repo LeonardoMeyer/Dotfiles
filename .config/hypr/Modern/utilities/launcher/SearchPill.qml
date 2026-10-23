@@ -22,8 +22,8 @@ Item {
         morph.stop()
         morph.from = open
         morph.to = expanded ? 1 : 0
-        morph.duration = expanded ? 420 : 280
-        morph.easing.bezierCurve = expanded ? [0.22, 1.06, 0.36, 1, 1, 1] : [0.4, 0, 0.2, 1, 1, 1]
+        morph.duration = Theme.ms(expanded ? 420 : 280)
+        morph.easing.bezierCurve = expanded ? Theme.settle : Theme.leave
         morph.start()
     }
     NumberAnimation { id: morph; target: pill; property: "open"; easing.type: Easing.BezierSpline }

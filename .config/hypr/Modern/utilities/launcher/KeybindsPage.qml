@@ -99,7 +99,7 @@ Item {
         current: page.current
         intro: page.intro
         opacity: page.matches ? 0.35 : 1
-        Behavior on opacity { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: Theme.ms(240); easing.type: Easing.OutCubic } }
         onPicked: i => page.pick(i)
         onActivated: i => page.pick(i)
 
@@ -146,20 +146,20 @@ Item {
             scroll.to = Math.max(0, Math.min(contentHeight - height, (scroll.running ? scroll.to : contentY) + d))
             scroll.start()
         }
-        NumberAnimation { id: scroll; target: list; property: "contentY"; duration: 180; easing.type: Easing.OutCubic }
+        NumberAnimation { id: scroll; target: list; property: "contentY"; duration: Theme.ms(180); easing.type: Easing.OutCubic }
 
         property real shift: 0
-        NumberAnimation { id: searchFade; target: rows; property: "opacity"; from: 0.35; to: 1; duration: 200; easing.type: Easing.OutCubic }
+        NumberAnimation { id: searchFade; target: rows; property: "opacity"; from: 0.35; to: 1; duration: Theme.ms(200); easing.type: Easing.OutCubic }
 
         SequentialAnimation {
             id: swapAnim
             ParallelAnimation {
-                NumberAnimation { target: rows; property: "opacity"; to: 0; duration: 90; easing.type: Easing.InQuad }
-                NumberAnimation { target: list; property: "shift"; to: -16 * page.dir; duration: 90; easing.type: Easing.InQuad }
+                NumberAnimation { target: rows; property: "opacity"; to: 0; duration: Theme.ms(90); easing.type: Easing.InQuad }
+                NumberAnimation { target: list; property: "shift"; to: -16 * page.dir; duration: Theme.ms(90); easing.type: Easing.InQuad }
             }
             ScriptAction { script: { page.shown = page.cur; list.contentY = 0; list.shift = 16 * page.dir } }
             ParallelAnimation {
-                NumberAnimation { target: rows; property: "opacity"; to: 1; duration: 220; easing.type: Easing.OutCubic }
+                NumberAnimation { target: rows; property: "opacity"; to: 1; duration: Theme.ms(220); easing.type: Easing.OutCubic }
                 NumberAnimation { target: list; property: "shift"; to: 0; duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
             }
         }

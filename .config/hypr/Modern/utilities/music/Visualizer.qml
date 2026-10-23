@@ -37,7 +37,7 @@ Item {
         property: "live"
         from: 0
         to: 1
-        duration: 700
+        duration: Theme.ms(700)
         easing.type: Easing.InOutQuad
     }
 
@@ -82,7 +82,7 @@ Item {
             radius: viz.barW / 2
             color: Theme.along(Theme.spectrum, index / (viz.bars - 1))
             opacity: (0.35 + 0.6 * Math.min(1, level * 1.6)) * Math.min(1, viz.sweep(viz.intro, index) * 3)
-            Behavior on height { enabled: bar.handoff >= 1; NumberAnimation { duration: 90; easing.type: Easing.OutQuad } }
+            Behavior on height { enabled: bar.handoff >= 1; NumberAnimation { duration: Theme.ms(90); easing.type: Easing.OutQuad } }
         }
     }
 }

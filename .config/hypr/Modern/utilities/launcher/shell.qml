@@ -25,7 +25,7 @@ ShellRoot {
     // The window stays mapped (empty input region) so opening never waits on surface creation.
     property bool active: false
     property bool leaving: false
-    property real t: 0         // enter/exit progress (overshoots slightly on enter, like the OSD)
+    property real t: 0         // enter/exit progress
     property real gridIntro: 1
     property var targetScreen: null
 
@@ -265,9 +265,9 @@ ShellRoot {
         }
     }
 
-    NumberAnimation { id: introHomeAnim; target: root; property: "introHome"; from: 0; to: 1; duration: 520 }
-    NumberAnimation { id: introBindsAnim; target: root; property: "introBinds"; from: 0; to: 1; duration: 520 }
-    NumberAnimation { id: gridIntroAnim; target: root; property: "gridIntro"; from: 0; to: 1; duration: 720 }
+    NumberAnimation { id: introHomeAnim; target: root; property: "introHome"; from: 0; to: 1; duration: Theme.ms(520) }
+    NumberAnimation { id: introBindsAnim; target: root; property: "introBinds"; from: 0; to: 1; duration: Theme.ms(520) }
+    NumberAnimation { id: gridIntroAnim; target: root; property: "gridIntro"; from: 0; to: 1; duration: Theme.ms(720) }
 
     function replayIntro() {
         if (tabId === "apps") gridIntroAnim.restart()
@@ -345,7 +345,6 @@ ShellRoot {
 
     // ---- Open and close --------------------------------------------------------------------------------------
 
-    Rounding { id: rounding }
 
     Component.onCompleted: {
         targetScreen = focusedScreen()
@@ -383,7 +382,7 @@ ShellRoot {
     function begin() {
         leaving = false
         active = true
-        rounding.refresh()
+        Theme.refresh()
         focusTab()
         replayIntro()
         animateTo(1)
@@ -401,13 +400,13 @@ ShellRoot {
         else show("")
     }
 
-    // Enter: the OSD's springy curve, stretched for a bigger shape. Exit: ease-in, so it folds up and drops away.
+    // On Hyprland's curves, like the OSD: in the way windows open, out the way they close.
     function animateTo(target) {
         tween.stop()
         tween.from = t
         tween.to = target
-        tween.duration = target === 1 ? 520 : 320
-        tween.easing.bezierCurve = target === 1 ? [0.18, 1.12, 0.32, 1, 1, 1] : [0.45, 0, 0.8, 0.35, 1, 1]
+        tween.duration = Theme.ms(target === 1 ? 520 : 320)
+        tween.easing.bezierCurve = target === 1 ? Theme.settle : Theme.leave
         tween.start()
     }
 
@@ -467,8 +466,9 @@ ShellRoot {
             Region {
                 readonly property var m: root.music.open && root.music.screen === win.screen?.name ? root.music : null
                 intersection: Intersection.Subtract
-                x: m ? Math.round((win.width - m.side) / 2) : 0
-                y: m ? m.top : 0
+                // Wherever it has been dragged; older placements only gave the size, centered under the bar.
+                x: m ? (m.x ?? Math.round((win.width - m.side) / 2)) : 0
+                y: m ? (m.y ?? m.top) : 0
                 width: m ? m.side : 0
                 height: m ? m.side : 0
             }
@@ -505,7 +505,7 @@ ShellRoot {
                 width: root.dot + (root.cardW - root.dot) * root.mw
                 height: root.dot + (root.cardH - root.dot) * root.mh
                 // Fully round as a capsule, relaxing to Hyprland's own rounding as it opens.
-                readonly property real rest: Math.min(root.dot / 2, rounding.value)
+                readonly property real rest: Math.min(root.dot / 2, Theme.rounding)
                 readonly property real radius: Math.max(rest, root.dot / 2 - (root.dot / 2 - rest) * Math.min(1, root.mw))
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
@@ -587,7 +587,7 @@ ShellRoot {
                             ParallelAnimation {
                                 id: titleAnim
                                 NumberAnimation { target: titleShift; property: "y"; from: 6; to: 0; duration: Theme.move; easing.type: Easing.OutCubic }
-                                NumberAnimation { target: title; property: "fade"; from: 0; to: 1; duration: 220; easing.type: Easing.OutCubic }
+                                NumberAnimation { target: title; property: "fade"; from: 0; to: 1; duration: Theme.ms(220); easing.type: Easing.OutCubic }
                             }
                         }
 
@@ -756,7 +756,7 @@ ShellRoot {
         visible: on || opacity > 0.01
         opacity: on ? 1 : 0
         property real slide: on ? 0 : (index < root.tab ? -1 : 1) * 28
-        Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: Theme.ms(220); easing.type: Easing.OutCubic } }
         Behavior on slide { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
         transform: Translate { x: slide }
     }

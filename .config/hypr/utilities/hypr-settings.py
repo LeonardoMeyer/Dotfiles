@@ -1,34 +1,5 @@
 #!/usr/bin/env python3
-"""Backend for the Hyprland settings panel.
 
-Every style/variant keeps its own tweaks in hypr/tweaks/<Style>-<variant>.json (source of truth). The
-active one is mirrored to hypr/settings.lua, which overrides.lua layers over the profile. Profile files
-are never edited, and switching profile swaps in that profile's own tweaks.
-
-  hypr-settings.py state KEY...      current values + profiles, themes and cursors, as JSON
-  hypr-settings.py set KEY=JSON ...  save and live-apply (KEY is a dotted path, e.g. config.general.gaps_in;
-                                     a JSON null removes the key)
-  hypr-settings.py reset             switch to Default (no overrides); the variant's file is kept
-  hypr-settings.py sync              write settings.lua for the active profile (used when switching)
-  hypr-settings.py cursor            apply the active profile's cursor theme and size
-  hypr-settings.py appearance        apply the live entry's color theme and waybar style if they differ
-  hypr-settings.py ui KEY=JSON ...   panel UI state (width, last page), kept outside the repo
-  hypr-settings.py saved save NAME   snapshot what is live now as a named saved profile
-  hypr-settings.py saved apply ID    make an entry the live one (ids below)
-  hypr-settings.py saved delete ID   remove an entry's file; Default can't be deleted
-  hypr-settings.py saved wipe        remove every saved profile and every tweaks file (style folders are untouched)
-
-The live settings come from one entry per style/variant, picked on the panel's profile page:
-  default        no overrides at all: the profile's own Hyprland files as they are
-  variant:NAME   tweaks/<Style>-NAME.json, one per variant of the style (desktop, laptop, ...)
-  saved:NAME     tweaks/saved/<Style>-<variant>/NAME.json, named snapshots in the same format
-Edits land in the live entry and it stays live. On Default there is nothing to edit, so the change is added
-to the active variant's own file (Desktop/Laptop) and that becomes live. Which entry is live is kept in
-hypr/.active-saved.json.
-
-Besides Hyprland options an entry carries colors.theme, waybar.style and wallpaper.path; left out they mean
-pywal, the style's "default" waybar and whatever wallpaper is up, which is what Default gets.
-"""
 import json
 import os
 import re
@@ -45,6 +16,8 @@ SAVED = TWEAKS / "saved"
 ACTIVE_SAVED_FILE = HYPR / ".active-saved.json"
 THEME_FILE = HYPR / ".color-theme"
 PROFILE_FILE = HYPR / ".active-profile"
+BAR_FILE = HYPR / ".active-bar"
+QUICKSHELL_FILE = HYPR / ".quickshell-bar"
 SCHEMES = HOME / ".config/wal/colorschemes"
 # Files pywal16 maintains itself for --cols16; not user-selectable themes.
 INTERNAL_SCHEMES = {"pywal16", "ywal16"}
@@ -250,22 +223,35 @@ def themes():
     return out
 
 
-def waybar():
-    """Waybar styles shipped by the active style, and which one is live (matched by file content)."""
-    style = PROFILE_FILE.read_text().strip().partition("/")[0] if PROFILE_FILE.exists() else ""
-    live = HOME / ".config/waybar"
-    styles, active = [], ""
-    for d in sorted((HYPR / style / "waybar").glob("*/")):
-        if not (d / "config").is_file():
+def style_dir():
+    """hypr/<style> of the active profile."""
+    return HYPR / (PROFILE_FILE.read_text().strip().partition("/")[0] if PROFILE_FILE.exists() else "")
+
+
+def bar_styles(folder, marker):
+    """A bar's styles shipped by the active style: hypr/<style>/<folder>/<name>/ holding `marker`, with an optional
+    preview.svg or preview.png. Adding a style is just adding its folder."""
+    out = []
+    for d in sorted((style_dir() / folder).glob("*/")):
+        if not (d / marker).is_file():
             continue
-        styles.append({"id": d.name, "name": d.name.replace("-", " ").title(),
-                       "image": str(d / "preview.png") if (d / "preview.png").is_file() else ""})
-        same = all((d / f).read_bytes() == (live / g).read_bytes()
-                   for f, g in (("config", "config"), ("style.css", "style.css"))
-                   if (d / f).is_file() and (live / g).is_file())
-        if same and not active:
-            active = d.name
-    return {"styles": styles, "active": active}
+        image = next((d / f for f in ("preview.svg", "preview.png") if (d / f).is_file()), None)
+        out.append({"id": d.name, "name": d.name.replace("-", " ").title(), "image": str(image) if image else ""})
+    return out
+
+
+def waybar():
+    """Waybar styles, and which one is live (matched by file content)."""
+    styles, live, base = bar_styles("waybar", "config"), HOME / ".config/waybar", style_dir() / "waybar"
+    same = lambda s: all((base / s["id"] / f).read_bytes() == (live / f).read_bytes()
+                         for f in ("config", "style.css") if (base / s["id"] / f).is_file() and (live / f).is_file())
+    return {"styles": styles, "active": next((s["id"] for s in styles if same(s)), "")}
+
+
+def quickshell():
+    """Quickshell bar styles, and which one is live (hypr/.quickshell-bar names it; none named means "default")."""
+    styles, live = bar_styles("quickshell", "config.json"), load_text(QUICKSHELL_FILE) or DEFAULT_QUICKSHELL
+    return {"styles": styles, "active": live if any(s["id"] == live for s in styles) else ""}
 
 
 def cursors():
@@ -304,6 +290,7 @@ def wallpaper_palette(path):
 # Shown when a tweak has not been saved yet; the panel edits from these.
 FALLBACKS = {
     "animation.preset": "theme",
+    "utilities.animations": False,
     "animation.speed": 1.0,
     "animation.curve": [0.15, 0.85, 0.25, 1.0],
     "animation.window": "popin 90%",
@@ -355,6 +342,8 @@ def cmd_state(keys):
         "caps": {"touchpad": has_touchpad(), "multimonitor": monitor_count() > 1, "hyprglass": has_hyprglass()},
         "cursors": cursors(),
         "waybar": waybar(),
+        "bar": current_bar(),
+        "quickshell": quickshell(),
         "saved": saved_state(),
     }))
 
@@ -430,6 +419,8 @@ def saved_state():
 
 DEFAULT_THEME = "pywal"
 DEFAULT_WAYBAR = "default"
+DEFAULT_BAR = "waybar"
+DEFAULT_QUICKSHELL = "default"
 
 
 WALLPAPER_FILE = HOME / ".cache/wallpaper-picker/current"
@@ -437,6 +428,11 @@ WALLPAPER_FILE = HOME / ".cache/wallpaper-picker/current"
 
 def current_wallpaper():
     return WALLPAPER_FILE.read_text().strip() if WALLPAPER_FILE.exists() else ""
+
+
+def current_bar():
+    """waybar or quickshell, as bar.sh last set it."""
+    return "quickshell" if load_text(BAR_FILE) == "quickshell" else DEFAULT_BAR
 
 
 def current_theme():
@@ -464,8 +460,9 @@ def load_text(path):
 
 
 def cmd_appearance():
-    """Wallpaper, colors and waybar follow the live entry. The wallpaper is re-run on every switch (the entry's
-    own, else the one already up), which also regenerates the palette; waybar only restarts when it changes."""
+    """Wallpaper, colors, the bar and its styles follow the live entry. The wallpaper is re-run on every switch
+    (the entry's own, else the one already up), which also regenerates the palette; waybar only restarts when it
+    changes."""
     settings = live_settings()
     theme = dig(settings, "colors.theme") or DEFAULT_THEME
     wallpaper = real_wallpaper(os.path.expandvars(dig(settings, "wallpaper.path") or "")) or real_wallpaper(current_wallpaper())
@@ -476,8 +473,18 @@ def cmd_appearance():
         detached(str(HYPR / "utilities/wallpaper-apply.sh"), wallpaper, env={"HYPR_SETTINGS_NO_RECORD": "1"})
     elif theme != current_theme():
         detached(str(HYPR / "utilities/color-apply.sh"), theme)
+    # The bar is switched first and waited on, so the waybar style below sees which bar is up.
+    kind = dig(settings, "bar.kind") or DEFAULT_BAR
+    if kind != current_bar():
+        subprocess.run([str(HYPR / "utilities/bar.sh"), "apply", kind], env={**os.environ, "HYPR_SETTINGS_NO_RECORD": "1"},
+                       stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    look = dig(settings, "quickshell.style") or DEFAULT_QUICKSHELL
+    qs = quickshell()
+    if look != qs["active"] and any(s["id"] == look for s in qs["styles"]):
+        detached(str(HYPR / "utilities/bar.sh"), "style", look, env={"HYPR_SETTINGS_NO_RECORD": "1"})
     bar = waybar()
-    style = dig(settings, "waybar.style") or DEFAULT_WAYBAR
+    # While the quickshell bar is up, waybar keeps its default config and style.
+    style = DEFAULT_WAYBAR if kind == "quickshell" else dig(settings, "waybar.style") or DEFAULT_WAYBAR
     if style != bar["active"] and any(s["id"] == style for s in bar["styles"]):
         detached(str(HYPR / "utilities/waybar-style.sh"), "apply", style, env={"HYPR_SETTINGS_NO_RECORD": "1"})
 
@@ -501,6 +508,10 @@ def cmd_saved(args):
             snapshot.setdefault("wallpaper", {})["path"] = current_wallpaper()
         if waybar()["active"]:
             snapshot.setdefault("waybar", {})["style"] = waybar()["active"]
+        snapshot.setdefault("bar", {})["kind"] = current_bar()
+        look = quickshell()["active"]
+        if look:
+            snapshot.setdefault("quickshell", {})["style"] = look
         write_atomic(saved_dir() / f"{name}.json", json.dumps(portable(snapshot), indent=2, sort_keys=True) + "\n")
         set_live_entry("saved:" + name)
     elif action == "apply":

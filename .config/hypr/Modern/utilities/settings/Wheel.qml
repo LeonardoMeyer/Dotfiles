@@ -65,8 +65,8 @@ Item {
     property int introDelay: 0
     SequentialAnimation {
         id: introAnim
-        PauseAnimation { duration: wheel.introDelay }
-        NumberAnimation { target: wheel; property: "intro"; from: 0; to: 1; duration: 620; easing.type: Easing.OutCubic }
+        PauseAnimation { duration: Theme.ms(wheel.introDelay) }
+        NumberAnimation { target: wheel; property: "intro"; from: 0; to: 1; duration: Theme.ms(620); easing.type: Easing.OutCubic }
     }
     onActiveIndexChanged: cur = cur + wrap(activeIndex - mod(cur))
     onEntriesChanged: { cur = mod(cur); if (!settleAnim.running) pos = cur }
@@ -76,7 +76,7 @@ Item {
         settleAnim.start()
     }
 
-    NumberAnimation { id: settleAnim; target: wheel; property: "pos"; duration: 380; easing.type: Easing.OutCubic }
+    NumberAnimation { id: settleAnim; target: wheel; property: "pos"; duration: Theme.ms(380); easing.type: Easing.OutCubic }
 
     function step(d) {
         if (n > 1) cur += d
@@ -143,7 +143,7 @@ Item {
                     visible: !item.isImage
                     anchors.fill: parent
                     spacing: item.centered ? 8 : 4
-                    Behavior on spacing { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+                    Behavior on spacing { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutCubic } }
 
                     Repeater {
                         model: item.modelData.colors || []
@@ -158,7 +158,7 @@ Item {
 
                             // Eases the drift in and out as this entry enters or leaves the center.
                             property real breath: item.centered ? 1 : 0
-                            Behavior on breath { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                            Behavior on breath { NumberAnimation { duration: Theme.ms(400); easing.type: Easing.OutCubic } }
 
                             Rectangle {
                                 width: parent.width
@@ -167,7 +167,7 @@ Item {
                                 anchors.verticalCenterOffset: cell.breath * Math.sin(wheel.t + cell.index * 0.8) * 2.5
                                 radius: Math.min(width / 2, 10)
                                 color: cell.modelData
-                                Behavior on height { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
+                                Behavior on height { NumberAnimation { duration: Theme.ms(280); easing.type: Easing.OutCubic } }
                             }
                         }
                     }
@@ -220,7 +220,7 @@ Item {
                     anchors.topMargin: item.isImage ? 10 : 6
                     anchors.horizontalCenter: parent.horizontalCenter
                     opacity: item.centered ? 1 : 0
-                    Behavior on opacity { NumberAnimation { duration: 200 } }
+                    Behavior on opacity { NumberAnimation { duration: Theme.ms(200) } }
                     text: item.modelData.name + (item.modelData.sub ? "  ·  " + item.modelData.sub : "")
                     font.family: Theme.sans
                     font.pixelSize: 13

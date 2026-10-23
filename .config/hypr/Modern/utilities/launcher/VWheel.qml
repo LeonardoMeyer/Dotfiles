@@ -35,7 +35,7 @@ Item {
 
     // Entries settle in from below when the list is replaced (opening, a new search).
     property real intro: 1
-    NumberAnimation { id: introAnim; target: wheel; property: "intro"; from: 0; to: 1; duration: 420; easing.type: Easing.OutCubic }
+    NumberAnimation { id: introAnim; target: wheel; property: "intro"; from: 0; to: 1; duration: Theme.ms(420); easing.type: Easing.OutCubic }
 
     function reset() {
         settle.stop()
@@ -54,7 +54,7 @@ Item {
         settle.start()
     }
 
-    NumberAnimation { id: settle; target: wheel; property: "pos"; duration: 380; easing.type: Easing.OutCubic }
+    NumberAnimation { id: settle; target: wheel; property: "pos"; duration: Theme.ms(380); easing.type: Easing.OutCubic }
 
     property real wheelAcc: 0
     MouseArea {

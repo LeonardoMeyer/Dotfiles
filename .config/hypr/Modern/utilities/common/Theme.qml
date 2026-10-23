@@ -3,18 +3,162 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
+import Quickshell.Services.Mpris
 
-// The palette and motion every utility shares (import "../common"). Same roles as waybar:
+// The palette, motion and small helpers every utility shares (import "../common"). Same roles as waybar:
 // color9 accent, color7 text, background translucent.
 Singleton {
     id: root
 
     readonly property string sans: "CodeNewRoman Nerd Font Propo"
     readonly property int pad: 14
-    readonly property int fast: 160
-    // Shared motion: everything that moves into place uses the same curve.
-    readonly property int move: 280
-    readonly property var settle: [0.2, 0.9, 0.3, 1, 1, 1]
+
+    // ---- Hyprland's own look and motion, kept live --------------------------------------------------------------
+
+    // Corner rounding, and motion that follows the windows: the curves they open (settle) and close (leave) on,
+    // their speed, and nothing moving at all while Hyprland's animations are off. The settings panel's "default
+    // quickshell animations" (utilities.animations) gives the utilities their own curve and pace instead, even then.
+    // Every duration goes through ms(): `ms(280)` is about as long as a window takes to open.
+    property real rounding: 10
+    property bool hyprAnimates: true
+    property real hyprPace: 1
+    property var hyprSettle: own
+    property var hyprLeave: own
+    readonly property bool ownMotion: /\["utilities"\]\s*=\s*\{[^}]*\["animations"\]\s*=\s*true/.test(settingsFile.text())
+
+    readonly property var own: [0.2, 0.9, 0.3, 1, 1, 1]
+    readonly property bool animates: ownMotion || hyprAnimates
+    readonly property real pace: ownMotion ? 1 : hyprPace
+    readonly property var settle: ownMotion ? own : hyprSettle
+    readonly property var leave: ownMotion ? own : hyprLeave
+    readonly property int fast: ms(160)
+    readonly property int move: ms(280)
+
+    function ms(d) {
+        return animates ? Math.round(d * pace) : 0
+    }
+
+    function refresh() {
+        optionProc.running = true
+        curveProc.running = true
+    }
+    Component.onCompleted: refresh()
+
+    Process {
+        id: optionProc
+        command: ["sh", "-c", "hyprctl -j getoption decoration:rounding; hyprctl -j getoption animations:enabled"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const [r, a] = text.trim().split(/\n(?=\{)/).map(s => JSON.parse(s))
+                    if (typeof r.int === "number") root.rounding = r.int
+                    root.hyprAnimates = a.bool ?? a.int !== 0
+                } catch (e) {}
+            }
+        }
+    }
+
+    Process {
+        id: curveProc
+        command: ["hyprctl", "-j", "animations"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const [leaves, beziers] = JSON.parse(text)
+                    // A leaf left unset follows its parent.
+                    const parent = { windowsIn: "windows", windowsOut: "windows", windows: "global" }
+                    const leaf = (name, has) => {
+                        for (let n = name; n; n = parent[n]) {
+                            const l = leaves.find(a => a.name === n)
+                            if (l && has(l)) return l
+                        }
+                        return null
+                    }
+                    const curve = name => {
+                        const l = leaf(name, l => !!l.bezier && beziers.some(b => b.name === l.bezier))
+                        const b = l ? beziers.find(b => b.name === l.bezier) : null
+                        return b ? [b.X0, b.Y0, b.X1, b.Y1, 1, 1] : null
+                    }
+                    root.hyprSettle = curve("windowsIn") ?? root.own
+                    root.hyprLeave = curve("windowsOut") ?? root.hyprSettle
+                    // Speed is in tenths of a second; 3 is the pace these utilities were timed at.
+                    const w = leaf("windowsIn", l => l.speed > 0)
+                    root.hyprPace = w ? Math.max(0.2, Math.min(3, w.speed / 3)) : 1
+                } catch (e) {}
+            }
+        }
+    }
+
+    // The file is written just before the compositor applies it, so ask a few times as it settles.
+    FileView {
+        id: settingsFile
+        path: Quickshell.env("HOME") + "/.config/hypr/settings.lua"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: { reload(); settleTimer.n = 0; settleTimer.restart() }
+    }
+    Timer {
+        id: settleTimer
+        property int n: 0
+        interval: 250
+        repeat: true
+        onTriggered: { root.refresh(); if (++n >= 3) stop() }
+    }
+
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) { if (event.name === "configreloaded") root.refresh() }
+    }
+
+    // Media players, without playerctld: it only mirrors the real ones, and keeps the last track once they stop.
+    readonly property var players: Mpris.players.values.filter(p => !(p.dbusName || "").includes("playerctld"))
+
+    // Whether a media player or tray app is Spotify.
+    function isSpotify(x) {
+        return !!x && [x.identity, x.dbusName, x.id, x.title, x.tooltipTitle].some(s => (s || "").toLowerCase().includes("spotify"))
+    }
+
+    // Opens Spotify: focuses its window, or reveals its pypr scratchpad when it is hidden there or not running.
+    function openSpotify() {
+        Quickshell.execDetached([Quickshell.shellDir + "/common/spotify.sh"])
+    }
+
+    // ---- The monitor under the cursor ---------------------------------------------------------------------------
+
+    // Hands done(screen) the monitor under the cursor, for a utility opening there. Hyprland.focusedMonitor can be
+    // stale until the first focus event after startup, so this asks for the cursor directly; the focused monitor
+    // is only the fallback.
+    function locate(done) {
+        located.push(done)
+        cursorQuery.running = true
+    }
+    function screenAt(x, y) {
+        return Quickshell.screens.find(s => x >= s.x && x < s.x + s.width && y >= s.y && y < s.y + s.height)
+            ?? Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
+            ?? Quickshell.screens[0]
+    }
+    property var located: []
+    function found(c) {
+        const scr = c ? screenAt(c.x, c.y) : screenAt(-1, -1)
+        const done = located
+        located = []
+        done.forEach(f => f(scr))
+    }
+    Process {
+        id: cursorQuery
+        command: ["hyprctl", "-j", "cursorpos"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let c = null
+                try { c = JSON.parse(text) } catch (e) {}
+                root.found(c)
+            }
+        }
+        onExited: code => { if (code !== 0) root.found(null) }
+    }
+
+    // ---- Palette ----------------------------------------------------------------------------------------------
 
     FileView {
         id: walFile

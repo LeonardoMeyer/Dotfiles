@@ -3,6 +3,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
+import "../common"
 
 // One notification, shared by the home tile (popup: false) and the pop-up window (popup: true).
 Item {
@@ -50,7 +51,7 @@ Item {
         color: card.popup ? shell.popupBg : (area.containsMouse ? "#26ffffff" : "#14ffffff")
         border.width: card.popup || card.critical ? 1 : 0
         border.color: card.critical ? "#b3ff6b6b" : Qt.alpha(shell.accent, 0.4)
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation { duration: Theme.ms(150) } }
         // Soft drop shadow lifts pop-ups off the desktop; faint enough that the blur rule ignores it.
         layer.enabled: card.popup
         layer.effect: MultiEffect {
@@ -152,12 +153,12 @@ Item {
                     width: actLabel.implicitWidth + 22 * card.u
                     height: 26 * card.u
                     scale: actArea.pressed ? 0.94 : 1
-                    Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } }
+                    Behavior on scale { NumberAnimation { duration: Theme.ms(140); easing.type: Easing.OutBack } }
                     Rectangle {
                         anchors.fill: parent
                         radius: height / 2
                         color: actArea.containsMouse ? "#40ffffff" : "#26ffffff"
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Theme.ms(150) } }
                     }
                     Text {
                         id: actLabel
@@ -200,7 +201,7 @@ Item {
         font.family: shell.sans
         font.pixelSize: 13 * card.u
         color: closeArea.containsMouse ? "#ffffff" : "#99ffffff"
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: Theme.ms(150) } }
 
         MouseArea {
             id: closeArea

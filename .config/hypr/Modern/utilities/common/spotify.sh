@@ -1,0 +1,16 @@
+#!/bin/bash
+# Opens Spotify, for every utility (Theme.openSpotify) and Super+Escape (spotify.sh toggle). It lives in a pypr
+# scratchpad: revealed from there when hidden or not running yet, focused when already up. Without pypr (not
+# installed, or its daemon down) it is a plain window instead: focused, or launched.
+c=$(hyprctl clients -j | jq -c '[.[] | select(.class | test("^spotify$"; "i"))][0] // empty')
+if [ "${1:-}" = toggle ] || [ -z "$c" ] || echo "$c" | jq -e '.workspace.name | startswith("special")' >/dev/null; then
+    pypr "${1:-show}" spotify 2>/dev/null && exit 0
+fi
+if [ -n "$c" ]; then
+    # Hyprland here is configured in Lua, so dispatches are Lua expressions.
+    hyprctl dispatch "hl.dsp.focus({ window = \"address:$(echo "$c" | jq -r .address)\" })" >/dev/null
+elif command -v spotify-launcher >/dev/null; then
+    exec spotify-launcher
+else
+    exec spotify
+fi

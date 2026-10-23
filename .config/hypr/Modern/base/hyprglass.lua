@@ -1,50 +1,3 @@
--- hyprglass.lua
-
--- Read pywal color N as a 0xRRGGBB number. Tries colors-hyprland first
--- (same file style.lua uses), then the plain ~/.cache/wal/colors file.
--- local function read_wal_color(index, fallback)
---     local home = os.getenv("HOME")
---
---     local f = io.open(home .. "/.cache/wal/colors-hyprland", "r")
---     if f then
---         for line in f:lines() do
---             local idx, value = line:match("%$?color(%d+)%s*=%s*(%S+)")
---             if idx and tonumber(idx) == index then
---                 local hex = value:match("(%x%x%x%x%x%x)")
---                 if hex then
---                     f:close()
---                     return tonumber(hex, 16)
---                 end
---             end
---         end
---         f:close()
---     end
---
---     f = io.open(home .. "/.cache/wal/colors", "r") -- one #RRGGBB per line
---     if f then
---         local n = 0
---         for line in f:lines() do
---             if n == index then
---                 local hex = line:match("(%x%x%x%x%x%x)")
---                 f:close()
---                 if hex then return tonumber(hex, 16) end
---                 return fallback
---             end
---             n = n + 1
---         end
---         f:close()
---     end
---
---     return fallback
--- end
---
--- -- Build a 0xRRGGBBAA number from 0xRRGGBB plus an alpha byte.
--- local function tint(rgb, alpha)
---     return rgb * 256 + alpha
--- end
---
--- The look of every glassed window. Exported so the settings panel can show these
--- values and overrides.lua can layer the panel's tweaks on top of them.
 local PRESET = "apple_extreme"
 local PRESET_VALUES = {
     inherits = "glass",
@@ -106,39 +59,9 @@ local PRESET_VALUES = {
     },
 }
 
---[[ Reference: everything else hyprglass understands
-
-Every look option (blur_strength ... frost_blur, brightness ... adaptive_boost) can go
-in four places: hg.config({...}) globally, hg.config({ dark = {...}, light = {...} })
-per theme, a preset's shared values, or a preset's dark = {...} / light = {...}.
-Resolution: preset theme variant -> preset shared -> inherited preset -> theme -> global.
-
-Built-in presets (usable as default_preset, inherits, or layer preset):
-    "high_contrast", "subtle", "clear", "glass", "pomme"  ("default" = no preset)
-
-Per-window tags (window rules):
-    hl.window_rule({ match = { class = "mpv" }, tag = "+hyprglass_disabled" })
-    +hyprglass_enabled            force glass on (useful with enabled = false)
-    +hyprglass_disabled           force glass off (wins over enabled)
-    +hyprglass_theme_dark         / +hyprglass_theme_light
-    +hyprglass_preset_<name>      use another preset for this window
-
-On the fly:
-    hyprctl keyword plugin:hyprglass:<option> <value>
-    hyprctl dispatch tagwindow +hyprglass_preset_subtle
-    hyprctl hyprglass stats       cache hits/misses per monitor
-    hyprctl configerrors          unknown options
-
-Layer shape: shape = { inset = 6, radius = -1 } (pill), or
-             shape = { inset = { top, right, bottom, left }, radius = 16 }
---]]
-
 if hl.plugin.hyprglass then
     local hg = hl.plugin.hyprglass
 
-    -- Resolution order for every look option:
-    --   preset (theme variant -> shared -> inherited) -> theme (dark/light) -> global -> built-in default
-    -- So values in the apple_extreme preset below win over the globals here.
     hg.config({
         -- Global-only settings
         enabled = false,
@@ -226,13 +149,8 @@ if hl.plugin.hyprglass then
         },
     })
 
-    -- Unset values here fall through to the built-in "glass" preset; the
-    -- ones marked (glass) / (default) are those inherited values, spelled out.
-    -- The settings panel's Glass sliders are layered over this preset by overrides.lua.
     hg.preset(PRESET, PRESET_VALUES)
 
-    -- Per-layer fields: preset, mask_threshold, mask_mode, mask_feather,
-    -- live_resample, exclude, shape = { inset = px | {t, r, b, l}, radius = px | -1 }
     hg.layer("settings-panel", {
         preset = PRESET,
         mask_threshold = 0.01,
@@ -240,7 +158,6 @@ if hl.plugin.hyprglass then
         mask_feather = 0.0,
         live_resample = true,
         exclude = false,
-        -- shape = { inset = 0, radius = 0 },  -- unset = whole layer
     })
 
     hg.layer("app-drawer", {
@@ -250,7 +167,15 @@ if hl.plugin.hyprglass then
         mask_feather = 0.0,
         live_resample = true,
         exclude = false,
-        -- shape = { inset = 0, radius = 0 },  -- unset = whole layer
+    })
+
+    hg.layer("quickshell-bar", {
+        preset = PRESET,
+        mask_threshold = 0.01,
+        mask_mode = "auto",
+        mask_feather = 0.0,
+        live_resample = true,
+        exclude = false,
     })
 
     hg.layer("music-player", {
@@ -260,7 +185,6 @@ if hl.plugin.hyprglass then
         mask_feather = 0.0,
         live_resample = true,
         exclude = false,
-        -- shape = { inset = 0, radius = 0 },  -- unset = whole layer
     })
 end
 

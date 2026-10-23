@@ -12,6 +12,7 @@ import "../common"
 // It follows Spotify when that's running, else whichever player is playing; the chip top left switches players.
 // It never takes focus or closes on outside clicks: only the card itself takes input, and keys work once it's clicked.
 // The bottom edge drags to resize (it stays square and centered); the size is remembered between sessions.
+// Drag the card anywhere else to move it around the screen like a window; double-click puts it back.
 ShellRoot {
     id: root
 
@@ -21,6 +22,8 @@ ShellRoot {
     // The window stays mapped (empty input region) so opening never waits on surface creation.
     property bool active: false
     property bool leaving: false
+    // Folded away for a moment (a quickshell bar card opening over it), still open; it drops back in when untucked.
+    property bool tucked: false
     property real t: 0
     property var targetScreen: null
 
@@ -48,7 +51,7 @@ ShellRoot {
     readonly property real pad: px(30)
 
     // The profile's own rounding and outer gap, so the card sits like a window would.
-    readonly property real rounding: roundingWatch.value
+    readonly property real rounding: Theme.rounding
     property real gapsOut: 8
     readonly property real topGap: Math.max(8, gapsOut)
     readonly property real radius: Math.min(rounding, shown / 4)
@@ -60,9 +63,33 @@ ShellRoot {
         printErrors: false
     }
 
-    // Where the card sits while open, so the launcher can let clicks on it through instead of closing.
+    // ---- Position ---------------------------------------------------------------------------------------------
+
+    // How far the card has been dragged from its home under the bar, while it stays open (tucking keeps it;
+    // opening again starts back home).
+    property real offX: 0
+    property real offY: 0
+    property bool moving: false
+    Behavior on offX { enabled: !root.moving; NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+    Behavior on offY { enabled: !root.moving; NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+    // Where the open card rests in the window, kept on screen.
+    readonly property real homeX: (win.width - shown) / 2
+    readonly property real baseX: Math.max(8, Math.min(win.width - shown - 8, homeX + offX))
+    readonly property real baseY: Math.max(topGap, Math.min(win.height - shown - 8, topGap + offY))
+
+    function resetPosition() {
+        // Jumps rather than glides: it only happens while the card is hidden.
+        moving = true
+        offX = 0
+        offY = 0
+        moving = false
+    }
+
+    // Where the card sits while open, so the launcher can let clicks on it through instead of closing, and the
+    // quickshell bar can fold it away while one of its cards opens over it.
     readonly property string placement: JSON.stringify({
-        open: active && !leaving, screen: targetScreen?.name ?? "", side: Math.round(shown), top: topGap
+        open: active && !leaving, tucked: tucked, screen: targetScreen?.name ?? "", side: Math.round(shown), top: topGap,
+        x: Math.round(baseX), y: Math.round(baseY)
     })
     onPlacementChanged: placementWrite.restart()
     Timer { id: placementWrite; interval: 30; onTriggered: placementFile.setText(root.placement) }
@@ -78,7 +105,6 @@ ShellRoot {
                                  uiPath, JSON.stringify({ side: v / u })])
     }
 
-    Rounding { id: roundingWatch }
 
     Process {
         id: gapsProc
@@ -96,23 +122,19 @@ ShellRoot {
 
     // ---- Players ----------------------------------------------------------------------------------------------
 
-    readonly property var players: Mpris.players.values
+    readonly property var players: Theme.players
     // Chosen with the chip; otherwise Spotify, then whatever is playing, then anything.
     property string pinned: ""
     readonly property var player: {
         const ps = players
         if (!ps || ps.length === 0) return null
         return ps.find(p => p.dbusName === pinned)
-            ?? ps.find(p => isSpotify(p))
+            ?? ps.find(p => Theme.isSpotify(p))
             ?? ps.find(p => p.isPlaying)
             ?? ps[0]
     }
-    readonly property bool spotify: !!player && isSpotify(player)
+    readonly property bool spotify: Theme.isSpotify(player)
     readonly property bool playing: !!player && player.isPlaying
-
-    function isSpotify(p) {
-        return (p.identity || "").toLowerCase().includes("spotify") || (p.dbusName || "").toLowerCase().includes("spotify")
-    }
 
     function cyclePlayer() {
         const ps = players
@@ -137,14 +159,8 @@ ShellRoot {
         player.position = Math.max(0, Math.min(player.length, player.position + s))
     }
 
-    // Same as the home screen's: focus an existing Spotify window; reveal it via pypr if it sits in the scratchpad;
-    // otherwise launch the scratchpad.
     function openSpotify() {
-        Quickshell.execDetached(["sh", "-c",
-            "c=$(hyprctl clients -j | jq -c '[.[] | select(.class | test(\"^spotify$\"; \"i\"))][0] // empty'); " +
-            "if [ -z \"$c\" ]; then pypr show spotify; " +
-            "elif echo \"$c\" | jq -e '.workspace.name | startswith(\"special\")' >/dev/null; then pypr show spotify; " +
-            "else hyprctl dispatch focuswindow address:$(echo \"$c\" | jq -r .address); fi"])
+        Theme.openSpotify()
         close()
     }
 
@@ -173,11 +189,6 @@ ShellRoot {
 
     // ---- Open and close ---------------------------------------------------------------------------------------
 
-    // Drop-down morph, the launcher's mirrored: a capsule slides out from under the bar, stretches wide, then grows tall.
-    readonly property real dot: Math.round(52 * u)
-    readonly property real rise: Math.max(0, Math.min(1, t / 0.28))
-    readonly property real mw: Math.max(0, Math.min(1.02, (t - 0.12) / 0.48))
-    readonly property real mh: Math.max(0, Math.min(1.02, (t - 0.32) / 0.68))
     property real vizIntro: 0
 
     Component.onCompleted: {
@@ -187,7 +198,7 @@ ShellRoot {
         } catch (e) {}
         targetScreen = focusedScreen()
         placementWrite.restart()
-        roundingWatch.refresh()
+        Theme.refresh()
         gapsProc.running = true
     }
 
@@ -197,13 +208,15 @@ ShellRoot {
     }
 
     function show() {
+        if (tucked) { untuck(); return }
         if (active && !leaving) return
-        roundingWatch.refresh()
+        Theme.refresh()
         gapsProc.running = true
         const scr = focusedScreen()
         if (!active && scr !== targetScreen) {
-            // A different monitor needs a new surface; give it a moment before dropping.
+            // A different monitor needs a new surface; give it a moment before dropping. It starts at home there.
             targetScreen = scr
+            resetPosition()
             moveDelay.restart()
             return
         }
@@ -211,6 +224,7 @@ ShellRoot {
     }
 
     function begin() {
+        if (!active) resetPosition()
         leaving = false
         active = true
         animateTo(1)
@@ -219,8 +233,24 @@ ShellRoot {
 
     function close() {
         if (!active || leaving) return
+        tucked = false
         leaving = true
         animateTo(0)
+    }
+
+    // The same fold and drop as closing and opening, without closing.
+    function tuck() {
+        if (!active || leaving || tucked) return
+        tucked = true
+        animateTo(0)
+    }
+
+    function untuck() {
+        if (!tucked) return
+        tucked = false
+        if (!active || leaving) return
+        animateTo(1)
+        vizAnim.restart()
     }
 
     function toggleOpen() {
@@ -228,13 +258,13 @@ ShellRoot {
         else show()
     }
 
-    // Enter: springy, with a touch of overshoot. Exit: ease-in, so it folds up and slips back under the bar.
+    // Both ways on the shared curve, like the bar's cards: the height unfolds and folds in place.
     function animateTo(target) {
         tween.stop()
         tween.from = t
         tween.to = target
-        tween.duration = target === 1 ? 560 : 340
-        tween.easing.bezierCurve = target === 1 ? [0.18, 1.12, 0.32, 1, 1, 1] : [0.45, 0, 0.8, 0.35, 1, 1]
+        tween.duration = Theme.ms(target === 1 ? 400 : 320)
+        tween.easing.bezierCurve = Theme.settle
         tween.start()
     }
 
@@ -263,8 +293,8 @@ ShellRoot {
     SequentialAnimation {
         id: vizAnim
         PropertyAction { target: root; property: "vizIntro"; value: 0 }
-        PauseAnimation { duration: 220 }
-        NumberAnimation { target: root; property: "vizIntro"; to: 1; duration: 820; easing.type: Easing.OutQuad }
+        PauseAnimation { duration: Theme.ms(220) }
+        NumberAnimation { target: root; property: "vizIntro"; to: 1; duration: Theme.ms(820); easing.type: Easing.OutQuad }
     }
 
     IpcHandler {
@@ -272,6 +302,8 @@ ShellRoot {
         function toggle(): void { root.toggleOpen() }
         function open(): void { root.show() }
         function close(): void { root.close() }
+        function tuck(): void { root.tuck() }
+        function untuck(): void { root.untuck() }
     }
 
     // ---- Window -----------------------------------------------------------------------------------------------
@@ -279,25 +311,31 @@ ShellRoot {
     PanelWindow {
         id: win
         screen: root.targetScreen ?? Quickshell.screens[0]
-        anchors.top: true
-        // Normal exclusion keeps it below waybar's reserved strip.
+        // The whole screen below the bar, so the card can be dragged anywhere; only the card takes input.
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
+        }
+        // Normal exclusion keeps it below the bar's reserved strip.
         exclusionMode: ExclusionMode.Normal
-        implicitWidth: root.maxSide + 48
-        implicitHeight: root.maxSide + root.topGap + 48
         color: "transparent"
         // Only the card takes input, and only while open; everything around it clicks through.
-        mask: Region { item: root.active && !root.leaving ? card : null }
+        mask: Region { item: root.active && !root.leaving && !root.tucked ? card : null }
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "music-player"
         // Never grabs the keyboard; clicking the card lends it focus for the shortcuts below.
-        WlrLayershell.keyboardFocus: root.active && !root.leaving ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: root.active && !root.leaving && !root.tucked ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
         Item {
             id: card
-            width: root.dot + (root.shown - root.dot) * root.mw
-            height: root.dot + (root.shown - root.dot) * root.mh
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: root.topGap - (1 - root.rise) * (root.dot + root.topGap + 24)
+            // Opens and closes where it rests: full width, its height unfolding from nothing and folding back.
+            width: root.shown
+            height: root.shown * Math.max(0, Math.min(1, root.t))
+            // Grows from the middle of where it rests, and drops in from the top edge above it.
+            x: root.baseX + (root.shown - width) / 2
+            y: root.baseY
             // Solid the whole way (no faint tail for the blur to ghost on).
             opacity: root.active ? Math.min(1, root.t * 8) : 0
             focus: true
@@ -317,15 +355,47 @@ ShellRoot {
                 event.accepted = true
             }
 
+            // The card's background: a click focuses it for the keys above, a drag moves it around the screen
+            // (controls on top keep their own presses and drags), and a double-click sends it home.
             MouseArea {
                 anchors.fill: parent
-                onPressed: card.forceActiveFocus()
+                cursorShape: pressed && root.moving ? Qt.ClosedHandCursor : Qt.ArrowCursor
+                property point start
+                property real sx: 0
+                property real sy: 0
+
+                function at(mouse) {
+                    return mapToItem(win.contentItem, mouse.x, mouse.y)
+                }
+
+                onPressed: mouse => {
+                    card.forceActiveFocus()
+                    start = at(mouse)
+                    sx = root.baseX - root.homeX
+                    sy = root.baseY - root.topGap
+                }
+                onPositionChanged: mouse => {
+                    if (!pressed || !root.active || root.leaving) return
+                    const p = at(mouse)
+                    if (!root.moving && Math.hypot(p.x - start.x, p.y - start.y) < 4) return
+                    root.moving = true
+                    root.offX = sx + p.x - start.x
+                    root.offY = sy + p.y - start.y
+                }
+                onReleased: {
+                    if (!root.moving) return
+                    // Keep what is stored within reach, so the next drag starts from where the card is.
+                    root.offX = root.baseX - root.homeX
+                    root.offY = root.baseY - root.topGap
+                    root.moving = false
+                }
+                onDoubleClicked: { root.offX = 0; root.offY = 0 }
             }
 
             // Matches Hyprland: the profile's rounding, translucent over compositor blur (and hyprglass where enabled).
             Rectangle {
                 anchors.fill: parent
-                radius: Math.min(card.height / 2, Math.max(root.radius, root.dot / 2 - (root.dot / 2 - root.radius) * Math.min(1, root.mw)))
+                radius: Math.min(card.height / 2, root.radius)
                 color: Theme.alpha(Theme.bg, 0.6)
                 border.width: 1
                 border.color: Theme.alpha(Theme.fg, 0.07)
@@ -476,13 +546,13 @@ ShellRoot {
                             SequentialAnimation {
                                 id: swap
                                 ParallelAnimation {
-                                    NumberAnimation { target: infoCol; property: "opacity"; to: 0; duration: 130; easing.type: Easing.InQuad }
-                                    NumberAnimation { target: info; property: "shift"; to: -root.dir * 18; duration: 130; easing.type: Easing.InQuad }
+                                    NumberAnimation { target: infoCol; property: "opacity"; to: 0; duration: Theme.ms(130); easing.type: Easing.InQuad }
+                                    NumberAnimation { target: info; property: "shift"; to: -root.dir * 18; duration: Theme.ms(130); easing.type: Easing.InQuad }
                                 }
                                 ScriptAction { script: { info.take(); info.shift = root.dir * 18; root.dir = 1 } }
                                 ParallelAnimation {
-                                    NumberAnimation { target: infoCol; property: "opacity"; to: 1; duration: 300; easing.type: Easing.OutCubic }
-                                    NumberAnimation { target: info; property: "shift"; to: 0; duration: Theme.move + 60; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
+                                    NumberAnimation { target: infoCol; property: "opacity"; to: 1; duration: Theme.ms(300); easing.type: Easing.OutCubic }
+                                    NumberAnimation { target: info; property: "shift"; to: 0; duration: Theme.ms(340); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
                                 }
                             }
 
@@ -604,7 +674,7 @@ ShellRoot {
                     width: grabArea.containsMouse || grabArea.pressed ? root.px(64) : root.px(36)
                     radius: 2
                     color: Theme.alpha(grabArea.containsMouse || grabArea.pressed ? Theme.accent : Theme.fg, grabArea.containsMouse || grabArea.pressed ? 0.85 : 0.18)
-                    Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Behavior on width { NumberAnimation { duration: Theme.ms(200); easing.type: Easing.OutCubic } }
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
                 }
 
@@ -670,8 +740,8 @@ ShellRoot {
 
         SequentialAnimation {
             id: kickAnim
-            NumberAnimation { target: btn; property: "kick"; to: 1; duration: 90; easing.type: Easing.OutQuad }
-            NumberAnimation { target: btn; property: "kick"; to: 0; duration: 380; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+            NumberAnimation { target: btn; property: "kick"; to: 1; duration: Theme.ms(90); easing.type: Easing.OutQuad }
+            NumberAnimation { target: btn; property: "kick"; to: 0; duration: Theme.ms(380); easing.type: Easing.OutBack; easing.overshoot: 2.2 }
         }
 
         Rectangle {
@@ -694,7 +764,7 @@ ShellRoot {
             scale: (area.pressed ? 0.84 : 1) * (1 + 0.08 * btn.kick * (btn.nudge === 0 ? 1 : 0))
             transform: Translate { x: btn.nudge * btn.kick * root.px(6) }
             Behavior on color { ColorAnimation { duration: Theme.fast } }
-            Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack; easing.overshoot: 2 } }
+            Behavior on scale { NumberAnimation { duration: Theme.ms(180); easing.type: Easing.OutBack; easing.overshoot: 2 } }
         }
 
         MouseArea {
@@ -729,7 +799,7 @@ ShellRoot {
                 radius: height / 2
                 color: root.muted ? Theme.dim : Theme.accent
                 // Follows the pointer exactly while dragging, eases otherwise.
-                Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: Theme.ms(120); easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
             }
         }
@@ -781,7 +851,7 @@ ShellRoot {
 
         function bump() { ringAnim.restart() }
 
-        NumberAnimation { id: ringAnim; target: pb; property: "ring"; from: 0; to: 1; duration: 520; easing.type: Easing.OutCubic }
+        NumberAnimation { id: ringAnim; target: pb; property: "ring"; from: 0; to: 1; duration: Theme.ms(520); easing.type: Easing.OutCubic }
 
         Rectangle {
             anchors.centerIn: parent
@@ -800,7 +870,7 @@ ShellRoot {
             radius: width / 2
             color: Theme.accent
             scale: pbArea.pressed ? 0.9 : (pbArea.containsMouse ? 1.05 : 1)
-            Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2.4 } }
+            Behavior on scale { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutBack; easing.overshoot: 2.4 } }
 
             PlayPause {
                 anchors.centerIn: parent
@@ -808,7 +878,7 @@ ShellRoot {
                 height: width
                 color: Theme.bg
                 m: root.playing ? 1 : 0
-                Behavior on m { NumberAnimation { duration: 340; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
+                Behavior on m { NumberAnimation { duration: Theme.ms(340); easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
             }
         }
 
@@ -849,7 +919,7 @@ ShellRoot {
                 height: sk.hot ? root.px(6) : root.px(4)
                 radius: height / 2
                 color: Theme.alpha(Theme.fg, 0.14)
-                Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on height { NumberAnimation { duration: Theme.ms(200); easing.type: Easing.OutCubic } }
 
                 Rectangle {
                     height: parent.height
@@ -860,7 +930,7 @@ ShellRoot {
                     // moves every frame, which would restart the animation before it ever advanced and freeze the fill.
                     Behavior on width {
                         enabled: !sk.seeking && !root.playing
-                        NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                        NumberAnimation { duration: Theme.ms(160); easing.type: Easing.OutCubic }
                     }
                 }
             }
@@ -873,7 +943,7 @@ ShellRoot {
                 radius: width / 2
                 color: Theme.bright
                 scale: sk.hot && sk.live ? (bar.pressed ? 1.15 : 1) : 0
-                Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutBack; easing.overshoot: 2 } }
+                Behavior on scale { NumberAnimation { duration: Theme.ms(240); easing.type: Easing.OutBack; easing.overshoot: 2 } }
             }
 
             MouseArea {
@@ -972,8 +1042,8 @@ ShellRoot {
                 opacity: art.useA && status === Image.Ready ? 1 : 0
                 scale: art.useA ? 1 : 1.04
                 onStatusChanged: art.settled(imgA)
-                Behavior on opacity { NumberAnimation { duration: 380; easing.type: Easing.OutCubic } }
-                Behavior on scale { NumberAnimation { duration: 520; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: Theme.ms(380); easing.type: Easing.OutCubic } }
+                Behavior on scale { NumberAnimation { duration: Theme.ms(520); easing.type: Easing.OutCubic } }
             }
             Image {
                 id: imgB
@@ -986,8 +1056,8 @@ ShellRoot {
                 opacity: !art.useA && status === Image.Ready ? 1 : 0
                 scale: !art.useA ? 1 : 1.04
                 onStatusChanged: art.settled(imgB)
-                Behavior on opacity { NumberAnimation { duration: 380; easing.type: Easing.OutCubic } }
-                Behavior on scale { NumberAnimation { duration: 520; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: Theme.ms(380); easing.type: Easing.OutCubic } }
+                Behavior on scale { NumberAnimation { duration: Theme.ms(520); easing.type: Easing.OutCubic } }
             }
         }
     }

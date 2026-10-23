@@ -32,7 +32,7 @@ Item {
         glide.to = Math.round(pos) + d
         glide.start()
     }
-    NumberAnimation { id: glide; target: ring; property: "pos"; duration: 320; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
+    NumberAnimation { id: glide; target: ring; property: "pos"; duration: Theme.ms(320); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
 
     function local(i) {
         // Entries fan out a beat apart, so the ring opens like a dial rather than all at once.
@@ -116,7 +116,7 @@ Item {
                 font.pixelSize: Math.round(ring.btn * 0.36)
                 scale: b.on ? 1.14 : 1
                 color: b.on || area.containsMouse ? Theme.bright : Theme.fg
-                Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
+                Behavior on scale { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutBack } }
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
             }
 

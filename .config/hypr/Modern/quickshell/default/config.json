@@ -1,0 +1,10 @@
+{
+    "left": ["user", "workspaces"],
+    "center": ["media", "date", "timer", "clock"],
+    "right": ["tray", "|", "updates", "network", "audio", "battery", "|", "power"],
+    "strip": false,
+    "background": true,
+    "height": 30,
+    "gap": 6,
+    "shape": "round"
+}

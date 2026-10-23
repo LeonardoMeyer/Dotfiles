@@ -1,16 +1,6 @@
 #!/bin/bash
 set -uo pipefail
 
-# The quickshell utilities, all hosted in one process by utilities/shell.qml.
-#   shells.sh start|stop|restart                         the shared process
-#   shells.sh <utility> [call [args...]]                 IPC call into a utility (call defaults to toggle):
-#     shells.sh home | launcher | music | wallpaper | settings
-#     shells.sh launcher tab apps|home|commands|keybinds  open the launcher on that tab
-#     shells.sh music open|close
-#     shells.sh osd notify <kind> <value> <flag> <text>   (osd.sh does this)
-# Utilities stay resident and hidden, so opening one is an IPC call rather than a launch. If the process
-# isn't up yet it is started first, and a toggle becomes an open.
-# boot is excluded: it only runs once, launched by startup.lua with its own environment.
 UTIL="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 call() {

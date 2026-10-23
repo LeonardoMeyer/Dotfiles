@@ -13,11 +13,8 @@ Item {
         const i = s.indexOf(".")
         return i < 0 ? 0 : s.length - i - 1
     }
-    property real dragValue: 0
-    property real lastSent: 0
-    readonly property real shown: area.pressed ? dragValue : (ready ? raw : def.min)
-    readonly property real ratio: Math.max(0, Math.min(1, (shown - def.min) / (def.max - def.min)))
-    readonly property bool hot: area.containsMouse || area.pressed
+    readonly property real shown: ready ? raw : def.min
+    property bool hot: false
 
     implicitHeight: 58
     opacity: ready ? 1 : 0.35
@@ -42,54 +39,21 @@ Item {
         color: Theme.accent
     }
 
-    Rectangle {
-        id: track
+    Slider {
         x: Theme.pad
-        y: 38
+        y: 30
         width: parent.width - Theme.pad * 2
-        height: 4
-        radius: 2
-        color: Theme.alpha(Theme.fg, 0.16)
-
-        Rectangle {
-            width: parent.width * control.ratio
-            height: parent.height
-            radius: 2
-            color: Theme.accent
-        }
-
-        Rectangle {
-            x: parent.width * control.ratio - width / 2
-            y: -4
-            width: 12
-            height: 12
-            radius: 6
-            color: Theme.bright
-            scale: control.hot ? 1 : 0
-            Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-        }
-    }
-
-    MouseArea {
-        id: area
-        anchors.fill: parent
-        hoverEnabled: true
         enabled: control.ready
-        cursorShape: Qt.PointingHandCursor
-
-        function update(x) {
-            const r = Math.max(0, Math.min(1, (x - track.x) / track.width))
-            let v = control.def.min + Math.round(r * (control.def.max - control.def.min) / control.step) * control.step
-            v = Number(Math.max(control.def.min, Math.min(control.def.max, v)).toFixed(control.decimals))
-            control.dragValue = v
-            if (v !== control.lastSent) {
-                control.lastSent = v
-                Store.set(control.def.key, v)
-            }
+        scrollable: false
+        from: control.def.min
+        to: control.def.max
+        value: control.shown
+        onHotChanged: control.hot = hot
+        onMoved: v => {
+            v = Number(Math.max(control.def.min, Math.min(control.def.max,
+                control.def.min + Math.round((v - control.def.min) / control.step) * control.step)).toFixed(control.decimals))
+            if (v !== control.raw) Store.set(control.def.key, v)
         }
-
-        onPressed: mouse => { control.lastSent = control.raw; update(mouse.x) }
-        onPositionChanged: mouse => { if (pressed) update(mouse.x) }
     }
 
     // Right-click puts the setting back to the profile's own value.

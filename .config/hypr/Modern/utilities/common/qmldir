@@ -1,2 +1,5 @@
 singleton Theme 1.0 Theme.qml
-Rounding 1.0 Rounding.qml
+Switch 1.0 Switch.qml
+Slider 1.0 Slider.qml
+PlayPause 1.0 PlayPause.qml
+Button 1.0 Button.qml

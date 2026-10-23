@@ -32,7 +32,7 @@ Item {
         height: parent.height - 4
         radius: 6
         color: Theme.alpha(Theme.accent, 0.5)
-        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        Behavior on x { NumberAnimation { duration: Theme.ms(200); easing.type: Easing.OutCubic } }
     }
 
     Repeater {

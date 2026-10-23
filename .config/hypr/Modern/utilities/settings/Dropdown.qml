@@ -2,7 +2,7 @@ import QtQuick
 import "../common"
 
 // Collapsed row that expands in place into a list; used when there are five or more options.
-// options: [{ v, l, swatch?: [colors], image?: url }]
+// options: [{ v, l, swatch?: [colors], image?: url, preview?: url }]; a preview is a wide layout strip under the name.
 Item {
     id: dd
 
@@ -79,7 +79,7 @@ Item {
                     font.pixelSize: 9
                     color: Theme.fg
                     rotation: dd.open ? 180 : 0
-                    Behavior on rotation { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                    Behavior on rotation { NumberAnimation { duration: Theme.ms(220); easing.type: Easing.OutCubic } }
                 }
             }
         }
@@ -97,9 +97,9 @@ Item {
         id: list
         y: dd.headH
         width: parent.width
-        height: dd.open ? col.height + 8 : 0
+        height: dd.open ? col.height + 12 : 0
         clip: true
-        Behavior on height { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+        Behavior on height { NumberAnimation { duration: Theme.ms(240); easing.type: Easing.OutCubic } }
 
         Column {
             id: col
@@ -114,15 +114,15 @@ Item {
                     required property var modelData
                     readonly property bool on: modelData.v === dd.current
                     width: col.width
-                    height: dd.rowH
+                    height: modelData.preview ? dd.rowH + strip.height + 6 : dd.rowH
                     radius: 8
                     color: on ? Theme.alpha(Theme.accent, 0.28) : Theme.alpha(Theme.fg, rowArea.containsMouse ? 0.1 : 0)
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color { ColorAnimation { duration: Theme.ms(120) } }
 
                     Row {
                         anchors.left: parent.left
-                        anchors.leftMargin: 10
-                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.leftMargin: 12
+                        y: (dd.rowH - height) / 2
                         spacing: 10
 
                         Row {
@@ -162,11 +162,26 @@ Item {
                         }
                     }
 
+                    Image {
+                        id: strip
+                        visible: !!modelData.preview
+                        x: 12
+                        y: dd.rowH - 4
+                        width: parent.width - 24
+                        height: visible ? width * 70 / 2000 : 0
+                        source: modelData.preview || ""
+                        sourceSize.width: 1000
+                        fillMode: Image.PreserveAspectFit
+                        asynchronous: true
+                        opacity: on || rowArea.containsMouse ? 0.95 : 0.6
+                        Behavior on opacity { NumberAnimation { duration: Theme.fast } }
+                    }
+
                     Text {
                         visible: on
                         anchors.right: parent.right
                         anchors.rightMargin: 12
-                        anchors.verticalCenter: parent.verticalCenter
+                        y: (dd.rowH - height) / 2
                         text: "\uf00c"
                         font.family: Theme.sans
                         font.pixelSize: 11

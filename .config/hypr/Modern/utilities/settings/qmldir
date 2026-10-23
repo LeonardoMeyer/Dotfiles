@@ -10,9 +10,9 @@ SettingSlider 1.0 SettingSlider.qml
 SettingToggle 1.0 SettingToggle.qml
 SettingChoice 1.0 SettingChoice.qml
 SettingProfile 1.0 SettingProfile.qml
+SettingBar 1.0 SettingBar.qml
 SettingWaybar 1.0 SettingWaybar.qml
 SettingCursors 1.0 SettingCursors.qml
-SettingAction 1.0 SettingAction.qml
 SettingSaved 1.0 SettingSaved.qml
 SettingAnimpreset 1.0 SettingAnimpreset.qml
 SettingBezier 1.0 SettingBezier.qml

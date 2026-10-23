@@ -3,10 +3,8 @@ import QtQuick.Effects
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Widgets
-import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 import "../music" as Music
 import Quickshell.Services.Notifications
@@ -21,8 +19,7 @@ ShellRoot {
     readonly property real u: unitFor(win.screen)
     // Hyprland's live rounding (override or profile default): the cards take it as is, and smaller pieces
     // designed against its default 10px scale along with it.
-    Rounding { id: roundingWatch }
-    readonly property real rounding: roundingWatch.value
+    readonly property real rounding: Theme.rounding
     function rr(v) { return v * rounding / 10 * u }
 
     // Portrait screens stack the tiles two per row, so their column is wider.
@@ -97,7 +94,7 @@ ShellRoot {
 
     // Media and audio
     readonly property var player: {
-        const list = Mpris.players.values
+        const list = Theme.players
         return list.find(p => p.isPlaying) ?? list[0] ?? null
     }
     readonly property var sink: Pipewire.defaultAudioSink
@@ -112,7 +109,7 @@ ShellRoot {
         tween.stop()
         tween.from = t
         tween.to = target
-        tween.duration = target === 1 ? 1200 : 450
+        tween.duration = Theme.ms(target === 1 ? 1200 : 450)
         tween.easing.type = target === 1 ? Easing.OutCubic : Easing.InOutCubic
         tween.start()
     }
@@ -128,7 +125,7 @@ ShellRoot {
     }
 
     function show() {
-        roundingWatch.refresh()
+        Theme.refresh()
         startTimer.stop()
         watchdog.stop()
         closing = false
@@ -136,13 +133,22 @@ ShellRoot {
             animateTo(1)
             return
         }
+        if (locating) return
+        locating = true
+        Theme.locate(open)
+    }
+
+    property bool locating: false
+    function open(screen) {
+        locating = false
+        if (shown) return
         t = 0
         popups = []
         const now = new Date()
         calY = now.getFullYear()
         calM = now.getMonth()
         // Frozen for this open so moving the cursor to another monitor never drags the window along.
-        targetScreen = Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+        targetScreen = screen
         shown = true
         wallReady = false
         startWaited = false
@@ -309,7 +315,7 @@ ShellRoot {
     Timer { id: startTimer; interval: 30; onTriggered: root.tryStart() }
     Timer { id: waitTimer; interval: 450; onTriggered: { root.startWaited = true; root.tryStart() } }
     // Last resort: a close that stalls must never leave the full-screen surface grabbing input.
-    Timer { id: watchdog; interval: 1200; onTriggered: if (root.closing) root.finish() }
+    Timer { id: watchdog; interval: Theme.ms(1200) + 100; onTriggered: if (root.closing) root.finish() }
 
     SystemClock { id: clock; precision: SystemClock.Minutes; enabled: root.shown }
     PwObjectTracker { objects: [Pipewire.defaultAudioSink] }
@@ -433,7 +439,7 @@ ShellRoot {
         width: size
         height: size
         scale: ima.pressed ? 0.85 : (ima.containsMouse ? 1.12 : 1)
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
+        Behavior on scale { NumberAnimation { duration: Theme.ms(180); easing.type: Easing.OutBack } }
         Text {
             anchors.centerIn: parent
             text: ib.glyph
@@ -450,7 +456,7 @@ ShellRoot {
         property string label: ""
         property string valueText: ""
         property real shown: ratio
-        Behavior on shown { NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
+        Behavior on shown { NumberAnimation { duration: Theme.ms(700); easing.type: Easing.OutCubic } }
 
         width: 66 * root.u
         height: 92 * root.u
@@ -503,13 +509,13 @@ ShellRoot {
         width: 64 * root.u
         height: 64 * root.u
         scale: dma.pressed ? 0.9 : (dma.containsMouse ? 1.18 : 1)
-        Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+        Behavior on scale { NumberAnimation { duration: Theme.ms(220); easing.type: Easing.OutBack } }
 
         Rectangle {
             anchors.fill: parent
             radius: root.rr(20)
             color: dma.containsMouse ? "#2effffff" : "#14ffffff"
-            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on color { ColorAnimation { duration: Theme.ms(150) } }
         }
         Text {
             anchors.centerIn: parent
@@ -526,7 +532,7 @@ ShellRoot {
             font.family: root.sans
             font.pixelSize: 12 * root.u
             color: "#ffffff"
-            Behavior on opacity { NumberAnimation { duration: 150 } }
+            Behavior on opacity { NumberAnimation { duration: Theme.ms(150) } }
         }
         MouseArea { id: dma; anchors.fill: parent; hoverEnabled: true; onClicked: root.run(db.cmd) }
     }
@@ -749,19 +755,15 @@ ShellRoot {
                             color: root.accent
                             opacity: spotifyMa.containsMouse ? 1 : 0.75
                             scale: spotifyMa.containsMouse ? 1.15 : 1
-                            Behavior on opacity { NumberAnimation { duration: 120 } }
-                            Behavior on scale { NumberAnimation { duration: 120 } }
+                            Behavior on opacity { NumberAnimation { duration: Theme.ms(120) } }
+                            Behavior on scale { NumberAnimation { duration: Theme.ms(120) } }
                         }
                         MouseArea {
                             id: spotifyMa
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            // Focus an existing Spotify window; reveal it via pypr if it sits in the scratchpad; otherwise launch the scratchpad.
-                            onClicked: root.run("c=$(hyprctl clients -j | jq -c '[.[] | select(.class | test(\"^spotify$\"; \"i\"))][0] // empty'); " +
-                                "if [ -z \"$c\" ]; then pypr show spotify; " +
-                                "elif echo \"$c\" | jq -e '.workspace.name | startswith(\"special\")' >/dev/null; then pypr show spotify; " +
-                                "else hyprctl dispatch focuswindow address:$(echo \"$c\" | jq -r .address); fi")
+                            onClicked: { root.close(); Theme.openSpotify() }
                         }
                     }
 
@@ -803,7 +805,7 @@ ShellRoot {
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
                                 opacity: status === Image.Ready ? 1 : 0
-                                Behavior on opacity { NumberAnimation { duration: 300 } }
+                                Behavior on opacity { NumberAnimation { duration: Theme.ms(300) } }
                             }
                         }
                         Column {
@@ -915,8 +917,8 @@ ShellRoot {
 
                         SequentialAnimation {
                             id: monthFlip
-                            NumberAnimation { target: calGrid; property: "opacity"; to: 0.1; duration: 90 }
-                            NumberAnimation { target: calGrid; property: "opacity"; to: 1; duration: 280; easing.type: Easing.OutCubic }
+                            NumberAnimation { target: calGrid; property: "opacity"; to: 0.1; duration: Theme.ms(90) }
+                            NumberAnimation { target: calGrid; property: "opacity"; to: 1; duration: Theme.ms(280); easing.type: Easing.OutCubic }
                         }
 
                         Repeater {
@@ -1170,7 +1172,7 @@ ShellRoot {
                                         radius: height / 2
                                         color: "#f2ffffff"
                                         // Follows the pointer exactly while dragging, eases otherwise.
-                                        Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                                        Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: Theme.ms(120); easing.type: Easing.OutCubic } }
                                     }
                                 }
                                 Text {
@@ -1267,18 +1269,18 @@ ShellRoot {
 
                             add: Transition {
                                 ParallelAnimation {
-                                    NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 250 }
-                                    NumberAnimation { property: "x"; from: 40 * root.u; duration: 320; easing.type: Easing.OutCubic }
+                                    NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.ms(250) }
+                                    NumberAnimation { property: "x"; from: 40 * root.u; duration: Theme.ms(320); easing.type: Easing.OutCubic }
                                 }
                             }
                             remove: Transition {
                                 ParallelAnimation {
-                                    NumberAnimation { property: "opacity"; to: 0; duration: 180 }
-                                    NumberAnimation { property: "x"; to: 60 * root.u; duration: 220; easing.type: Easing.InCubic }
+                                    NumberAnimation { property: "opacity"; to: 0; duration: Theme.ms(180) }
+                                    NumberAnimation { property: "x"; to: 60 * root.u; duration: Theme.ms(220); easing.type: Easing.InCubic }
                                 }
                             }
                             displaced: Transition {
-                                NumberAnimation { properties: "y"; duration: 250; easing.type: Easing.OutCubic }
+                                NumberAnimation { properties: "y"; duration: Theme.ms(250); easing.type: Easing.OutCubic }
                             }
                         }
 

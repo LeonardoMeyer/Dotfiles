@@ -58,7 +58,7 @@ Flickable {
         else if (bottom > target + height) scrollTo(bottom - height)
     }
 
-    NumberAnimation { id: scrollAnim; target: grid; property: "contentY"; duration: 260; easing.type: Easing.OutCubic }
+    NumberAnimation { id: scrollAnim; target: grid; property: "contentY"; duration: Theme.ms(260); easing.type: Easing.OutCubic }
 
     onSelectedChanged: reveal(selected)
 
@@ -93,8 +93,8 @@ Flickable {
         border.width: 1
         border.color: Theme.alpha(Theme.accent, 0.55)
         opacity: grid.count > 0 ? 1 : 0
-        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-        Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        Behavior on x { NumberAnimation { duration: Theme.ms(200); easing.type: Easing.OutCubic } }
+        Behavior on y { NumberAnimation { duration: Theme.ms(200); easing.type: Easing.OutCubic } }
         Behavior on opacity { NumberAnimation { duration: Theme.fast } }
     }
 
@@ -111,7 +111,7 @@ Flickable {
 
             // Presence eases in a little slower than it leaves, so results bloom rather than pop.
             property real present: slot >= 0 ? 1 : 0
-            Behavior on present { NumberAnimation { duration: tile.slot >= 0 ? 300 : 200; easing.type: Easing.OutCubic } }
+            Behavior on present { NumberAnimation { duration: Theme.ms(tile.slot >= 0 ? 300 : 200); easing.type: Easing.OutCubic } }
 
             // Row-by-row rise on open; capped so long lists don't wait on their last rows.
             readonly property real rise: {
@@ -127,8 +127,8 @@ Flickable {
             scale: 0.92 + 0.08 * present
             transform: Translate { y: 10 * (1 - tile.rise) }
 
-            Behavior on x { id: moveX; NumberAnimation { duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.22, 1, 0.36, 1, 1, 1] } }
-            Behavior on y { id: moveY; NumberAnimation { duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.22, 1, 0.36, 1, 1, 1] } }
+            Behavior on x { id: moveX; NumberAnimation { duration: Theme.ms(420); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+            Behavior on y { id: moveY; NumberAnimation { duration: Theme.ms(420); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
 
             function jumpTo(nx, ny) {
                 moveX.enabled = false
@@ -160,7 +160,7 @@ Flickable {
                 mipmap: true
                 visible: tile.src !== "" && status !== Image.Error
                 scale: hit.containsMouse ? 1.06 : 1
-                Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on scale { NumberAnimation { duration: Theme.ms(220); easing.type: Easing.OutCubic } }
             }
 
             // Last resort when not even the generic icon resolves: the app's initial in the accent color.
@@ -192,7 +192,7 @@ Flickable {
         spacing: 8
         opacity: grid.count === 0 ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 240 } }
+        Behavior on opacity { NumberAnimation { duration: Theme.ms(240) } }
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter

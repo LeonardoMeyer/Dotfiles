@@ -15,7 +15,7 @@ ShellRoot {
     // Resident and hidden; present() drives every appearance.
     property bool active: false
     property bool leaving: false
-    property real t: 0          // enter/exit progress (can overshoot slightly on enter)
+    property real t: 0          // enter/exit progress
     property real pulse: 0      // quick bump on each update
     property real wiggle: 0     // icon rotation on state toggle (mute, caps, mic)
     property int fillDuration: 110
@@ -28,7 +28,7 @@ ShellRoot {
     // Morph geometry: circle (dot) -> full pill.
     readonly property real dotSize: 52
     readonly property real fullWidth: 300
-    // Width progress starts after the dot has begun rising; may overshoot a touch on enter.
+    // Width progress starts after the dot has begun rising.
     readonly property real w: Math.max(0, (t - 0.2) / 0.8)
 
     // The shared palette (common/Theme.qml); background drawn at 0.6.
@@ -110,14 +110,14 @@ ShellRoot {
         if (toggled) wiggleAnim.restart()
     }
 
-    // Enter: springy rise with overshoot. Exit: ease-in so it accelerates off the bottom of the screen.
+    // On Hyprland's curves: in the way windows open, out the way they close.
     function animateTo(target) {
         tween.stop()
         tween.from = t
         tween.to = target
-        tween.duration = target === 1 ? 480 : 340
+        tween.duration = Theme.ms(target === 1 ? 480 : 340)
         tween.easing.type = Easing.BezierSpline
-        tween.easing.bezierCurve = target === 1 ? [0.18, 1.2, 0.32, 1, 1, 1] : [0.45, 0, 0.8, 0.35, 1, 1]
+        tween.easing.bezierCurve = target === 1 ? Theme.settle : Theme.leave
         tween.start()
     }
 
@@ -138,16 +138,16 @@ ShellRoot {
 
     SequentialAnimation {
         id: pulseAnim
-        NumberAnimation { target: root; property: "pulse"; to: 1; duration: 70; easing.type: Easing.OutCubic }
-        NumberAnimation { target: root; property: "pulse"; to: 0; duration: 220; easing.type: Easing.OutBack }
+        NumberAnimation { target: root; property: "pulse"; to: 1; duration: Theme.ms(70); easing.type: Easing.OutCubic }
+        NumberAnimation { target: root; property: "pulse"; to: 0; duration: Theme.ms(220); easing.type: Easing.OutBack }
     }
 
     SequentialAnimation {
         id: wiggleAnim
-        NumberAnimation { target: root; property: "wiggle"; to: -14; duration: 60; easing.type: Easing.OutQuad }
-        NumberAnimation { target: root; property: "wiggle"; to: 11; duration: 90; easing.type: Easing.InOutQuad }
-        NumberAnimation { target: root; property: "wiggle"; to: -6; duration: 80; easing.type: Easing.InOutQuad }
-        NumberAnimation { target: root; property: "wiggle"; to: 0; duration: 100; easing.type: Easing.OutQuad }
+        NumberAnimation { target: root; property: "wiggle"; to: -14; duration: Theme.ms(60); easing.type: Easing.OutQuad }
+        NumberAnimation { target: root; property: "wiggle"; to: 11; duration: Theme.ms(90); easing.type: Easing.InOutQuad }
+        NumberAnimation { target: root; property: "wiggle"; to: -6; duration: Theme.ms(80); easing.type: Easing.InOutQuad }
+        NumberAnimation { target: root; property: "wiggle"; to: 0; duration: Theme.ms(100); easing.type: Easing.OutQuad }
     }
 
     IpcHandler {
@@ -205,7 +205,7 @@ ShellRoot {
                 rotation: root.wiggle
                 // Icon is the dot's face: present from the start, bumps on each update.
                 scale: (0.75 + 0.25 * root.stage(0.1)) * (1 + 0.18 * root.pulse)
-                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: Theme.ms(120) } }
             }
 
             Text {
@@ -222,7 +222,7 @@ ShellRoot {
                 color: root.readoutLit ? root.fg : root.dim
                 opacity: root.stage(0.55)
                 transform: Translate { x: 6 * (1 - root.stage(0.55)) }
-                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: Theme.ms(120) } }
             }
 
             Rectangle {
@@ -244,7 +244,7 @@ ShellRoot {
                     radius: 2
                     width: parent.width * Math.max(0, Math.min(1, root.shownValue))
                     color: root.off ? root.dim : root.accent
-                    Behavior on color { ColorAnimation { duration: 90 } }
+                    Behavior on color { ColorAnimation { duration: Theme.ms(90) } }
 
                     // Solid knob riding the leading edge of the fill.
                     Rectangle {
@@ -277,5 +277,5 @@ ShellRoot {
         }
     }
 
-    Behavior on shownValue { id: barBehavior; NumberAnimation { duration: root.fillDuration; easing.type: Easing.OutCubic } }
+    Behavior on shownValue { id: barBehavior; NumberAnimation { duration: Theme.ms(root.fillDuration); easing.type: Easing.OutCubic } }
 }

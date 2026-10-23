@@ -13,7 +13,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
     hl.exec_cmd("~/.config/hypr/utilities/shells.sh start")
-    hl.exec_cmd("waybar")
+    hl.exec_cmd("~/.config/hypr/utilities/bar.sh start")
     hl.exec_cmd("~/.config/hypr/utilities/pypr.sh")
     hl.exec_cmd("pactl set-sink-mute @DEFAULT_SINK@ 0")
     hl.exec_cmd("hypridle")
@@ -33,7 +33,6 @@ hl.env("LIBVA_DRIVER_NAME", "nvidia")
 hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 hl.env("XCURSOR_THEME", cursor.theme or defaults.cursor.theme)
 hl.env("XCURSOR_SIZE", tostring(cursor.size or defaults.cursor.size))
-
 hl.device({ name = "epic-mouse-v1", sensitivity = 0 })
 
 return { defaults = defaults }
