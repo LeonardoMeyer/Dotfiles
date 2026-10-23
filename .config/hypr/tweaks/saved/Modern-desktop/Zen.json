@@ -11,6 +11,9 @@
     "window": "gnomed",
     "workspace": "slidefadevert"
   },
+  "bar": {
+    "kind": "quickshell"
+  },
   "config": {
     "decoration": {
       "active_opacity": 1,
@@ -49,10 +52,13 @@
       }
     }
   },
+  "quickshell": {
+    "style": "zen"
+  },
   "wallpaper": {
-    "path": "/home/$USER/wallpapers/library/nature/nat-17.jpg"
+    "path": "/home/$USER/wallpapers/library/cars/car-09.jpg"
   },
   "waybar": {
-    "style": "zen"
+    "style": "default"
   }
 }
