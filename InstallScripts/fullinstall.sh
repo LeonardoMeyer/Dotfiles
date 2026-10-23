@@ -129,6 +129,13 @@ apply_dotfiles() {
 
     success "Dotfiles linked."
     nohup bash -c 'sleep 1; hyprctl reload' >/dev/null 2>&1 &
+
+    # Inside a running session the quickshells were loaded from the old utilities; restart them so new ones
+    # (and the profile's bar) show up now instead of after the next login.
+    if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+        "$src/hypr/utilities/shells.sh" restart
+        "$src/hypr/utilities/bar.sh" boot
+    fi
 }
 
 run_wallpaper_selector() {

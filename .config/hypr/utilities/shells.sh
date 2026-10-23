@@ -13,7 +13,10 @@ launch() (
     exec 9>"${XDG_RUNTIME_DIR:-/tmp}/quickshell-utilities.lock"
     flock -w 5 9 || exit 1
     qs ipc -p "$UTIL" show 2>/dev/null | grep -q '^target' && exit 0
-    qs -n -p "$UTIL" --daemonize </dev/null >/dev/null 2>&1
+    # The shell loads whichever utilities/<name> links exist, so make sure they match the active style first.
+    "$UTIL/hypr-profile.sh" links >/dev/null 2>&1 || true
+    # 9>&-: the daemon must not inherit the lock, or it holds it for its whole life and every later launch times out.
+    qs -n -p "$UTIL" --daemonize </dev/null >/dev/null 2>&1 9>&-
     for _ in $(seq 1 60); do
         qs ipc -p "$UTIL" show 2>/dev/null | grep -q '^target' && exit 0
         sleep 0.05

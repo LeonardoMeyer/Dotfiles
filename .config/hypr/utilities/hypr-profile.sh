@@ -16,6 +16,24 @@ list() {
     done
 }
 
+# utilities/<name> -> ../<style>/utilities/<name> for the active style. Rebuilt on every quickshell launch too
+# (shells.sh), so a utility added by a pull is picked up without re-applying the profile.
+links() {
+    local style d
+    style="$(cut -d/ -f1 "$HYPR/.active-profile" 2>/dev/null || true)"
+    [ -n "$style" ] && [ -d "$HYPR/$style/utilities" ] || return 0
+    # Only stale links go (another style's, or a utility that was removed); good ones are left alone.
+    for d in "$UTIL"/*; do
+        if [ -L "$d" ] && { [ "$(readlink "$d")" != "../$style/utilities/${d##*/}" ] || [ ! -e "$d" ]; }; then
+            rm -f "$d"
+        fi
+    done
+    for d in "$HYPR/$style/utilities"/*/; do
+        d="$(basename "$d")"
+        if [ ! -L "$UTIL/$d" ]; then ln -s "../$style/utilities/$d" "$UTIL/$d"; fi
+    done
+}
+
 apply() {
     local style="${1:?style}" variant="${2:?variant}" offline="${3:-}"
     local src="$HYPR/$style/$variant" d
@@ -34,12 +52,8 @@ apply() {
     cp -a "$HYPR/$style/base"/*.lua "$HYPR/"
     cp -a "$src"/*.lua "$HYPR/"
 
-    find "$UTIL" -maxdepth 1 -type l -delete
-    for d in "$HYPR/$style/utilities"/*/; do
-        ln -s "../$style/utilities/$(basename "$d")" "$UTIL/$(basename "$d")"
-    done
-
     printf '%s/%s\n' "$style" "$variant" > "$HYPR/.active-profile"
+    links
 
     # Each style/variant keeps its own tweaks (hypr/tweaks/); swap in the new profile's.
     python3 "$UTIL/hypr-settings.py" sync
@@ -60,5 +74,6 @@ apply() {
 case "${1:-}" in
     apply) shift; apply "$@" ;;
     list) list ;;
-    *) echo "usage: hypr-profile.sh apply <style> <variant> [--offline] | list" >&2; exit 2 ;;
+    links) links ;;
+    *) echo "usage: hypr-profile.sh apply <style> <variant> [--offline] | list | links" >&2; exit 2 ;;
 esac

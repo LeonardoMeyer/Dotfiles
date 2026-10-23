@@ -1,0 +1,85 @@
+{
+  "animation": {
+    "curve": [
+      0.3,
+      1,
+      0.4,
+      1
+    ],
+    "preset": "snappy",
+    "speed": 1.7,
+    "window": "popin 60%",
+    "workspace": "slide"
+  },
+  "bar": {
+    "kind": "quickshell"
+  },
+  "colors": {
+    "theme": "dark/gruvbox"
+  },
+  "config": {
+    "animations": {
+      "enabled": true
+    },
+    "decoration": {
+      "active_opacity": 1,
+      "blur": {
+        "brightness": 0.75,
+        "contrast": 0.75,
+        "enabled": true,
+        "noise": 0.055,
+        "passes": 8,
+        "size": 20,
+        "vibrancy": 0
+      },
+      "dim_inactive": true,
+      "dim_strength": 0.25,
+      "glow": {
+        "enabled": false
+      },
+      "inactive_opacity": 1,
+      "motion_blur": {
+        "enabled": false
+      },
+      "rounding": 3,
+      "rounding_power": 5,
+      "shadow": {
+        "enabled": true,
+        "range": 1,
+        "render_power": 4,
+        "scale": 1,
+        "sharp": true
+      }
+    },
+    "general": {
+      "border_size": 0,
+      "gaps_in": 11,
+      "gaps_out": 0,
+      "gaps_workspaces": 0
+    },
+    "plugin": {
+      "hyprglass": {
+        "enabled": false,
+        "layers": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "hyprglass": {
+    "layers": true,
+    "quickshell": true
+  },
+  "quickshell": {
+    "style": "attached"
+  },
+  "utilities": {
+    "animations": false
+  },
+  "wallpaper": {
+    "path": "/home/$USER/wallpapers/library/abstract/abs-08.jpg"
+  },
+  "waybar": {
+    "style": "default"
+  }
+}

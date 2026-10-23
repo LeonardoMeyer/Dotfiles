@@ -28,6 +28,11 @@ case "${1:-}" in
     start)
         start
         ;;
+    boot)
+        # At login the profile's settings decide the bar, not whatever .active-bar was last left as.
+        python3 "$UTIL/hypr-settings.py" sync >/dev/null 2>&1 || true
+        start
+        ;;
     apply)
         kind="${2:?waybar|quickshell}"
         case "$kind" in
@@ -57,7 +62,7 @@ case "${1:-}" in
         fi
         ;;
     "")
-        echo "usage: bar.sh start | apply waybar|quickshell | style <name> | toggle | current | <call> [args...]" >&2
+        echo "usage: bar.sh start | boot | apply waybar|quickshell | style <name> | toggle | current | <call> [args...]" >&2
         exit 2
         ;;
     *)

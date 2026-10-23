@@ -11,12 +11,15 @@
     "window": "popin 60%",
     "workspace": "slide"
   },
+  "bar": {
+    "kind": "waybar"
+  },
   "colors": {
     "theme": "pywal"
   },
   "config": {
     "animations": {
-      "enabled": true
+      "enabled": false
     },
     "decoration": {
       "active_opacity": 1,
@@ -35,6 +38,9 @@
         "enabled": false
       },
       "inactive_opacity": 1,
+      "motion_blur": {
+        "enabled": false
+      },
       "rounding": 3,
       "rounding_power": 5,
       "shadow": {
@@ -53,15 +59,22 @@
     },
     "plugin": {
       "hyprglass": {
-        "enabled": true,
+        "enabled": false,
         "layers": {
           "enabled": true
         }
       }
     }
   },
+  "hyprglass": {
+    "layers": false,
+    "quickshell": false
+  },
+  "quickshell": {
+    "style": "full"
+  },
   "wallpaper": {
-    "path": "/home/$USER/wallpapers/library/abstract/abs-08.jpg"
+    "path": "/home/$USER/wallpapers/library/nature/nat-41.jpg"
   },
   "waybar": {
     "style": "line"

@@ -390,7 +390,17 @@ def cmd_reset():
 
 
 def cmd_sync():
-    write_lua(live_settings())
+    """settings.lua, and which bar runs, from the live entry. The bar files are only what bar.sh reads at startup
+    (and are gitignored), so they follow the entry instead of drifting from it: a fresh install or a switched
+    profile starts the bar its settings name."""
+    settings = live_settings()
+    write_lua(settings)
+    kind = dig(settings, "bar.kind") or DEFAULT_BAR
+    if kind in ("waybar", "quickshell") and load_text(BAR_FILE) != kind:
+        write_atomic(BAR_FILE, kind + "\n")
+    look = dig(settings, "quickshell.style")
+    if look and look != load_text(QUICKSHELL_FILE) and any(s["id"] == look for s in quickshell()["styles"]):
+        write_atomic(QUICKSHELL_FILE, look + "\n")
 
 
 def cmd_cursor():
