@@ -59,12 +59,17 @@
     },
     "plugin": {
       "hyprglass": {
-        "enabled": false,
+        "default_theme": "light",
         "layers": {
           "enabled": true
         }
       }
     }
+  },
+  "glass": {
+    "fresnel_color": 4269807923,
+    "fresnel_tint": 0.05,
+    "specular_angle": 0
   },
   "hyprglass": {
     "layers": true,
@@ -77,7 +82,7 @@
     "animations": false
   },
   "wallpaper": {
-    "path": "/home/$USER/wallpapers/library/abstract/abs-08.jpg"
+    "path": "/home/$USER/wallpapers/library/industrial/ind-07.jpg"
   },
   "waybar": {
     "style": "default"
