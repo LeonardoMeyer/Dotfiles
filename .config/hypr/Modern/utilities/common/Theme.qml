@@ -21,6 +21,8 @@ Singleton {
     // quickshell animations" (utilities.animations) gives the utilities their own curve and pace instead, even then.
     // Every duration goes through ms(): `ms(280)` is about as long as a window takes to open.
     property real rounding: 10
+    // hyprglass glasses Quickshell's layers (the settings panel's "Glass on Quickshell"); false without the plugin.
+    property bool glass: false
     property bool hyprAnimates: true
     property real hyprPace: 1
     property var hyprSettle: own
@@ -42,6 +44,7 @@ Singleton {
     function refresh() {
         optionProc.running = true
         curveProc.running = true
+        glassProc.running = true
     }
     Component.onCompleted: refresh()
 
@@ -55,6 +58,23 @@ Singleton {
                     if (typeof r.int === "number") root.rounding = r.int
                     root.hyprAnimates = a.bool ?? a.int !== 0
                 } catch (e) {}
+            }
+        }
+    }
+
+    // Asked on its own: without the plugin hyprctl answers with an error rather than JSON.
+    Process {
+        id: glassProc
+        command: ["sh", "-c", "for o in enabled namespaces exclude_namespaces; do hyprctl -j getoption plugin:hyprglass:layers:$o; done"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const [on, only, except] = text.trim().split(/\n(?=\{)/).map(s => JSON.parse(s))
+                    // overrides.lua narrows layer glass to Quickshell's namespaces, or leaves them out.
+                    const ns = "quickshell-bar"
+                    const has = o => (o.str || "").split(",").includes(ns)
+                    root.glass = on.int === 1 && (!only.str || only.str === "[[EMPTY]]" || has(only)) && !has(except)
+                } catch (e) { root.glass = false }
             }
         }
     }
@@ -167,9 +187,15 @@ Singleton {
         onFileChanged: reload()
     }
 
-    readonly property var wal: {
+    readonly property var saved: {
         try { return JSON.parse(walFile.text()) } catch (e) { return null }
     }
+    // The wallpaper picker's selection, shown before it is applied: its 16 colors, or null for the saved palette.
+    property var preview: null
+    readonly property var wal: preview ? {
+        colors: preview.reduce((o, c, i) => (o["color" + i] = c, o), {}),
+        special: { background: preview[0], foreground: preview[15] }
+    } : saved
     readonly property color accent: wal ? wal.colors.color9 : "#8fd3ff"
     readonly property color fg: wal ? wal.colors.color7 : "#c7c6c2"
     readonly property color bright: wal ? wal.colors.color15 : "#ffffff"

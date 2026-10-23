@@ -44,7 +44,7 @@ case "${1:-}" in
     style)
         name="${2:?name}"
         style="$(cut -d/ -f1 "$HYPR/.active-profile" 2>/dev/null || true)"
-        [ -f "$HYPR/$style/quickshell/$name/config.json" ] || { echo "No quickshell bar style '$name' for $style" >&2; exit 1; }
+        [ -f "$HYPR/$style/quickshellbar/$name/config.json" ] || { echo "No quickshell bar style '$name' for $style" >&2; exit 1; }
         # Only the name: the bar reads the style's own config.json, so edits to it show at once.
         printf '%s\n' "$name" > "$HYPR/.quickshell-bar.tmp" && mv -f "$HYPR/.quickshell-bar.tmp" "$HYPR/.quickshell-bar"
         record "quickshell.style=\"$name\""

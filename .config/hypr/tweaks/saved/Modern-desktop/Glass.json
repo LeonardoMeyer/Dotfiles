@@ -1,4 +1,7 @@
 {
+  "bar": {
+    "kind": "quickshell"
+  },
   "border": {
     "gradient": false
   },
@@ -28,7 +31,7 @@
       "hyprglass": {
         "enabled": true,
         "layers": {
-          "enabled": true
+          "enabled": false
         }
       }
     }
@@ -37,10 +40,17 @@
     "size": 12,
     "theme": "Qogir-Dark"
   },
+  "hyprglass": {
+    "layers": true,
+    "quickshell": true
+  },
+  "quickshell": {
+    "style": "experimental"
+  },
   "wallpaper": {
-    "path": "/home/$USER/wallpapers/library/cars/car-08.jpg"
+    "path": "/home/$USER/wallpapers/library/nature/nat-21.jpg"
   },
   "waybar": {
-    "style": "experimental"
+    "style": "default"
   }
 }

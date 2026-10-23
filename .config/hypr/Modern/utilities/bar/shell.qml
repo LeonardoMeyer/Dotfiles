@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
+import QtQuick.Shapes
 import "../common"
 
 // The quickshell bar, the profile's other bar beside waybar (bar.sh picks one, hypr/.active-bar keeps it).
@@ -49,18 +50,19 @@ ShellRoot {
 
             // ---- Style --------------------------------------------------------------------------------------
 
-            // Read straight from its folder (hypr/<style>/quickshell/<name>/config.json), so editing it changes
+            // Read straight from its folder (hypr/<style>/quickshellbar/<name>/config.json), so editing it changes
             // the bar at once; hypr/.quickshell-bar names it (bar.sh style <name>).
             //   left/center/right  modules in each pill; only "center" gives one big pill
             //   strip              one full-width strip behind the pills
             //   background         pills draw their background while closed
+            //   attached           pills hang from the top edge, flaring into it, with no gap above
             //   height, gap        pill height, and room around the pills
             //   shape              corners: round (Hyprland's rounding), capsule or square
             FileView { id: profileFile; path: shell.hypr + "/.active-profile"; watchChanges: true; printErrors: false; onFileChanged: reload() }
             FileView { id: nameFile; path: shell.hypr + "/.quickshell-bar"; watchChanges: true; printErrors: false; onFileChanged: reload() }
             FileView {
                 id: lookFile
-                path: shell.hypr + "/" + profileFile.text().trim().split("/")[0] + "/quickshell/" + (nameFile.text().trim() || "default") + "/config.json"
+                path: shell.hypr + "/" + profileFile.text().trim().split("/")[0] + "/quickshellbar/" + (nameFile.text().trim() || "default") + "/config.json"
                 watchChanges: true
                 printErrors: false
                 onFileChanged: reload()
@@ -68,14 +70,19 @@ ShellRoot {
             readonly property var look: {
                 const d = { left: ["user", "workspaces"], center: ["media", "date", "timer", "clock"],
                     right: ["tray", "|", "updates", "network", "audio", "battery", "|", "power"],
-                    strip: false, background: true, height: 30, gap: 6, shape: "round" }
+                    strip: false, background: true, attached: false, height: 30, gap: 6, shape: "round" }
                 try { return Object.assign(d, JSON.parse(lookFile.text())) } catch (e) { return d }
             }
 
             readonly property int pillH: look.height
             readonly property int edge: look.gap
+            readonly property bool attached: look.attached === true && !look.strip
+            // The radius of the curves a card flares out of whatever it hangs from (the top edge when attached, the
+            // strip's bottom edge with a strip), and of the strip's own corners; 0 when it hangs from nothing.
+            readonly property real flare: !(attached || look.strip) || look.shape === "square" ? 0
+                : look.shape === "capsule" ? pillH / 2 : Math.min(Theme.rounding, pillH / 2)
             // The strip windows keep clear of; open cards overlap windows instead of pushing them.
-            readonly property int reserve: pillH + edge * 2
+            readonly property int reserve: pillH + edge * (attached ? 1 : 2)
 
             // ---- Actions ------------------------------------------------------------------------------------
 
@@ -293,10 +300,27 @@ ShellRoot {
 
                     // Each side pill may grow until it nearly meets the centre one; the centre one grows evenly
                     // both ways, into the room the wider side leaves.
-                    readonly property real inset: root.look.strip ? root.edge : root.edge + 4
+                    readonly property real inset: root.look.strip ? root.edge + 2 * root.flare : root.edge + 4 + root.flare
                     readonly property real gap: 8
                     readonly property real leftEnd: left.visible ? left.x + left.width : 0
                     readonly property real rightStart: right.visible ? right.x : width
+                    // The strip's outline: its sides and top just off screen, its bottom corners rounded, and each
+                    // card that has grown below it hanging from its bottom edge.
+                    readonly property string stripPath: {
+                        if (!root.look.strip) return ""
+                        const S = root.reserve - 0.5, r = root.flare, W = width
+                        let d = `M -1 -2 L -1 ${S - r} A ${r} ${r} 0 0 0 ${r - 1} ${S}`
+                        for (const p of pills) {
+                            if (!p.visible) continue
+                            const x0 = p.x + p.card.x + 0.5, x1 = x0 + p.card.width - 1, B = p.y + p.card.height - 0.5
+                            const depth = B - S
+                            if (depth <= 0) continue
+                            const k = Math.min(r, depth / 2)
+                            d += ` L ${x0 - k} ${S} A ${k} ${k} 0 0 1 ${x0} ${S + k} L ${x0} ${B - k} A ${k} ${k} 0 0 0 ${x0 + k} ${B}`
+                               + ` L ${x1 - k} ${B} A ${k} ${k} 0 0 0 ${x1} ${B - k} L ${x1} ${S + k} A ${k} ${k} 0 0 1 ${x1 + k} ${S}`
+                        }
+                        return d + ` L ${W + 1 - r} ${S} A ${r} ${r} 0 0 0 ${W + 1} ${S - r} L ${W + 1} -2 Z`
+                    }
                     readonly property real centerRoom: left.visible || right.visible
                         ? width - 2 * Math.max(leftEnd, width - rightStart) - 2 * gap : width - 2 * inset
 
@@ -305,17 +329,24 @@ ShellRoot {
                         focus: true
                         Keys.onEscapePressed: { for (const p of win.pills) p.close() }
 
-                        // "strip": one bar across the top, the pills sitting on it.
-                        Rectangle {
+                        // "strip": one bar across the top, the pills sitting on it. Their open cards are drawn
+                        // with it as one outline, so each grows down out of the strip, flaring from its bottom edge,
+                        // instead of opening over it. Faded as one layer, like the pills, so nothing stacks.
+                        Item {
                             visible: root.look.strip === true
-                            width: win.width
-                            height: root.reserve
-                            color: Theme.alpha(Theme.bg, 0.6)
-                            Rectangle {
-                                anchors.bottom: parent.bottom
-                                width: parent.width
-                                height: 1
-                                color: Theme.alpha(Theme.fg, 0.07)
+                            anchors.fill: parent
+                            opacity: 0.6
+                            layer.enabled: visible
+
+                            Shape {
+                                anchors.fill: parent
+                                preferredRendererType: Shape.CurveRenderer
+                                ShapePath {
+                                    strokeWidth: 1
+                                    strokeColor: Qt.tint(Theme.bg, Theme.alpha(Theme.fg, 0.12))
+                                    fillColor: Theme.bg
+                                    PathSvg { path: win.stripPath }
+                                }
                             }
                         }
 

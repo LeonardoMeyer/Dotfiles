@@ -7,6 +7,20 @@ call() {
     qs -p "$UTIL" ipc call "$@" >/dev/null 2>&1
 }
 
+# Starts the shared process unless it is up, and waits until it answers IPC. One caller at a time: startup.lua runs
+# shells.sh and bar.sh together, and two launches racing past `qs -n` would give two of everything.
+launch() (
+    exec 9>"${XDG_RUNTIME_DIR:-/tmp}/quickshell-utilities.lock"
+    flock -w 5 9 || exit 1
+    qs ipc -p "$UTIL" show 2>/dev/null | grep -q '^target' && exit 0
+    qs -n -p "$UTIL" --daemonize </dev/null >/dev/null 2>&1
+    for _ in $(seq 1 60); do
+        qs ipc -p "$UTIL" show 2>/dev/null | grep -q '^target' && exit 0
+        sleep 0.05
+    done
+    exit 1
+)
+
 # The monitor under the cursor (not just the focused one), in layout coordinates: a rotated
 # monitor swaps width and height, and scale shrinks both.
 cursor_monitor() {
@@ -24,7 +38,7 @@ for m in run("monitors"):
 
 case "${1:-}" in
     start)
-        qs -n -p "$UTIL" --daemonize </dev/null >/dev/null 2>&1
+        launch
         exit 0
         ;;
     stop)
@@ -63,9 +77,9 @@ case "$1" in
     toggle) set -- open "${@:2}" ;;
     toggleOn) set -- openOn "${@:2}" ;;
 esac
-qs -n -p "$UTIL" --daemonize </dev/null >/dev/null 2>&1
-for _ in $(seq 1 60); do
-    sleep 0.05
+launch || exit 1
+for _ in $(seq 1 20); do
     call "$target" "$@" && exit 0
+    sleep 0.05
 done
 exit 1

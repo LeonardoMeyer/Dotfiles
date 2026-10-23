@@ -2,9 +2,10 @@
     "left": ["user", "workspaces"],
     "center": ["media", "date", "timer", "clock"],
     "right": ["tray", "|", "updates", "network", "audio", "battery", "|", "power"],
-    "strip": true,
-    "background": false,
-    "height": 24,
-    "gap": 2,
-    "shape": "square"
+    "strip": false,
+    "background": true,
+    "attached": true,
+    "height": 30,
+    "gap": 6,
+    "shape": "round"
 }

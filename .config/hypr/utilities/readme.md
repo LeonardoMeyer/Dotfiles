@@ -55,7 +55,7 @@ bar.sh
 # The choice is kept in hypr/.active-bar; the quickshell bar watches that file and shows or hides itself.
 #   bar.sh start                       (re)start the chosen bar (startup.lua, profile switches)
 #   bar.sh apply waybar|quickshell     switch to it now; remembered by the live profile entry
-#   bar.sh style <name>                the quickshell bar's style: hypr/<style>/quickshell/<name>/, like waybar-style.sh
+#   bar.sh style <name>                the quickshell bar's style: hypr/<style>/quickshellbar/<name>/, like waybar-style.sh
 #   bar.sh toggle                      stop the chosen bar, or start it again (ALT+a)
 #   bar.sh current                     print the chosen bar
 #   bar.sh <call> [args...]            IPC call into the quickshell bar (menu, island, overview, close)

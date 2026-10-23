@@ -85,13 +85,16 @@ hl.animation({ leaf = "layers", enabled = true, speed = 2, bezier = "snappy", st
 hl.window_rule({ match = { class = "(?i)^spotify$" }, float = true })
 
 hl.layer_rule({ name = "waybar-blur", match = { namespace = "waybar" }, blur = true, ignore_alpha = 0.5 })
-hl.layer_rule({ name = "quickshell-bar-blur", match = { namespace = "quickshell-bar" }, blur = true, ignore_alpha = 0.05, no_anim = true })
+-- The cutoff sits at half the pills' opacity, so the blur stops on their antialiased edge instead of haloing past it.
+hl.layer_rule({ name = "quickshell-bar-blur", match = { namespace = "quickshell-bar" }, blur = true, ignore_alpha = 0.3, no_anim = true })
 hl.layer_rule({ name = "quickshell-overview-blur", match = { namespace = "quickshell-overview" }, blur = true, ignore_alpha = 0.05, no_anim = true })
 hl.layer_rule({ name = "notification-popup-glass", match = { namespace = "notification-popup" }, blur = true, ignore_alpha = 0.5, no_anim = true })
 hl.layer_rule({ name = "selection-no-anim", match = { namespace = "selection" }, no_anim = true })
 hl.layer_rule({ name = "osd-glass", match = { namespace = "osd" }, blur = true, ignore_alpha = 0.05, no_anim = true })
 hl.layer_rule({ name = "launcher-blur", match = { namespace = "launcher" }, blur = true, ignore_alpha = 0.3 })
 hl.layer_rule({ name = "wallpaper-picker-noanim", match = { namespace = "wallpaper-picker" }, no_anim = true })
+hl.layer_rule({ name = "wallpaper-picker-tab-noanim", match = { namespace = "wallpaper-picker-tab" }, no_anim = true })
+hl.layer_rule({ name = "wallpaper-picker-preview-noanim", match = { namespace = "wallpaper-picker-preview" }, no_anim = true })
 hl.layer_rule({ name = "settings-panel-glass", match = { namespace = "settings-panel" }, blur = true, ignore_alpha = 0.05, no_anim = true })
 hl.layer_rule({ name = "app-drawer-glass", match = { namespace = "app-drawer" }, blur = true, ignore_alpha = 0.05, no_anim = true })
 hl.layer_rule({ name = "music-player-glass", match = { namespace = "music-player" }, blur = true, ignore_alpha = 0.05, no_anim = true })

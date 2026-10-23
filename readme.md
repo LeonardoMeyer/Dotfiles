@@ -320,7 +320,7 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
       laptop/  desktop/     <- variants: machine.lua (+ any base file to replace for that machine)
       utilities/            <- the style's quickshells (common/ holds what they share)
       waybar/<name>/        <- waybar styles: config, style.css, preview.png
-      quickshell/<name>/    <- quickshell bar styles: config.json, preview.svg
+      quickshellbar/<name>/ <- quickshell bar styles: config.json, preview.svg
     tweaks/                 <- your tweaks and saved profiles (profiles are never edited)
     utilities/              <- shared scripts; the active style's quickshells are symlinked in here
   ```
@@ -376,7 +376,7 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 
 `Alt+S` slides it in from the left. Everything applies **live**, and your profile files are never edited.
 
-- **Profile**: pick the style and variant, switch or save profiles, and pick the bar, **Waybar** or the **Quickshell bar**, and its style (with a preview of each layout). The quickshell bar's pills grow into workspaces, media, network, sound and session cards on hover (inspired by [NabyScape](https://github.com/BillyNabil/nabyscape)). Each style's bars live in `<style>/waybar/` and `<style>/quickshell/`, and a new folder there shows up in the list. `Alt+A` stops or starts whichever bar is up.
+- **Profile**: pick the style and variant, switch or save profiles, and pick the bar, **Waybar** or the **Quickshell bar**, and its style (with a preview of each layout). The quickshell bar's pills grow into workspaces, media, network, sound and session cards on hover (inspired by [NabyScape](https://github.com/BillyNabil/nabyscape)). Each style's bars live in `<style>/waybar/` and `<style>/quickshellbar/`, and a new folder there shows up in the list. `Alt+A` stops or starts whichever bar is up.
 - **Colors**: a wheel of color schemes. **Pywal** (default) follows your wallpaper, and every `*.json` in `~/.config/wal/colorschemes/<dark|light>/` shows up too.
 - **Windows**: gaps, borders, rounding, a gradient border, tiling, opacity.
 - **Effects**: blur, shadow, glow, dimming, and every **hyprglass** option (when the plugin is installed).

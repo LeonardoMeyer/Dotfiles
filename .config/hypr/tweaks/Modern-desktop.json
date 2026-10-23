@@ -1,5 +1,14 @@
 {
+  "bar": {
+    "kind": "quickshell"
+  },
+  "quickshell": {
+    "style": "attached"
+  },
   "wallpaper": {
     "path": "/home/$USER/wallpapers/library/sunset/sun-17.jpg"
+  },
+  "waybar": {
+    "style": "default"
   }
 }

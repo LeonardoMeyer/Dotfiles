@@ -15,6 +15,7 @@ import Quickshell.Io
 //   workspaces  the workspace dots
 //   media       now playing: art, track and a waveform (folds away when nothing plays)
 //   date        the date, in the media's place while nothing plays
+//   constdate   the date, always shown
 //   timer       a running focus timer
 //   clock       the time
 //   tray        tray apps
@@ -63,7 +64,7 @@ Item {
     Loader {
         id: loader
         anchors.verticalCenter: parent.verticalCenter
-        sourceComponent: ({ user: userC, workspaces: workspacesC, media: mediaC, date: dateC, timer: timerC, clock: clockC,
+        sourceComponent: ({ user: userC, workspaces: workspacesC, media: mediaC, date: dateC, constdate: constdateC, timer: timerC, clock: clockC,
             tray: trayC, updates: updatesC, network: networkC, audio: audioC, battery: batteryC, power: powerC,
             "|": dividerC })[mod.name] ?? null
     }
@@ -173,6 +174,7 @@ Item {
             }
         }
     }
+
     Component {
         id: constdateC
         Fold {

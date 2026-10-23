@@ -28,6 +28,32 @@ if S.config then
     end
 end
 
+-- Glass on Quickshell's layers and on every other app's layers, each on its own (windows are the
+-- plugin's own `enabled`). Both go through layer glass, so it stays on while either is wanted and
+-- the namespace lists narrow it to the side that is.
+local QUICKSHELL_LAYERS = table.concat({
+    "quickshell-bar", "quickshell-overview", "settings-panel", "settings-panel-outside", "app-drawer",
+    "music-player", "notification-popup", "osd", "home-screen", "boot-sequence",
+    "wallpaper-picker", "wallpaper-picker-preview", "wallpaper-picker-tab",
+}, ",")
+local targets = S.hyprglass
+if targets and (targets.layers ~= nil or targets.quickshell ~= nil) then
+    local layers = targets.layers ~= false
+    local quickshell = targets.quickshell ~= false
+    local function apply_targets()
+        if not (hl.plugin and hl.plugin.hyprglass) then return false end
+        hl.plugin.hyprglass.config({ layers = {
+            enabled = layers or quickshell,
+            namespaces = (quickshell and not layers) and QUICKSHELL_LAYERS or "",
+            exclude_namespaces = (layers and not quickshell) and QUICKSHELL_LAYERS or "",
+        } })
+        return true
+    end
+    if not apply_targets() then
+        hl.on("hyprland.start", apply_targets)
+    end
+end
+
 -- Glass look: the panel's values extend hyprglass.lua's preset (preset values win over hg.config).
 -- Each one also goes in both theme variants, which would otherwise beat the shared value.
 local look = S.glass

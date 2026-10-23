@@ -1,7 +1,7 @@
 import QtQuick
 import "../common"
 
-// The chosen bar's styles shipped by the active style (hypr/<style>/waybar/<name>/ or quickshell/<name>/), each
+// The chosen bar's styles shipped by the active style (hypr/<style>/waybar/<name>/ or quickshellbar/<name>/), each
 // with its layout preview; collapsed, the active one's preview shows underneath. A new folder there shows up here.
 Column {
     id: control

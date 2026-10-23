@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Shapes
 import "../common"
 
 // One pill of the bar: a row of modules (Module.qml) that grows into a card showing the page of whichever
@@ -31,7 +32,7 @@ Item {
     // ---- Pages ------------------------------------------------------------------------------------------------
 
     // What each module opens. Modules missing here open nothing.
-    readonly property var opens: ({ workspaces: "workspaces", media: "island", date: "island", timer: "island",
+    readonly property var opens: ({ workspaces: "workspaces", media: "island", date: "island", constdate: "island", timer: "island",
         clock: "island", tray: "tray", network: "network", audio: "audio", power: "power" })
     function has(page) {
         return modules.some(m => opens[m] === page)
@@ -182,7 +183,7 @@ Item {
         if (tucked) { tucked = false; ctx.musicCall("untuck") }
     }
 
-    y: ctx.edge
+    y: ctx.attached ? 0 : ctx.edge
     width: rowW
     height: pillH
     visible: modules.length > 0
@@ -210,12 +211,71 @@ Item {
         // Takes the hover over whatever the card has grown across.
         MouseArea { anchors.fill: parent; hoverEnabled: true }
 
-        Rectangle {
-            anchors.fill: parent
-            radius: self.radius(self.pillH)
-            color: Theme.alpha(Theme.bg, 0.6 * (self.filled ? 1 : self.t))
-            border.width: 1
-            border.color: Theme.alpha(Theme.fg, 0.07 * (self.filled ? 1 : self.t))
+        // Drawn opaque and faded as one layer, so the rim and the fill never stack or leave a seam where they
+        // meet. It renders at twice the size and is mipmapped down, so the curve is smooth instead of stepped.
+        // Attached, it also reaches out over the flares either side.
+        Item {
+            x: -self.ctx.flare
+            width: parent.width + 2 * self.ctx.flare
+            height: parent.height
+            // With a strip, the strip draws the open card (shell.qml).
+            opacity: self.ctx.look.strip ? 0 : 0.6 * (self.filled ? 1 : self.t)
+            visible: opacity > 0
+            layer.enabled: true
+            layer.smooth: true
+            layer.mipmap: true
+            layer.textureSize: Qt.size(width * 2, height * 2)
+
+            // Attached: hangs from the top edge, square on top, curving out into the edge either side. The rim
+            // runs up the flares and its top edge sits just off the layer, so the screen edge has none.
+            Shape {
+                visible: self.ctx.attached
+                anchors.fill: parent
+                preferredRendererType: Shape.CurveRenderer
+                ShapePath {
+                    id: outline
+                    readonly property real f: self.ctx.flare
+                    readonly property real r: self.radius(self.pillH)
+                    readonly property real w: card.width
+                    readonly property real h: card.height - 0.5
+                    strokeWidth: 1
+                    strokeColor: Qt.tint(Theme.bg, Theme.alpha(Theme.fg, 0.12))
+                    fillColor: Theme.bg
+                    startX: 0; startY: -1
+                    PathLine { x: 0; y: 0 }
+                    PathArc { x: outline.f + 0.5; y: outline.f; radiusX: outline.f; radiusY: outline.f }
+                    PathLine { relativeX: 0; y: outline.h - outline.r }
+                    PathArc { x: outline.f + 0.5 + outline.r; y: outline.h; radiusX: outline.r; radiusY: outline.r; direction: PathArc.Counterclockwise }
+                    PathLine { x: outline.f + outline.w - 0.5 - outline.r; y: outline.h }
+                    PathArc { x: outline.f + outline.w - 0.5; y: outline.h - outline.r; radiusX: outline.r; radiusY: outline.r; direction: PathArc.Counterclockwise }
+                    PathLine { relativeX: 0; y: outline.f }
+                    PathArc { x: 2 * outline.f + outline.w; y: 0; radiusX: outline.f; radiusY: outline.f }
+                    PathLine { relativeX: 0; y: -1 }
+                }
+            }
+
+            // The rim: catches a little more light along the top than the bottom.
+            Rectangle {
+                visible: !self.ctx.attached
+                x: self.ctx.flare
+                width: card.width
+                height: parent.height
+                radius: self.radius(self.pillH)
+                gradient: Gradient {
+                    GradientStop { position: 0; color: Qt.tint(Theme.bg, Theme.alpha(Theme.fg, 0.2)) }
+                    GradientStop { position: Math.min(1, self.pillH / parent.height); color: Qt.tint(Theme.bg, Theme.alpha(Theme.fg, 0.1)) }
+                    GradientStop { position: 1; color: Qt.tint(Theme.bg, Theme.alpha(Theme.fg, 0.07)) }
+                }
+            }
+            Rectangle {
+                visible: !self.ctx.attached
+                x: self.ctx.flare + 1
+                y: 1
+                width: card.width - 2
+                height: parent.height - 2
+                radius: Math.max(0, self.radius(self.pillH) - 1)
+                color: Theme.bg
+            }
         }
 
         // The pages, laid out at full size and uncovered by the growing card from its fixed edge.

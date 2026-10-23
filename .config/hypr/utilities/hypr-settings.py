@@ -250,7 +250,7 @@ def waybar():
 
 def quickshell():
     """Quickshell bar styles, and which one is live (hypr/.quickshell-bar names it; none named means "default")."""
-    styles, live = bar_styles("quickshell", "config.json"), load_text(QUICKSHELL_FILE) or DEFAULT_QUICKSHELL
+    styles, live = bar_styles("quickshellbar", "config.json"), load_text(QUICKSHELL_FILE) or DEFAULT_QUICKSHELL
     return {"styles": styles, "active": live if any(s["id"] == live for s in styles) else ""}
 
 
@@ -325,6 +325,9 @@ def cmd_state(keys):
                     glass_theme = option("plugin.hyprglass.default_theme") or "dark"
                 name = key[len("glass."):]
                 value = glass.get(f"{glass_theme}.{name}", glass.get(name))
+            elif key.startswith("hyprglass."):
+                # Not split yet: the profile's layer glass covers both layers and Quickshell.
+                value = bool(option("plugin.hyprglass.layers.enabled"))
             else:
                 value = FALLBACKS.get(key)
         values[key] = value
@@ -370,8 +373,8 @@ def cmd_set(pairs):
             node[leaf] = value
         if key in RELOAD_ON_CHANGE and not value:
             reload = True
-        # Presets are only committed by a config reload.
-        if key.startswith("glass."):
+        # Presets and layer namespace lists are only committed by a config reload.
+        if key.startswith(("glass.", "hyprglass.")):
             reload = True
         if key == "config.input.sensitivity":
             settings["mice"] = mice()

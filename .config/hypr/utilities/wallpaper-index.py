@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the wallpaper picker index: thumbnails plus a pywal palette per image, cached."""
+"""Builds the wallpaper picker index: thumbnails, a screen-sized copy and a pywal palette per image, cached."""
 import hashlib
 import json
 import os
@@ -28,17 +28,25 @@ def key_for(path: Path) -> str:
     return hashlib.sha1(f"{path}:{stat.st_mtime_ns}:{stat.st_size}".encode()).hexdigest()
 
 
-def make_thumb(path: Path, key: str) -> Path:
-    thumb = THUMBS / f"{key}.jpg"
-    if not thumb.exists():
-        tmp = thumb.with_suffix(".tmp.jpg")
+# Everything the picker shows of one wallpaper, made in a single ImageMagick run from one decode (large JPEGs are
+# decoded at reduced size straight away):
+#   thumb    640x360, the cards, the palette and the panel's blurred backdrop
+#   screen   screen-sized JPEG, the full-screen preview (flipping through decodes it in a few milliseconds)
+def make_assets(path: Path, key: str) -> tuple[Path, Path]:
+    thumb, screen = THUMBS / f"{key}.jpg", THUMBS / f"{key}-s.jpg"
+    files = [thumb, screen]
+    if not all(f.exists() for f in files):
+        tmp = [f.with_name(f"{f.stem}.{os.getpid()}.tmp{f.suffix}") for f in files]
         subprocess.run(
-            ["magick", f"{path}[0]", "-auto-orient", "-thumbnail", "640x360^",
-             "-gravity", "center", "-extent", "640x360", "-quality", "85", str(tmp)],
+            ["magick", "-define", "jpeg:size=1920x1080", f"{path}[0]", "-auto-orient",
+             "-thumbnail", "1920x1080^", "-write", "mpr:s", "-quality", "88", "-write", str(tmp[1]), "+delete",
+             "mpr:s", "-thumbnail", "640x360^", "-gravity", "center", "-extent", "640x360",
+             "-quality", "85", str(tmp[0])],
             check=True, capture_output=True,
         )
-        tmp.rename(thumb)
-    return thumb
+        for t, f in zip(tmp, files):
+            os.replace(t, f)
+    return thumb, screen
 
 
 def make_palette(thumb: Path) -> list[str]:
@@ -62,7 +70,7 @@ def main() -> None:
     def work(path: Path):
         key = key_for(path)
         try:
-            thumb = make_thumb(path, key)
+            thumb, screen = make_assets(path, key)
             colors = palettes.get(key) or make_palette(thumb)
         except (subprocess.CalledProcessError, OSError, KeyError, ValueError) as err:
             print(f"skip {path}: {err}", file=sys.stderr)
@@ -72,11 +80,19 @@ def main() -> None:
             "name": path.stem,
             "theme": path.parent.name,
             "thumb": str(thumb),
+            "screen": str(screen),
             "colors": colors,
         }
 
     with ThreadPoolExecutor(max_workers=4) as pool:
         results = [r for r in pool.map(work, files) if r]
+
+    # Cached files no longer used (wallpapers removed or changed, older formats) go, so the cache only ever holds
+    # what is shown.
+    live = {Path(v[f]).name for _, v in results for f in ("thumb", "screen")}
+    for f in THUMBS.iterdir():
+        if f.name not in live and ".tmp" not in f.name:
+            f.unlink(missing_ok=True)
 
     write_atomic(PALETTES, json.dumps({k: v["colors"] for k, v in results}))
     write_atomic(INDEX, json.dumps([v for _, v in results]))

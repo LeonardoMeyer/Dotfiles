@@ -3,6 +3,7 @@
 // Every page and option of the panel. Keys are dotted paths into the active profile's tweaks:
 //   config.*  -> hl.config() options (live values come from hyprctl getoption)
 //   glass.*  -> hyprglass preset values, layered over hyprglass.lua's preset by overrides.lua
+//   hyprglass.layers / hyprglass.quickshell -> which layers get glass, worked out by overrides.lua
 //   animation.*, border.*, cursor.*, boot.* -> handled by overrides.lua / startup.lua
 // Adding an option is one line here. Choices with 5+ options render as a dropdown.
 // A control can carry `when` (hide unless another option has a value) or `cap` (hide unless
@@ -28,8 +29,11 @@ function opt(v, l, extra) {
 }
 
 var ON = { eq: true }
-var GLASS = { key: "config.plugin.hyprglass.enabled", eq: true }
-var LAYERS = [GLASS, { key: "config.plugin.hyprglass.layers.enabled", eq: true }]
+// Windows, other apps' layers and Quickshell are glassed separately; the look applies wherever any is on.
+var WINDOWS = { key: "config.plugin.hyprglass.enabled", eq: true }
+var LAYER_KEYS = ["hyprglass.layers", "hyprglass.quickshell"]
+var LAYERS = { any: [{ key: "hyprglass.layers", eq: true }, { key: "hyprglass.quickshell", eq: true }] }
+var GLASS = { any: [WINDOWS, { key: "hyprglass.layers", eq: true }, { key: "hyprglass.quickshell", eq: true }] }
 // Layer/subsurface presets: "" follows the windows' preset; then this setup's preset and the built-ins.
 var PRESET_OPTIONS = [opt("", "Same as windows", { dflt: true }), opt("apple_extreme", "Apple extreme"),
     opt("glass", "Glass"), opt("pomme", "Pomme"), opt("clear", "Clear"), opt("subtle", "Subtle"), opt("high_contrast", "High contrast")]
@@ -141,8 +145,9 @@ var PAGES = [
                 toggle("config.decoration.motion_blur.enabled", "Motion blur")
             ]),
             section("Glass", glass([
-                toggle("config.plugin.hyprglass.enabled", "Liquid glass"),
-                toggle("config.plugin.hyprglass.layers.enabled", "Glass on bars and popups", { when: GLASS }),
+                toggle("config.plugin.hyprglass.enabled", "Glass on windows"),
+                toggle("hyprglass.layers", "Glass on layers (other apps' bars and popups)"),
+                toggle("hyprglass.quickshell", "Glass on Quickshell"),
                 choice("config.plugin.hyprglass.default_theme", "Theme", [opt("dark", "Dark"), opt("light", "Light")], { when: GLASS })
             ])),
             section("Glass blur", glass([
@@ -193,7 +198,7 @@ var PAGES = [
                 slider("glass.adaptive_dim", "Dim bright backgrounds", 0, 1, 0.01, "", { when: GLASS }),
                 slider("glass.adaptive_boost", "Lift dark backgrounds", 0, 1, 0.01, "", { when: GLASS })
             ])),
-            section("Glass on bars and popups", glass([
+            section("Glass on layers", glass([
                 choice("config.plugin.hyprglass.layers.preset", "Preset", PRESET_OPTIONS, { when: LAYERS }),
                 choice("config.plugin.hyprglass.layers.mask_mode", "Where glass goes", [opt("auto", "Auto"), opt("region", "Region"), opt("alpha", "Alpha"), opt("contour", "Contour")], { when: LAYERS }),
                 slider("config.plugin.hyprglass.layers.mask_threshold", "Alpha cutoff", 0, 1, 0.001, "", { when: LAYERS }),
@@ -209,12 +214,12 @@ var PAGES = [
                 slider("config.plugin.hyprglass.subsurfaces.radius", "Corners (-1 = capsule)", -1, 500, 1, " px", { when: [GLASS, { key: "config.plugin.hyprglass.subsurfaces.enabled", eq: true }] })
             ])),
             section("Glass performance", glass([
-                toggle("config.plugin.hyprglass.manage_window_blur", "Turn off Hyprland blur on glass", { when: GLASS }),
-                toggle("config.plugin.hyprglass.skip_opaque_windows", "Skip glass under opaque windows", { when: GLASS }),
+                toggle("config.plugin.hyprglass.manage_window_blur", "Turn off Hyprland blur on glass", { when: WINDOWS }),
+                toggle("config.plugin.hyprglass.skip_opaque_windows", "Skip glass under opaque windows", { when: WINDOWS }),
                 toggle("config.plugin.hyprglass.blur_fold", "Fewer blur passes, same look", { when: GLASS }),
-                toggle("config.plugin.hyprglass.windows.background_cache", "Cache window backgrounds", { when: GLASS }),
-                toggle("config.plugin.hyprglass.windows.live_resample", "Follow changes behind windows", { when: GLASS }),
-                slider("config.plugin.hyprglass.windows.live_resample_fps", "Follow rate (0 = uncapped)", 0, 240, 1, " fps", { when: [GLASS, { key: "config.plugin.hyprglass.windows.live_resample", eq: true }] })
+                toggle("config.plugin.hyprglass.windows.background_cache", "Cache window backgrounds", { when: WINDOWS }),
+                toggle("config.plugin.hyprglass.windows.live_resample", "Follow changes behind windows", { when: WINDOWS }),
+                slider("config.plugin.hyprglass.windows.live_resample_fps", "Follow rate (0 = uncapped)", 0, 240, 1, " fps", { when: [WINDOWS, { key: "config.plugin.hyprglass.windows.live_resample", eq: true }] })
             ])),
             section("Glass debugging", glass([
                 choice("config.plugin.hyprglass.debug.mode", "Debug mode", [opt("off", "Off"), opt("hints_only", "Hints only"), opt("gl_work_only", "GL work only")], { when: GLASS }),
@@ -316,18 +321,31 @@ var PAGES = [
     }
 ];
 
+// Layers and Quickshell are saved together, since overrides.lua reads a missing one as on.
+function glassTargets(entries, values) {
+    if (!LAYER_KEYS.some(function (k) { return k in entries })) return entries
+    var out = Object.assign({}, entries)
+    LAYER_KEYS.forEach(function (k) { if (!(k in out)) out[k] = !!values[k] })
+    return out
+}
+
 // Whether a control should currently be shown, given the live values and device capabilities.
 function shown(c, values, caps) {
     if (c.cap && !(caps && caps[c.cap])) return false
     if (!c.when) return true
     // A list of conditions comes back from QML's model as a list wrapper, not an Array.
-    var conds = c.when.key === undefined ? c.when : [c.when]
+    var conds = c.when.key === undefined && c.when.any === undefined ? c.when : [c.when]
     for (var i = 0; i < conds.length; i++)
         if (!holds(conds[i], values)) return false
     return true
 }
 
 function holds(w, values) {
+    if (w.any !== undefined) {
+        for (var i = 0; i < w.any.length; i++)
+            if (holds(w.any[i], values)) return true
+        return false
+    }
     var v = values[w.key]
     if (v === undefined || v === null) return false
     if (w.eq !== undefined) {

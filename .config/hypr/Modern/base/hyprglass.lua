@@ -171,9 +171,20 @@ if hl.plugin.hyprglass then
 
     hg.layer("quickshell-bar", {
         preset = PRESET,
-        mask_threshold = 0.01,
+        -- The pills are 0.6 opaque: the glass fades in across their antialiased edge rather than stopping hard.
+        mask_threshold = 0.15,
         mask_mode = "auto",
-        mask_feather = 0.0,
+        mask_feather = 0.4,
+        live_resample = true,
+        exclude = false,
+    })
+
+    -- The wallpaper picker's theme-tab highlight: its own layer, glassed only where the pane is drawn.
+    hg.layer("wallpaper-picker-tab", {
+        preset = PRESET,
+        mask_threshold = 0.01,
+        mask_mode = "alpha",
+        mask_feather = 0.1,
         live_resample = true,
         exclude = false,
     })
