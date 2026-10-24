@@ -58,6 +58,8 @@ Item {
                     playerCount: page.ctx.players.length
                     playing: page.ctx.playing
                     musicOut: page.ctx.mediaAway(page.pill)
+                    // On its own the bar has no music player to pop out into.
+                    canPopOut: !page.ctx.standalone
                     onCyclePlayer: page.ctx.cyclePlayer()
                     onPopOut: { page.pill.close(); if (!page.ctx.musicOut) page.ctx.musicCall("open") }
                     onBringBack: { page.pill.close(); page.ctx.musicCall("close") }
@@ -147,6 +149,7 @@ Item {
         signal bringBack()
         // The music player has the media; this page offers to bring it back.
         property bool musicOut: false
+        property bool canPopOut: true
 
         function mmss(s) {
             if (!isFinite(s) || s < 0) s = 0
@@ -347,6 +350,7 @@ Item {
             // Pop out into the music player, which can then be dragged around like a window. Top right, level with
             // the player chip and clear of the title below it.
             Rectangle {
+                visible: page.canPopOut
                 anchors.right: parent.right
                 anchors.top: parent.top
                 width: 26

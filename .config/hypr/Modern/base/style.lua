@@ -93,6 +93,8 @@ hl.layer_rule({ name = "selection-no-anim", match = { namespace = "selection" },
 hl.layer_rule({ name = "osd-glass", match = { namespace = "osd" }, blur = true, ignore_alpha = 0.05, no_anim = true })
 hl.layer_rule({ name = "launcher-blur", match = { namespace = "launcher" }, blur = true, ignore_alpha = 0.3 })
 hl.layer_rule({ name = "wallpaper-picker-noanim", match = { namespace = "wallpaper-picker" }, no_anim = true })
+-- The lock's unlock handoff fades itself out; Hyprland animating it too would show as a flicker.
+hl.layer_rule({ name = "lock-handoff-noanim", match = { namespace = "lock-handoff" }, no_anim = true })
 hl.layer_rule({ name = "wallpaper-picker-tab-noanim", match = { namespace = "wallpaper-picker-tab" }, no_anim = true })
 hl.layer_rule({ name = "wallpaper-picker-preview-noanim", match = { namespace = "wallpaper-picker-preview" }, no_anim = true })
 hl.layer_rule({ name = "settings-panel-glass", match = { namespace = "settings-panel" }, blur = true, ignore_alpha = 0.05, no_anim = true })

@@ -102,7 +102,7 @@ Item {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 10 + 2 * row.ease
+                    radius: Theme.r(10) + 2 * row.ease
                     color: Qt.rgba(
                         Theme.fg.r + (Theme.accent.r - Theme.fg.r) * row.ease,
                         Theme.fg.g + (Theme.accent.g - Theme.fg.g) * row.ease,

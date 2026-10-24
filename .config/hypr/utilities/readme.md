@@ -89,7 +89,7 @@ save-profile.sh
 
 # Save the live root config back into the active profile.
 # Reads .active-profile (e.g. "Modern/laptop"). machine.lua, and any file the variant already overrides,
-# go back to the variant folder; every other .lua file and hyprlock.conf go to the style's shared base/.
+# go back to the variant folder; every other .lua file goes to the style's shared base/.
 
 shell.qml
 

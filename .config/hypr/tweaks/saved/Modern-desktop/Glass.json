@@ -45,10 +45,10 @@
     "quickshell": true
   },
   "quickshell": {
-    "style": "experimental"
+    "style": "attached"
   },
   "wallpaper": {
-    "path": "/home/$USER/wallpapers/library/nature/nat-21.jpg"
+    "path": "/home/$USER/wallpapers/library/nature/nat-39.jpg"
   },
   "waybar": {
     "style": "default"

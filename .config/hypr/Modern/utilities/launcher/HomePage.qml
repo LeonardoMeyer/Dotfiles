@@ -13,7 +13,7 @@ Item {
 
     readonly property string util: "~/.config/hypr/utilities/"
     readonly property var commands: [
-        { id: "lock", icon: "", label: "Lock", sub: "Lock the session", cmd: "pidof hyprlock || hyprlock" },
+        { id: "lock", icon: "", label: "Lock", sub: "Lock the session", cmd: "~/.config/hypr/utilities/lock.sh" },
         { id: "suspend", icon: "", label: "Suspend", sub: "Sleep the machine", cmd: "systemctl suspend" },
         { id: "logout", icon: "", label: "Log out", sub: "End the Hyprland session", confirm: "log out", cmd: "pkill Hyprland || loginctl terminate-user $USER" },
         { id: "reboot", icon: "", label: "Reboot", sub: "Restart the machine", confirm: "reboot", cmd: "systemctl reboot || loginctl reboot" },

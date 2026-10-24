@@ -28,7 +28,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 12
+        radius: Theme.r(12)
         color: Theme.alpha(Theme.fg, 0.045)
     }
 

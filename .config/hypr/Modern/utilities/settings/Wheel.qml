@@ -184,19 +184,19 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         anchors.margins: -4 * item.ease
-                        radius: 12
+                        radius: Theme.r(12)
                         color: Theme.alpha(Theme.bright, 0.03 + 0.07 * item.ease)
                     }
 
                     RoundedImage {
                         anchors.fill: parent
-                        radius: 10
+                        radius: Theme.r(10)
                         source: item.isImage ? item.modelData.image : ""
                     }
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: 10
+                        radius: Theme.r(10)
                         color: Theme.alpha(Theme.bg, 0.4 * (1 - item.ease))
                     }
                 }

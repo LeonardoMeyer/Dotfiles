@@ -28,8 +28,6 @@ ShellRoot {
     property string pendingPath: ""
     // The preview stays up after applying until awww has drawn the same image under it.
     property bool holding: false
-    // Each monitor's workspace when the picker opened; they all switch to empty ones so the preview shows.
-    property var prevWs: null
     // The full-screen preview follows the selection at once, from its screen-sized copy (wallpaper-index.py), which
     // decodes in a few milliseconds; the original only if the index has none yet.
     property var previewed: null
@@ -79,6 +77,14 @@ ShellRoot {
         waybar(["foreground " + c[15], "background " + c[0], "cursor " + c[15], ""]
             .concat(c.map((x, i) => "color" + i + " " + x))
             .map(l => l ? "@define-color " + l + ";" : "").join("\n") + "\n")
+        terminals(c)
+    }
+
+    // Open terminals take the colors too, through the escape sequences wal sends them (applying sends wal's own).
+    function terminals(c) {
+        const seq = c.map((x, i) => "\x1b]4;" + i + ";" + x + "\x1b\\").join("")
+            + "\x1b]10;" + c[15] + "\x1b\\\x1b]11;" + c[0] + "\x1b\\\x1b]12;" + c[15] + "\x1b\\"
+        Quickshell.execDetached(["sh", "-c", 'for t in /dev/pts/[0-9]*; do [ -O "$t" ] && printf %s "$0" > "$t" 2>/dev/null & done; wait', seq])
     }
 
     // Writes waybar's colors (or keeps wal's, given nothing) and has it reload them; skipped while it isn't the bar.
@@ -177,7 +183,6 @@ ShellRoot {
         // Frozen for this open so moving the cursor to another monitor never drags the window along.
         targetScreen = screen
         previewed = current
-        wsQuery.running = true
         shown = true
         startTimer.restart()
         Qt.callLater(() => stage.forceActiveFocus())
@@ -190,7 +195,6 @@ ShellRoot {
 
     // Unmapping (rather than exiting) hands focus and the pointer straight back to the desktop.
     function finish() {
-        restoreWorkspace()
         watchdog.stop()
         startTimer.stop()
         tween.stop()
@@ -199,53 +203,6 @@ ShellRoot {
         t = 0
         if (theme !== "all") theme = "all"
         rebuild(landing)
-    }
-
-    // Asked of Hyprland directly: Quickshell's view of each monitor's workspace can lag behind.
-    Process {
-        id: wsQuery
-        command: ["sh", "-c", "hyprctl -j monitors | tr -d '\\n'; echo; hyprctl -j workspaces | tr -d '\\n'"]
-        stdout: StdioCollector { onStreamFinished: root.clearScreens(text) }
-    }
-
-    // Monitors showing windows move to empty workspaces so the preview shows, each to the lowest number not in
-    // use (made on the focused monitor; Hyprland's "emptym" can pick an empty one on the other monitor instead).
-    // An empty one stays: it is already clear, and leaving it would have Hyprland delete it. The picker's own
-    // monitor goes last, so focus ends there.
-    function clearScreens(text) {
-        let mons, wss
-        try { [mons, wss] = text.trim().split("\n").map(l => JSON.parse(l)) } catch (e) { return }
-        if (!shown || leaving) return
-        const main = win.screen.name
-        const windows = id => (wss.find(w => w.id === id) || {}).windows || 0
-        const busy = mons.filter(m => windows(m.activeWorkspace.id) > 0)
-            .sort((a, b) => (a.name === main) - (b.name === main))
-        const used = wss.map(w => w.id)
-        let free = 0
-        prevWs = busy.map(m => [m.name, m.activeWorkspace.id])
-        if (busy.length > 0)
-            hypr(busy.reduce((l, m) => {
-                while (used.includes(++free));
-                return l.concat([focusMonitor(m.name), "hl.dsp.focus({ workspace = " + free + " })"])
-            }, []).concat([focusMonitor(main)]))
-    }
-
-    // Back in the same order, ending on the picker's monitor.
-    function restoreWorkspace() {
-        if (prevWs && prevWs.length > 0)
-            hypr(prevWs.reduce((l, [m, id]) => l.concat([focusMonitor(m), "hl.dsp.focus({ workspace = " + id + " })"]), [])
-                .concat([focusMonitor(win.screen.name)]))
-        prevWs = null
-    }
-
-    function focusMonitor(name) {
-        return 'hl.dsp.focus({ monitor = "' + name + '" })'
-    }
-
-    // Runs Hyprland dispatches in order, in one call. Focusing a monitor warps the cursor to it, so it goes back after.
-    function hypr(cmds) {
-        Quickshell.execDetached(["sh", "-c", 'set -- "$0" $(hyprctl cursorpos | tr -d ,); hyprctl --batch "$1 ; dispatch hl.dsp.cursor.move({ x = $2, y = $3 })"',
-                                 cmds.map(c => "dispatch " + c).join(" ; ")])
     }
 
     // A failed apply never leaves the preview covering the desktop.
@@ -271,7 +228,6 @@ ShellRoot {
     function close() {
         if (!shown || leaving) return
         leaving = true
-        restoreWorkspace()
         previewTimer.stop()
         if (!holding) tint(null)
         startTimer.stop()
@@ -447,8 +403,8 @@ ShellRoot {
     }
 
     // A chip's shape, drawn like the old selector's cards and glass pane: into a texture at twice its size with a
-    // margin of clear pixels, then mipmapped down, so the curve comes out even; and a thin white border laid over
-    // the fill rather than around it, so there is one clean edge (which also gives the glass a defined rim).
+    // margin of clear pixels, then mipmapped down, so the curve comes out even; and the same faint edge as the other
+    // utilities' cards laid over the fill rather than around it, so there is one clean edge.
     component Pill: Item {
         property color fill
         property color edge
@@ -514,7 +470,7 @@ ShellRoot {
                     Component.onCompleted: if (active) row.sel = chip
                     width: Math.round(label.implicitWidth) + row.pad
                     height: row.h
-                    Pill { visible: row.drawn; radius: row.radius; fill: Theme.alpha(Theme.bg, 0.6); edge: "#40ffffff" }
+                    Pill { visible: row.drawn; radius: row.radius; fill: Theme.alpha(Theme.bg, 0.6); edge: Theme.alpha(Theme.fg, 0.07) }
                     Label { id: label; visible: row.drawn; text: chip.modelData; color: "#ffffff" }
                     MouseArea {
                         anchors.fill: parent
@@ -537,7 +493,7 @@ ShellRoot {
             width: r - l
             height: row.h
 
-            Pill { radius: row.radius; fill: Theme.accent; edge: "#66ffffff" }
+            Pill { radius: row.radius; fill: Theme.accent; edge: "transparent" }
 
             // The names again in the dark colour, clipped to the highlight, so each turns dark where it passes.
             Item {

@@ -24,6 +24,7 @@ __pycache__/
 .config/hypr/utilities/wallpaper-picker
 .config/hypr/utilities/launcher
 .config/hypr/utilities/music
+.config/hypr/utilities/lock
 
 # cava writes its default shaders and themes back on every start
 .config/cava/shaders/

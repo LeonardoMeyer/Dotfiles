@@ -356,7 +356,7 @@ ShellRoot {
                         Rectangle {
                             width: tabs.cell
                             height: parent.height
-                            radius: 9
+                            radius: Theme.r(9)
                             x: tabs.index * (tabs.cell + tabs.gap)
                             color: Theme.alpha(Theme.accent, 0.42)
                             Behavior on x { NumberAnimation { duration: Theme.ms(340); easing.type: Easing.OutCubic } }
@@ -376,7 +376,7 @@ ShellRoot {
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: 9
+                                    radius: Theme.r(9)
                                     color: Theme.alpha(Theme.fg, tab.on ? 0 : (tabArea.containsMouse ? 0.12 : 0.05))
                                     Behavior on color { ColorAnimation { duration: Theme.fast } }
                                 }
@@ -469,7 +469,7 @@ ShellRoot {
                                     Rectangle {
                                         width: sec.width
                                         height: rows.height
-                                        radius: 12
+                                        radius: Theme.r(12)
                                         color: Theme.alpha(Theme.fg, 0.055)
 
                                         Column {

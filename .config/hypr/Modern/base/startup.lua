@@ -10,7 +10,11 @@ hl.on("hyprland.start", function()
         hl.exec_cmd("BOOT_BLACK_MS=" .. (boot.black_ms or defaults.boot.black_ms) .. " qs -p ~/.config/hypr/utilities/boot --daemonize")
     end
     hl.exec_cmd("hyprctl setcursor " .. (cursor.theme or defaults.cursor.theme) .. " " .. (cursor.size or defaults.cursor.size))
-    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
+    -- The screen-share portal (OBS, browsers) dies with the previous session and systemd stops retrying it, so
+    -- clear that and restart it once the session is in systemd's environment.
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
+        .. "; systemctl --user reset-failed xdg-desktop-portal-hyprland xdg-desktop-portal"
+        .. "; systemctl --user restart xdg-desktop-portal-hyprland xdg-desktop-portal")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
     hl.exec_cmd("~/.config/hypr/utilities/shells.sh start")
     hl.exec_cmd("~/.config/hypr/utilities/bar.sh boot")

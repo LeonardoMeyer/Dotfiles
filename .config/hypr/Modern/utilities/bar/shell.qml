@@ -22,7 +22,17 @@ ShellRoot {
         printErrors: false
         onFileChanged: reload()
     }
-    readonly property bool chosen: kindFile.text().trim() === "quickshell"
+    // Installed on its own (InstallScripts/quickshellbarinstall.sh) there is no hypr/ setup around it: the bar is
+    // always the chosen one, and its style is the style.json beside it.
+    FileView {
+        id: ownStyle
+        path: Quickshell.shellDir + "/style.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+    }
+    readonly property bool standalone: ownStyle.text().trim() !== ""
+    readonly property bool chosen: standalone || kindFile.text().trim() === "quickshell"
     property bool stopped: false
     onChosenChanged: stopped = false
 
@@ -51,7 +61,7 @@ ShellRoot {
             // ---- Style --------------------------------------------------------------------------------------
 
             // Read straight from its folder (hypr/<style>/quickshellbar/<name>/config.json), so editing it changes
-            // the bar at once; hypr/.quickshell-bar names it (bar.sh style <name>).
+            // the bar at once; hypr/.quickshell-bar names it (bar.sh style <name>). On its own, style.json instead.
             //   left/center/right  modules in each pill; only "center" gives one big pill
             //   strip              one full-width strip behind the pills
             //   background         pills draw their background while closed
@@ -62,7 +72,7 @@ ShellRoot {
             FileView { id: nameFile; path: shell.hypr + "/.quickshell-bar"; watchChanges: true; printErrors: false; onFileChanged: reload() }
             FileView {
                 id: lookFile
-                path: shell.hypr + "/" + profileFile.text().trim().split("/")[0] + "/quickshellbar/" + (nameFile.text().trim() || "default") + "/config.json"
+                path: shell.standalone ? ownStyle.path : shell.hypr + "/" + profileFile.text().trim().split("/")[0] + "/quickshellbar/" + (nameFile.text().trim() || "default") + "/config.json"
                 watchChanges: true
                 printErrors: false
                 onFileChanged: reload()
@@ -74,6 +84,7 @@ ShellRoot {
                 try { return Object.assign(d, JSON.parse(lookFile.text())) } catch (e) { return d }
             }
 
+            readonly property bool standalone: shell.standalone
             readonly property int pillH: look.height
             readonly property int edge: look.gap
             readonly property bool attached: look.attached === true && !look.strip
@@ -90,9 +101,10 @@ ShellRoot {
                 Quickshell.execDetached(["sh", "-c", cmd])
             }
 
-            // waybar's color picker, so both bars share one history. A moment first, for the card to fold away.
+            // waybar's color picker, so both bars share one history (the bar's own copy of it when waybar's isn't
+            // there). A moment first, for the card to fold away.
             function pickColor() {
-                run("sleep 0.3; ~/.config/waybar/scripts/colorpicker.sh")
+                run("sleep 0.3; p=~/.config/waybar/scripts/colorpicker.sh; [ -x \"$p\" ] || p='" + Quickshell.shellDir + "/colorpicker.sh'; \"$p\"")
             }
 
             // Opens a page on the focused monitor's pill that has it, or closes it if it is open.
@@ -228,7 +240,7 @@ ShellRoot {
             }
 
             // open, close, tuck (fold away while a card covers it) or untuck.
-            function musicCall(call) { run("~/.config/hypr/utilities/shells.sh music " + call) }
+            function musicCall(call) { if (!standalone) run("~/.config/hypr/utilities/shells.sh music " + call) }
 
             // ---- Workspaces ---------------------------------------------------------------------------------
 

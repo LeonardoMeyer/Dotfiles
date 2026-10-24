@@ -20,7 +20,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 8
+        radius: Theme.r(8)
         color: Theme.alpha(Theme.fg, 0.07)
     }
 
@@ -30,7 +30,7 @@ Item {
         y: 2
         width: seg.cell - 4
         height: parent.height - 4
-        radius: 6
+        radius: Theme.r(6)
         color: Theme.alpha(Theme.accent, 0.5)
         Behavior on x { NumberAnimation { duration: Theme.ms(200); easing.type: Easing.OutCubic } }
     }

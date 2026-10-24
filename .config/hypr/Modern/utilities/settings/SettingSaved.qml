@@ -136,7 +136,7 @@ Item {
                     visible: entry.deletable
                     width: primed ? binText.implicitWidth + 18 : 28
                     height: 28
-                    radius: 8
+                    radius: Theme.r(8)
                     color: primed ? Theme.alpha("#e5566d", 0.45) : Theme.alpha(Theme.fg, binArea.containsMouse ? 0.14 : 0)
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
                     Behavior on width { NumberAnimation { duration: Theme.fast; easing.type: Easing.OutCubic } }
@@ -187,7 +187,7 @@ Item {
                 anchors.rightMargin: 8
                 anchors.verticalCenter: parent.verticalCenter
                 height: 32
-                radius: 8
+                radius: Theme.r(8)
                 color: Theme.alpha(Theme.fg, input.activeFocus ? 0.12 : 0.07)
                 border.width: input.activeFocus ? 1 : 0
                 border.color: Theme.alpha(Theme.accent, 0.6)
@@ -227,7 +227,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: saveText.implicitWidth + 22
                 height: 32
-                radius: 8
+                radius: Theme.r(8)
                 opacity: control.draft ? 1 : 0.4
                 color: Theme.alpha(Theme.accent, saveArea.containsMouse && control.draft ? 0.45 : 0.3)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
@@ -274,7 +274,7 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: 9
-                radius: 8
+                radius: Theme.r(8)
                 color: parent.primed ? Theme.alpha("#e5566d", 0.45) : Theme.alpha(Theme.fg, wipeArea.containsMouse ? 0.14 : 0.07)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
 

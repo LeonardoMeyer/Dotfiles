@@ -11,6 +11,9 @@
     "window": "popin 60%",
     "workspace": "slide"
   },
+  "bar": {
+    "kind": "waybar"
+  },
   "colors": {
     "theme": "pywal"
   },
@@ -53,12 +56,15 @@
     },
     "plugin": {
       "hyprglass": {
-        "enabled": true,
+        "enabled": false,
         "layers": {
           "enabled": true
         }
       }
     }
+  },
+  "quickshell": {
+    "style": "full"
   },
   "wallpaper": {
     "path": "/home/$USER/wallpapers/library/abstract/abs-08.jpg"

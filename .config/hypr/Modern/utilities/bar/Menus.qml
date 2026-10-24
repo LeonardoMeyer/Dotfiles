@@ -653,7 +653,7 @@ QtObject {
                     glyph: "󰕾"
                     label: "Mixer"
                     sub: "Per-app volume"
-                    onClicked: { menu.run("pypr toggle music"); menu.done() }
+                    onClicked: { menu.run("pypr toggle music 2>/dev/null || pavucontrol"); menu.done() }
                 }
             }
         }
@@ -774,9 +774,9 @@ QtObject {
         Timer { id: disarm; interval: 3000; onTriggered: menu.armed = "" }
 
         readonly property var actions: [
-            { id: "lock", glyph: "", label: "Lock", cmd: "pidof hyprlock || hyprlock", confirm: false },
+            { id: "lock", glyph: "", label: "Lock", cmd: "l=~/.config/hypr/utilities/lock.sh; if [ -x \"$l\" ]; then exec \"$l\"; elif command -v hyprlock >/dev/null; then exec hyprlock; else loginctl lock-session; fi", confirm: false },
             { id: "suspend", glyph: "󰒲", label: "Suspend", cmd: "systemctl suspend", confirm: false },
-            { id: "logout", glyph: "󰍃", label: "Log out", cmd: "hyprctl dispatch 'hl.dsp.exit()'", confirm: true },
+            { id: "logout", glyph: "󰍃", label: "Log out", cmd: Theme.lua ? "hyprctl dispatch 'hl.dsp.exit()'" : "hyprctl dispatch exit", confirm: true },
             { id: "reboot", glyph: "󰜉", label: "Reboot", cmd: "systemctl reboot", confirm: true },
             { id: "off", glyph: "󰐥", label: "Shut down", cmd: "systemctl poweroff", confirm: true }
         ]

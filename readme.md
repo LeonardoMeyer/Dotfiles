@@ -98,6 +98,22 @@
   <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/waybar2.png" width="100%">
 </p>
 
+### Quickshell Bar
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/quickshellbar-default.png" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/quickshellbar-attached.png" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/quickshellbar-experimental.png" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/quickshellbar-full.png" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/quickshellbar-zen.png" width="100%">
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/quickshellbar.gif" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/quickshellbar-attached.gif" width="100%">
+  <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/quickshellbar-split.gif" width="100%">
+</p>
+
 ### Other Applications
 
 **Neovim**
@@ -206,6 +222,14 @@
       <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/lock.gif" width="100%">
     </td>
   </tr>
+  <tr>
+    <td align="center" width="33%">
+      <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/profiles.gif" width="100%">
+    </td>
+    <td align="center" width="33%">
+      <img src="https://raw.githubusercontent.com/elifouts/Dotfiles/main/images/v2/wallpaper-picker.gif" width="100%">
+    </td>
+  </tr>
 </table>
 
 ### Older Screenshots
@@ -264,7 +288,11 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
   ./install.sh
   ```  
 
-  Pick `1. Full install` for everything, or install a single app and its config.
+  Pick `1. Full install` for everything, or just a bar on its own:
+  - `2. Waybar`: asks for a style and copies it into `~/.config/waybar`.
+  - `3. Quickshell bar`: asks for a style and installs it as its own Quickshell config (`~/.config/quickshell/dotfiles-bar`, run with `qs -c dotfiles-bar`).
+
+  Neither needs the rest of the dotfiles, and both print the lines to add to your Hyprland config for startup and keybinds when they finish.
 
   ### What the full install does
   1. Asks which Hyprland style/variant you want (e.g. `Modern — desktop`).
@@ -312,6 +340,8 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
     - **Saved profiles**: named snapshots you make yourself. **Glass** and **Zen** are mine.
 
   A saved profile remembers its tweaks **plus** the color theme, waybar style and wallpaper, so switching one changes the whole look.
+
+  ![profiles](https://github.com/elifouts/Dotfiles/blob/main/images/v2/profiles.gif)
 
   ```
   hypr/
@@ -413,6 +443,8 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
 
 ![wallpaper](https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper.gif)
 
+![wallpaper-picker](https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-picker.gif)
+
 - `Alt+W` opens a 3D carousel of `~/wallpapers/library`, with the palette of each wallpaper.
 - `←/→` browse, `Tab` changes category, `R` picks a random one, `Enter` applies.
 - Applying sets the wallpaper with `awww`, regenerates the `Pywal` colors, and updates everything that uses them.
@@ -483,23 +515,58 @@ Every screenshot below is shown three times, once for each saved profile: **Defa
   networkmanager
   ```
 
+  ### *How To Install*
+  Run `InstallScripts/install.sh` → *Waybar*. It works on its own, without the rest of the dotfiles.
+
 </details>
 
 <details>
-  <summary><picture><img src="images/badges/hyprlock-v2.svg" alt="Hyprlock" align="absmiddle"></picture></summary>
+  <summary><picture><img src="images/badges/quickshell-bar-v2.svg" alt="Quickshell Bar" align="absmiddle"></picture></summary>
+
+  ![quickshellbar-default](https://github.com/elifouts/Dotfiles/blob/main/images/v2/quickshellbar-default.png)
+  ![quickshellbar-attached](https://github.com/elifouts/Dotfiles/blob/main/images/v2/quickshellbar-attached.png)
+  ![quickshellbar-experimental](https://github.com/elifouts/Dotfiles/blob/main/images/v2/quickshellbar-experimental.png)
+  ![quickshellbar-full](https://github.com/elifouts/Dotfiles/blob/main/images/v2/quickshellbar-full.png)
+  ![quickshellbar-zen](https://github.com/elifouts/Dotfiles/blob/main/images/v2/quickshellbar-zen.png)
+
+  ![quickshellbar-attached](https://github.com/elifouts/Dotfiles/blob/main/images/v2/quickshellbar-attached.gif)
+  ![quickshellbar-split](https://github.com/elifouts/Dotfiles/blob/main/images/v2/quickshellbar-split.gif)
+
+  ## Overview
+  A Quickshell alternative to Waybar that uses your Pywal colors. There are 5 styles (`default`, `attached`, `experimental`, `full`, `zen`) in `hypr/Modern/quickshellbar/`. Pick one in **Settings → Profile → Quickshell bar**, and `Alt+A` stops or starts it.
+
+  ## Pills
+  The bar's pills grow into cards when you use them (inspired by [NabyScape](https://github.com/BillyNabil/nabyscape)):
+
+  - **Workspaces**: a live preview of each workspace, plus the overview.
+  - **Media / clock**: an island with tabs for the music player, a timer, a color picker and the weather.
+  - **Network, sound, power**: Wi-Fi and Bluetooth, output and input devices, and session buttons.
+  - **Tray**: right-click an app to open its menu.
+
+  ## Making a style
+  Each style is a folder with a `config.json` that lists the modules for the `left`, `center` and `right` of the bar (`|` adds a divider), plus `height`, `gap`, `shape`, `background`, `strip` and `attached`. Copy a folder, change it, and it shows up in the settings panel.
+
+  ### *How To Install*
+  Run `InstallScripts/install.sh` → *Quickshell bar*. It installs as its own Quickshell config (`~/.config/quickshell/dotfiles-bar`, run with `qs -c dotfiles-bar`), without the rest of the dotfiles.
+
+</details>
+
+<details>
+  <summary><picture><img src="images/badges/lock-screen-v2.svg" alt="Lock Screen" align="absmiddle"></picture></summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock-zen.png" width = "33%">
 
   ![lock](https://github.com/elifouts/Dotfiles/blob/main/images/v2/lock.gif)
   
   ## Overview
     
-  - Hyprlock blurs your current wallpaper, greets you by username, and uses your Pywal colors.
-  - `Mod+L` locks. `hypridle` also locks it when you're idle (`hypridle.conf`).
-  - Every variant shares the same `hyprlock.conf` (`hypr/Modern/base/`).
+  - A Quickshell lock screen (`hypr/Modern/utilities/lock`) that blurs your current wallpaper, greets you by username, and uses your Pywal colors.
+  - A music card with album art and previous / play-pause / next shows whenever a player is running.
+  - `Mod+L` locks (`utilities/lock.sh`). `hypridle` also locks it when you're idle (`hypridle.conf`).
+  - The old Hyprlock config is kept in `archive/hyprlock/`.
 
   ### *How To Install*
-1. **Install [Hyprlock](https://github.com/hyprwm/hyprlock/)**
-2. Copy `Dotfiles/.config/hypr/hyprlock.conf` and `hypridle.conf` to `~/.config/hypr`
+1. **Install [Quickshell](https://quickshell.org/)** and `hypridle`
+2. Copy `Dotfiles/.config/hypr/Modern/utilities/lock` to `~/.config/hypr/utilities/lock`, `utilities/lock.sh` to `~/.config/hypr/utilities/lock.sh`, and `hypridle.conf` into `~/.config/hypr`
 
 </details>
 
@@ -771,7 +838,6 @@ zip unzip
 pipewire
 hyprpicker
 hypridle
-hyprlock
 hyprshot
 pyprland
 code

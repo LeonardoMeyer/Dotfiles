@@ -45,7 +45,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             height: 28
             width: pillRow.implicitWidth + 22
-            radius: 8
+            radius: Theme.r(8)
             color: dd.open ? Theme.alpha(Theme.accent, 0.3) : Theme.alpha(Theme.fg, headArea.containsMouse ? 0.14 : 0.08)
             Behavior on color { ColorAnimation { duration: Theme.fast } }
 
@@ -115,7 +115,7 @@ Item {
                     readonly property bool on: modelData.v === dd.current
                     width: col.width
                     height: modelData.preview ? dd.rowH + strip.height + 6 : dd.rowH
-                    radius: 8
+                    radius: Theme.r(8)
                     color: on ? Theme.alpha(Theme.accent, 0.28) : Theme.alpha(Theme.fg, rowArea.containsMouse ? 0.1 : 0)
                     Behavior on color { ColorAnimation { duration: Theme.ms(120) } }
 
@@ -139,7 +139,7 @@ Item {
                             visible: !!modelData.image
                             width: 24
                             height: 24
-                            radius: 6
+                            radius: Theme.r(6)
                             anchors.verticalCenter: parent.verticalCenter
                             color: Theme.alpha(Theme.fg, 0.12)
                             clip: true

@@ -183,7 +183,7 @@ Item {
                         anchors.fill: parent
                         anchors.topMargin: 2
                         anchors.bottomMargin: 2
-                        radius: 8
+                        radius: Theme.r(8)
                         color: Theme.alpha(Theme.fg, row.index % 2 === 0 ? 0.045 : 0)
                     }
 
@@ -211,7 +211,7 @@ Item {
                                 required property string modelData
                                 width: label.implicitWidth + 12
                                 height: 20
-                                radius: 6
+                                radius: Theme.r(6)
                                 color: Theme.alpha(Theme.accent, 0.16)
                                 border.width: 1
                                 border.color: Theme.alpha(Theme.accent, 0.3)

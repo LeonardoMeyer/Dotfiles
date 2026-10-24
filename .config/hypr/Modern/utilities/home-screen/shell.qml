@@ -188,7 +188,7 @@ ShellRoot {
         if (pendingCmd !== "") launchTimer.restart()
     }
 
-    // Gives the compositor a moment to unmap the surface before the command (e.g. hyprlock) starts.
+    // Gives the compositor a moment to unmap the surface before the command (e.g. the lock screen) starts.
     Timer {
         id: launchTimer
         interval: 120
@@ -329,7 +329,7 @@ ShellRoot {
         function toggleDnd(): void { root.dnd = !root.dnd }
     }
 
-    // Same source hyprlock's $wallpaper comes from, so both always match the last applied wallpaper.
+    // Same source the lock screen uses, so both always match the last applied wallpaper.
     Process {
         id: walPath
         running: true
@@ -640,7 +640,7 @@ ShellRoot {
                 const k = event.key
                 const pl = root.player
                 if (k === Qt.Key_Escape) root.close()
-                else if (k === Qt.Key_L) root.run("hyprlock")
+                else if (k === Qt.Key_L) root.run("~/.config/hypr/utilities/lock.sh")
                 else if (k === Qt.Key_E) root.run("pkill Hyprland || pkill sway || pkill niri || loginctl terminate-user $USER")
                 else if (k === Qt.Key_R) root.run("systemctl reboot || loginctl reboot")
                 else if (k === Qt.Key_S) root.run("systemctl poweroff || loginctl poweroff")
@@ -1313,7 +1313,7 @@ ShellRoot {
                     parent: dock
                     anchors.centerIn: parent
                     spacing: 16 * root.u
-                    DockButton { glyph: "\uf023"; label: "Lock  L"; cmd: "hyprlock" }
+                    DockButton { glyph: "\uf023"; label: "Lock  L"; cmd: "~/.config/hypr/utilities/lock.sh" }
                     DockButton { glyph: "\uf08b"; label: "Log Out  E"; cmd: "pkill Hyprland || pkill sway || pkill niri || loginctl terminate-user $USER" }
                     DockButton { glyph: "\uf021"; label: "Restart  R"; cmd: "systemctl reboot || loginctl reboot" }
                     DockButton { glyph: "\uf011"; label: "Shut Down  S"; cmd: "systemctl poweroff || loginctl poweroff" }

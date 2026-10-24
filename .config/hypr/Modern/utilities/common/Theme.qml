@@ -37,6 +37,12 @@ Singleton {
     readonly property int fast: ms(160)
     readonly property int move: ms(280)
 
+    // A corner drawn at Hyprland's default rounding (10), scaled to the live one, so every utility's cards, tabs
+    // and buttons round off together (and go square with it).
+    function r(px) {
+        return px * rounding / 10
+    }
+
     function ms(d) {
         return animates ? Math.round(d * pace) : 0
     }
@@ -129,6 +135,20 @@ Singleton {
     Connections {
         target: Hyprland
         function onRawEvent(event) { if (event.name === "configreloaded") root.refresh() }
+    }
+
+    // Hyprland configured in Lua (hyprland.lua, read over hyprland.conf) takes Lua dispatches, otherwise the classic
+    // ones; the bar can be installed on its own next to either (InstallScripts/quickshellbarinstall.sh).
+    FileView {
+        id: luaFile
+        path: Quickshell.env("HOME") + "/.config/hypr/hyprland.lua"
+        blockLoading: true
+        printErrors: false
+    }
+    readonly property bool lua: luaFile.text() !== ""
+
+    function dispatch(lua, classic) {
+        Hyprland.dispatch(root.lua ? lua : classic)
     }
 
     // Media players, without playerctld: it only mirrors the real ones, and keeps the last track once they stop.

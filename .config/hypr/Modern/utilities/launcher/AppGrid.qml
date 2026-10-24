@@ -88,7 +88,7 @@ Flickable {
         y: grid.slotY(grid.selected) - grid.hlPad
         width: grid.cell + grid.hlPad * 2
         height: width
-        radius: 10 + grid.hlPad
+        radius: Theme.r(10) + grid.hlPad
         color: Theme.alpha(Theme.accent, 0.26)
         border.width: 1
         border.color: Theme.alpha(Theme.accent, 0.55)

@@ -17,7 +17,7 @@ base_dir="$HYPR_DIR/${profile%%/*}/base"
 echo "Active profile: $profile"
 
 shopt -s nullglob
-for file in "$HYPR_DIR"/*.lua "$HYPR_DIR"/hyprlock.conf; do
+for file in "$HYPR_DIR"/*.lua; do
     name="${file##*/}"
     skip=false
     for ex in "${EXCLUDE[@]}"; do

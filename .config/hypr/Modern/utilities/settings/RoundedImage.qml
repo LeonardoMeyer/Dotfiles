@@ -1,12 +1,13 @@
 import QtQuick
 import QtQuick.Effects
+import "../common"
 
 // Image clipped to rounded corners.
 Item {
     id: root
 
     property url source
-    property real radius: 8
+    property real radius: Theme.r(8)
     property int fillMode: Image.PreserveAspectFit
     property color backdrop: "transparent"
 

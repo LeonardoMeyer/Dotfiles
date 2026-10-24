@@ -9,7 +9,6 @@ import "../common"
 // Everything about workspaces: the bar's dots, the Exposé page its pill grows into, and the full-screen
 // overview (Super+Tab). The root is what they draw from: Hyprland's windows, workspaces and monitor geometry,
 // kept fresh only while a view is showing (`active`), by refetching on window events and a slow poll.
-// Hyprland here is configured in Lua, so dispatches are Lua expressions.
 Item {
     id: ex
 
@@ -94,11 +93,11 @@ Item {
 
     function focusWindow(t) {
         const addr = t.lastIpcObject && t.lastIpcObject.address ? t.lastIpcObject.address : "0x" + t.address
-        Hyprland.dispatch("hl.dsp.focus({ window = \"address:" + addr + "\" })")
+        Theme.dispatch("hl.dsp.focus({ window = \"address:" + addr + "\" })", "focuswindow address:" + addr)
     }
 
     function goTo(id) {
-        Hyprland.dispatch("hl.dsp.focus({ workspace = " + id + " })")
+        Theme.dispatch("hl.dsp.focus({ workspace = " + id + " })", "workspace " + id)
     }
 
     // ---- Dots -------------------------------------------------------------------------------------------------
@@ -123,7 +122,7 @@ Item {
         }
 
         function go(id) {
-            if (id !== activeId) Hyprland.dispatch("hl.dsp.focus({ workspace = " + id + " })")
+            if (id !== activeId) Theme.dispatch("hl.dsp.focus({ workspace = " + id + " })", "workspace " + id)
         }
 
         spacing: 6

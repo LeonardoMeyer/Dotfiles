@@ -7,8 +7,13 @@ if [ "${1:-}" = toggle ] || [ -z "$c" ] || echo "$c" | jq -e '.workspace.name | 
     pypr "${1:-show}" spotify 2>/dev/null && exit 0
 fi
 if [ -n "$c" ]; then
-    # Hyprland here is configured in Lua, so dispatches are Lua expressions.
-    hyprctl dispatch "hl.dsp.focus({ window = \"address:$(echo "$c" | jq -r .address)\" })" >/dev/null
+    a=$(echo "$c" | jq -r .address)
+    # Hyprland configured in Lua (hyprland.lua) takes Lua dispatches, otherwise the classic ones.
+    if [ -f "$HOME/.config/hypr/hyprland.lua" ]; then
+        hyprctl dispatch "hl.dsp.focus({ window = \"address:$a\" })" >/dev/null
+    else
+        hyprctl dispatch focuswindow "address:$a" >/dev/null
+    fi
 elif command -v spotify-launcher >/dev/null; then
     exec spotify-launcher
 else

@@ -689,7 +689,7 @@ ShellRoot {
                         Rectangle {
                             width: tabBar.cellW
                             height: parent.height
-                            radius: 9
+                            radius: Theme.r(9)
                             x: root.tab * (tabBar.cellW + tabBar.gapW)
                             color: Theme.alpha(Theme.accent, 0.3)
                             Behavior on x { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }

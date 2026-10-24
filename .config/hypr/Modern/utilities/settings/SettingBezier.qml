@@ -142,7 +142,7 @@ Item {
                     id: stage
                     width: parent.width
                     height: plot.height - 74
-                    radius: 12
+                    radius: Theme.r(12)
                     color: Theme.alpha(Theme.fg, 0.045)
                     clip: true
 
@@ -154,7 +154,7 @@ Item {
 
                         width: Math.min(130, stage.width * 0.7)
                         height: stage.height * 0.58
-                        radius: 9
+                        radius: Theme.r(9)
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: (stage.height - height) / 2 + (style === "slide" ? (1 - prog) * stage.height * 0.7 : 0)
                         scale: style === "slide" ? 1 : (style === "gnomed" ? Math.max(0, 0.5 + 0.5 * prog) : startScale + (1 - startScale) * prog)
@@ -214,7 +214,7 @@ Item {
                     required property int index
                     width: (fields.width - fields.spacing * 3) / 4
                     height: 32
-                    radius: 9
+                    radius: Theme.r(9)
                     color: Theme.alpha(Theme.fg, input.activeFocus ? 0.14 : 0.07)
                     border.width: input.activeFocus ? 1 : 0
                     border.color: Theme.alpha(Theme.accent, 0.8)
@@ -284,7 +284,7 @@ Item {
                 anchors.rightMargin: 8
                 width: 112
                 height: 32
-                radius: 9
+                radius: Theme.r(9)
                 color: Theme.alpha(Theme.accent, diceArea.containsMouse ? 0.62 : 0.45)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
 
@@ -310,7 +310,7 @@ Item {
                 anchors.right: parent.right
                 width: 88
                 height: 32
-                radius: 9
+                radius: Theme.r(9)
                 color: Theme.alpha(Theme.fg, copyArea.containsMouse ? 0.16 : 0.08)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
 

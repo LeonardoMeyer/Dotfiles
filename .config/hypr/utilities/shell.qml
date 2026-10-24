@@ -5,7 +5,7 @@ import Quickshell.Io
 ShellRoot {
     id: root
 
-    readonly property var standalone: ["boot"]
+    readonly property var standalone: ["boot", "lock"]
 
     Process {
         running: true
