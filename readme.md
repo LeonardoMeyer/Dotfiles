@@ -27,9 +27,6 @@ Claude helped with some of the scripting and docs. The design, look, and tweakin
 
 -Eli F.
 
-<p align="center">
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/profiles.gif" width="50%">
-</p>
 
 > [!WARNING]
 > Everything is designed to work with `Pywal`.
@@ -40,6 +37,10 @@ Claude helped with some of the scripting and docs. The design, look, and tweakin
 >   Don't want `Pywal`? Pick a fixed color scheme in **Settings → Colors**, or replace the colors in an app's `style.css`. I highly recommend `Pywal` though!
 >
 > </details>
+
+<p align="center">
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/profiles.gif" width="50%">
+</p>
 
 # Install
 
