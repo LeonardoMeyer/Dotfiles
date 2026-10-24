@@ -144,10 +144,7 @@ Screenshots are shown as **Default** | **Glass** | **Zen**.
 
 <details>
 <summary><picture><img src="images/badges/wallpaper-picker-v2.svg" alt="Wallpaper Picker" align="absmiddle"></picture></summary>
-<img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-zen.png" width = "33%">
-
-![wallpaper](https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper.gif)
-
+  
 ![wallpaper-picker](https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-picker.gif)
 
 **`Alt+W`**. A carousel of `~/wallpapers/library`. Picking one updates the `Pywal` colors everywhere.
