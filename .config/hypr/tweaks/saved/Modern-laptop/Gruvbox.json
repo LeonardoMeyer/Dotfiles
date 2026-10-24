@@ -66,8 +66,8 @@
     "specular_angle": 0
   },
   "hyprglass": {
-    "layers": true,
-    "quickshell": true
+    "layers": false,
+    "quickshell": false
   },
   "quickshell": {
     "style": "experimental"
@@ -76,7 +76,7 @@
     "animations": false
   },
   "wallpaper": {
-    "path": "/home/$USER/wallpapers/library/nature/nat-06.jpg"
+    "path": "/home/$USER/wallpapers/library/industrial/ind-15.jpg"
   },
   "waybar": {
     "style": "default"
