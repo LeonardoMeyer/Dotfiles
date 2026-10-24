@@ -19,9 +19,9 @@
 > [!TIP]
 > Check out [MyFetch](https://github.com/elifouts/MyFetch) now!
 
-My **Arch** Linux dotfiles for a clean, lightweight **Hyprland** setup built around **Quickshell**.
+This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprland** setup, built around **Quickshell**.
 
-Claude helped with some of the scripting and docs. The design, look, and tweaking are all mine.
+Built by me, with help from my own thoughts and ideas AKA Claude for some of the scripting and docs. The design, look, and tweaking are all mine.
 
 ***ENJOY!!***
 
@@ -29,12 +29,12 @@ Claude helped with some of the scripting and docs. The design, look, and tweakin
 
 
 > [!WARNING]
-> Everything is designed to work with `Pywal`.
+> All Configurations were meant to be used with `Pywal`
 >
 > <details>
 >   <summary><picture><img src="images/badges/color-schemes-more-info-v2.svg" alt="Color Schemes (more info)" align="absmiddle"></picture></summary>
 >
->   Don't want `Pywal`? Pick a fixed color scheme in **Settings → Colors**, or replace the colors in an app's `style.css`. I highly recommend `Pywal` though!
+>   If you do not want this, **you can pick a fixed color scheme in the settings panel (`Alt+S` → Colors)** or remove it in the given applications `style.css` and add valid color values. Although I highly recommend `Pywal` It's Pretty cool!
 >
 > </details>
 
@@ -47,6 +47,9 @@ Claude helped with some of the scripting and docs. The design, look, and tweakin
 <details>
   <summary><picture><img src="images/badges/arch-install-script-v2.svg" alt="Arch Install Script" align="absmiddle"></picture></summary>
 
+  - With this script you should be able to install everything together, or just one of my bars on its own.
+  - Dont worry it doesn't delete anything. It asks to back up your `~/.config` first and moves anything it replaces to `~/.dotfiles_replaced_<date>`.
+
   ```
   cd && git clone https://github.com/elifouts/Dotfiles.git
   cd ~/Dotfiles/InstallScripts
@@ -54,22 +57,22 @@ Claude helped with some of the scripting and docs. The design, look, and tweakin
   ./install.sh
   ```
 
-  - `1. Full install`: everything.
-  - `2. Waybar` or `3. Quickshell bar`: just a bar, no other dotfiles needed.
-
-  Nothing gets deleted. It offers to back up `~/.config` first, and anything it replaces is moved to `~/.dotfiles_replaced_<date>`. Configs are symlinked to `~/Dotfiles`, so `git pull` updates them.
+  - `1. Full install` - everything
+  - `2. Waybar` - just my waybar
+  - `3. Quickshell bar` - just my quickshell bar
+  - `p. Package manager TUI` - see below
 </details>
 
 <details>
   <summary><picture><img src="images/badges/package-manager-tui-v2.svg" alt="Package Manager TUI" align="absmiddle"></picture></summary>
 
-  Lists installed packages with their source and size.
+  A little tool I made to see what's installed, where it came from, and how big it is.
 
   ```bash
   ~/Dotfiles/.config/hypr/utilities/package-tui.sh
   ```
 
-  `j`/`k` scroll, `d` uninstall, `r` reinstall, `q` quit.
+  `j`/`k` to scroll, `d` to uninstall, `r` to reinstall, `q` to quit.
 </details>
 
 ## Styles, Variants & Profiles
@@ -77,9 +80,9 @@ Claude helped with some of the scripting and docs. The design, look, and tweakin
 <details>
   <summary><picture><img src="images/badges/how-it-all-fits-together-v2.svg" alt="How It All Fits Together" align="absmiddle"></picture></summary>
 
-  - **Style**: the whole look. Right now there is one: `Modern`.
-  - **Variant**: `desktop` or `laptop` (monitors, input, defaults).
-  - **Profile**: your tweaks on top, picked in the settings panel. **Glass** and **Zen** are mine. A saved profile also remembers your colors, bar and wallpaper.
+  - **Style**: the whole look. Right now I only have one, `Modern`.
+  - **Variant**: `desktop` or `laptop`. Just the stuff that changes per machine like monitors and mouse.
+  - **Profile**: your tweaks on top, picked in the settings panel. **Glass** and **Zen** are mine. Saving a profile also saves your colors, bar and wallpaper.
 
   ![profiles](https://github.com/elifouts/Dotfiles/blob/main/images/v2/profiles.gif)
 
@@ -97,17 +100,17 @@ Claude helped with some of the scripting and docs. The design, look, and tweakin
 
 ## My Applications
 
-Screenshots are shown as **Default** | **Glass** | **Zen**.
+Every screenshot below is shown three times, once for each of my saved profiles: **Default** | **Glass** | **Zen**. Same configs, just a different profile picked in the settings panel.
 
 <details>
   <summary><picture><img src="images/badges/quickshell-v2.svg" alt="Quickshell" align="absmiddle"></picture></summary>
 
-  All of my widgets are [Quickshell](https://quickshell.org) shells. They follow your `Pywal` colors and open on the monitor you're using.
+  All of my widgets are made with [Quickshell](https://quickshell.org). They use your `Pywal` colors and open on whatever monitor you're on.
 
   ### *How To Install*
-  1. `yay -S quickshell`
-  2. Copy `Dotfiles/.config/hypr` into `~/.config` (or use the installer)
-  3. `~/.config/hypr/utilities/shells.sh start` (already in `startup.lua`)
+  1. **Install [Quickshell](https://quickshell.org)** (`yay -S quickshell`)
+  2. Copy `Dotfiles/.config/hypr` into `~/.config` (or just use the install script)
+  3. Run `~/.config/hypr/utilities/shells.sh start`. My `startup.lua` already does this.
 </details>
 
 <details>
@@ -116,14 +119,16 @@ Screenshots are shown as **Default** | **Glass** | **Zen**.
 
 ![launcher](https://github.com/elifouts/Dotfiles/blob/main/images/v2/launcher.gif)
 
-**Tap `Super`**. Session dial, app search, commands and a list of every keybind.
+- **Tap `Super`** to open it.
+- Has a dial for power and session stuff, an app search, a command runner, and a list of all my keybinds.
 </details>
 
 <details>
 <summary><picture><img src="images/badges/home-screen-v2.svg" alt="Home Screen" align="absmiddle"></picture></summary>
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/home-zen.png" width = "33%">
 
-**`Alt+Tab`**. Clock, music, calendar, system stats, volume and notifications.
+- **`Alt+Tab`** to open it.
+- Clock, music, calendar, system stats, volume and your notifications all in one place.
 </details>
 
 <details>
@@ -132,10 +137,9 @@ Screenshots are shown as **Default** | **Glass** | **Zen**.
 
 ![settings](https://github.com/elifouts/Dotfiles/blob/main/images/v2/settings.gif)
 
-**`Alt+S`**. Change profiles, bar, colors, windows, effects, animations, input and more. Everything applies live.
-
-- Save a profile in **Profile → Saved profiles**.
-- **Right-click** any setting to reset it.
+- **`Alt+S`** to open it.
+- This is where you change pretty much everything. Profiles, bar, colors, gaps, blur, animations, cursor, and more. It all updates live.
+- Save your own profile in **Profile → Saved profiles**. Right-click any setting to reset it.
 </details>
 
 <details>
@@ -144,7 +148,8 @@ Screenshots are shown as **Default** | **Glass** | **Zen**.
 
 ![music](https://github.com/elifouts/Dotfiles/blob/main/images/v2/music.gif)
 
-**`Alt+Enter`**. Controls Spotify or whatever is playing, with a `cava` visualizer.
+- **`Alt+Enter`** to open it.
+- Works with Spotify or whatever else is playing, and has a `cava` visualizer.
 </details>
 
 <details>
@@ -152,7 +157,8 @@ Screenshots are shown as **Default** | **Glass** | **Zen**.
   
 ![wallpaper-picker](https://github.com/elifouts/Dotfiles/blob/main/images/v2/wallpaper-picker.gif)
 
-**`Alt+W`**. A carousel of `~/wallpapers/library`. Picking one updates the `Pywal` colors everywhere.
+- **`Alt+W`** to open it.
+- Scroll through your wallpapers in `~/wallpapers/library`. Picking one updates the `Pywal` colors for everything.
 </details>
 
 <details>
@@ -161,7 +167,7 @@ Screenshots are shown as **Default** | **Glass** | **Zen**.
 
 ![osd](https://github.com/elifouts/Dotfiles/blob/main/images/v2/osd.gif)
 
-Pops up for volume, brightness, caps lock and media keys.
+- Pops up at the bottom when you change volume, brightness, caps lock or use the media keys.
 </details>
 
 <details>
@@ -170,7 +176,7 @@ Pops up for volume, brightness, caps lock and media keys.
 
 ![notify](https://github.com/elifouts/Dotfiles/blob/main/images/v2/notify.gif)
 
-Popups in the bottom left. History is on the home screen.
+- Notifications show up in the bottom left. You can see the old ones on the home screen.
 </details>
 
 <details>
@@ -179,7 +185,7 @@ Popups in the bottom left. History is on the home screen.
 
 ![boot](https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot.gif)
 
-Plays when Hyprland starts. Turn it off in **Settings → System**.
+- Plays when Hyprland starts. You can turn it off in **Settings → System**.
 </details>
 
 <details>
@@ -189,12 +195,30 @@ Plays when Hyprland starts. Turn it off in **Settings → System**.
   ![waybar-glass](https://github.com/elifouts/Dotfiles/blob/main/images/v2/waybar-glass.png)
   ![waybar-zen](https://github.com/elifouts/Dotfiles/blob/main/images/v2/waybar-zen.png)
 
-  A minimal Waybar with 4 styles (`default`, `experimental`, `line`, `zen`). Hover to expand hidden widgets. Pick a style in **Settings → Profile**, `Alt+A` reloads it.
+  ## Overview
+  This is my minimal Waybar setup for Hyprland, designed to be clean and efficient. There are 4 styles (`default`, `experimental`, `line`, `zen`). Pick one in **Settings → Profile**, and `Alt+A` turns it on and off.
+
+  ## Workspaces
+  I’ve configured the workspaces so that if there is content on a workspace, the dot appears darker. This helps you keep track of your open content! Inspiration from [Gbar](https://github.com/scorpion-26/gBar).
+
+  ## Expanding Waybar
+  You can hide and reveal widgets you don’t need all the time. You can easily add or remove widgets in the style's `config` under the `group/expand` section.
+
+  - **Network Widget**: Clicking the network widget opens `nmtui` in `kitty`.
+  - **Hyprpicker Widget**: This custom widget lets you use `hyprpicker`, display values when hovered, and copy the hex value to your clipboard.
 
   ### *How To Install*
-  Run `InstallScripts/install.sh` → `2. Waybar`.
+  Run the install script and pick `2. Waybar`. You don't need the rest of my dotfiles for it.
 
-  Needs `waybar hyprpicker pywal blueman bluez networkmanager`.
+  ### Dependencies
+  ```
+  waybar
+  hyprpicker
+  pywal
+  blueman
+  bluez
+  networkmanager
+  ```
 </details>
 
 <details>
@@ -208,76 +232,130 @@ Plays when Hyprland starts. Turn it off in **Settings → System**.
 
   ![quickshellbar-attached](https://github.com/elifouts/Dotfiles/blob/main/images/v2/quickshellbar-attached.gif)
 
-  A Quickshell bar with 5 styles (`default`, `attached`, `experimental`, `full`, `zen`). Its pills grow into cards for workspaces, media, network, sound and power (inspired by [NabyScape](https://github.com/BillyNabil/nabyscape)). Pick a style in **Settings → Profile**, `Alt+A` toggles it.
+  ## Overview
+  My Quickshell version of Waybar. There are 5 styles (`default`, `attached`, `experimental`, `full`, `zen`). Pick one in **Settings → Profile**, and `Alt+A` turns it on and off.
+
+  When you hover the pills they grow into cards for your workspaces, music, wifi, sound and power. Inspiration from [NabyScape](https://github.com/BillyNabil/nabyscape).
 
   ### *How To Install*
-  Run `InstallScripts/install.sh` → `3. Quickshell bar`, then start it with `qs -c dotfiles-bar`.
+  Run the install script and pick `3. Quickshell bar`, then start it with `qs -c dotfiles-bar`. You don't need the rest of my dotfiles for it.
 </details>
 
 <details>
   <summary><picture><img src="images/badges/lock-screen-v2.svg" alt="Lock Screen" align="absmiddle"></picture></summary>
 
-  **`Mod+L`**, or after being idle. Blurs your wallpaper and shows a music card when something is playing.
+  ## Overview
+  - `Mod+L` to lock, or it locks on its own when you're idle with `hypridle`.
+  - It blurs your current wallpaper, greets you with your username, and uses your Pywal colors. If music is playing it shows that too.
 
   ### *How To Install*
-  1. Install [Quickshell](https://quickshell.org/) and `hypridle`
-  2. Copy `.config/hypr/Modern/utilities/lock` to `~/.config/hypr/utilities/lock`, plus `utilities/lock.sh` and `hypridle.conf`
+  1. **Install [Quickshell](https://quickshell.org/)** and `hypridle`
+  2. Copy `Dotfiles/.config/hypr/Modern/utilities/lock` to `~/.config/hypr/utilities/lock`, plus `utilities/lock.sh` and `hypridle.conf`
 </details>
 
 <details>
   <summary><picture><img src="images/badges/nvim-v2.svg" alt="Nvim" align="absmiddle"></picture></summary>
 <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/nvim-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/nvim-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/nvim-zen.png" width = "33%">
 
-A lightweight Lazy setup with only the plugins I want, themed with `Pywal`. Relaunch it after changing wallpaper to load new colors.
+## Overview
+
+- This Neovim "rice" is a simplified version of Lazyvim, created with custom Lua files. It’s lightweight and includes only what you need. I just installed lazy and configured only the pluggins I wanted.
+- It uses the Pywal theme, so relaunch nvim after you change your wallpaper to get the new colors.
+- It features:
+  - Alpha-nvim
+  - Pywal theme
+  - Autocompletion
+  - Lualine
+  - Tabline
+  - Markview
+  - Noice
+  - Mini-icons
+  - Snacks
+  - Neo-tree
+  - Telescope
+  - Treesitter
+  - Gitsigns
+  - Colorizer
+  - Which-key
+  - LSP (Mason)
+  - Copilot
 
 ### *How To Install*
-1. `yay -S neovim`
+1. **Install `Neovim`:**
+    ```bash
+    yay -S neovim
+    ```
 2. Copy `Dotfiles/.config/nvim` into `~/.config/`
-3. Start `nvim` and it installs everything.
+
+3. Start `nvim` and watch it install all necessary components.
 </details>
 
 <details>
   <summary><picture><img src="images/badges/starship-v2.svg" alt="Starship" align="absmiddle"></picture></summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/starship-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/starship-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/starship-zen.png" width = "33%">
 
-A minimal prompt with everything you need.
+## Overview
 
-### *How To Install*
-1. Install [Starship](https://github.com/starship/starship?tab=readme-ov-file#-installation)
-2. Copy `Dotfiles/.config/starship.toml` into `~/.config`
-3. Add `eval "$(starship init bash)"` to your `.bashrc` ([other shells](https://github.com/starship/starship?tab=readme-ov-file#step-2-set-up-your-shell-to-use-starship))
+  - This is a custom Starship config that is minimal but yet has everything you need/want from a terminal prompt.
+
+ ### *How To Install*
+1. **Install [Starship](https://github.com/starship/starship?tab=readme-ov-file#-installation)**
+2. Copy the `Dotfiles/.config/starship.toml` file into `~/.config`
+3. Add this to your `.bashrc` file:
+
+   ```bash
+    eval "$(starship init bash)"
+   ```
+   - Or go [here](https://github.com/starship/starship?tab=readme-ov-file#step-2-set-up-your-shell-to-use-starship) to find what you need for your shell.
 </details>
 
 <details>
   <summary><picture><img src="images/badges/pywalfox-v2.svg" alt="Pywalfox" align="absmiddle"></picture></summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/fox-default.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/fox-glass.png" width = "33%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/fox-zen.png" width = "33%">
 
-Makes Firefox use your `Pywal` colors.
+  ## Overview
 
-### *How To Install*
-1. Install [Pywalfox](https://github.com/Frewacom/pywalfox) and run `pywalfox install`
-2. Install the Pywalfox Firefox add-on
-3. Run `pywalfox update` after changing colors
+  - This is a way to configure `Firefox` so that it uses `Pywal` colors. After proper configuration, `Firefox` will change automatically when `Pywal` updates its color scheme.
+
+  ### Dependencies
+  ```
+  Firefox
+  Python
+  Pywal
+  ```
+
+ ### *How To Install*
+1. **Install [Pywalfox](https://github.com/Frewacom/pywalfox)**
+2. Run `pywalfox install`
+3. Install Firefox add-on for PywalFox
+4. Run `pywalfox update` in your terminal or add it to a script to update the `Firefox` theme after generating `Pywal` colors. My `color-apply.sh` already does this.
 </details>
 
 <details>
   <summary><picture><img src="images/badges/gtk-themes-v2.svg" alt="GTK Themes" align="absmiddle"></picture></summary>
 
-  - Widgets: Materia-dark
-  - Icons: Qogir-dark
+  ### I use these GTK themes
+
+  - Widget Theme: Materia-dark
+  - Icon Theme: Qogir-dark
   - Cursor: Bibata-Modern-Ice
 </details>
 
 <details>
   <summary><picture><img src="images/badges/old-stuff-no-longer-used-v2.svg" alt="Old Stuff (no longer used)" align="absmiddle"></picture></summary>
 
-  Replaced by the Quickshell utilities. Configs are still in `archive/`.
+  I replaced all of these with my Quickshell stuff. The configs are still in `archive/` if you want them.
 
 <details>
   <summary><picture><img src="images/badges/wofi-replaced-by-the-launcher-and-wallpaper-picker-v2.svg" alt="Wofi (replaced by the Launcher and Wallpaper Picker)" align="absmiddle"></picture></summary>
     <img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi1.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi2.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi3.png" width = "35%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wofi4.png" width = "35%">
 
-  To blur Wofi:
+  - I launched wofi like this:
+    ```config
+    wofi --show drun -n
+    ```
+
+  ### How to Add Blur to Wofi
 
   ```
   layerrule = blur, wofi
@@ -290,20 +368,20 @@ Makes Firefox use your `Pywal` colors.
   <summary><picture><img src="images/badges/swaync-replaced-by-notifications-and-the-home-screen-v2.svg" alt="Swaync (replaced by Notifications and the Home Screen)" align="absmiddle"></picture></summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync1.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync2.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync3.png" width = "20%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/swaync4.png" width = "20%">
 
-  Config is in `archive/swaync`.
+  - Config is in `archive/swaync`.
 </details>
 
 <details>
   <summary><picture><img src="images/badges/swayosd-replaced-by-the-osd-v2.svg" alt="SwayOSD (replaced by the OSD)" align="absmiddle"></picture></summary>
 
-  Config is in `archive/swayosd`.
+  - Config is in `archive/swayosd`.
 </details>
 
 <details>
   <summary><picture><img src="images/badges/wlogout-replaced-by-the-launcher-s-home-dial-v2.svg" alt="Wlogout (replaced by the Launcher's Home dial)" align="absmiddle"></picture></summary>
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout1.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout2.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout3.png" width = "40%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/wlogout4.png" width = "40%">
 
-  Config is in `archive/wlogout`.
+  - Config is in `archive/wlogout`.
 </details>
 
 <details>
@@ -314,7 +392,8 @@ Makes Firefox use your `Pywal` colors.
 
   <img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock1.PNG" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock2.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock3.png" width = "50%"><img src="https://github.com/elifouts/Dotfiles/blob/main/images/lock4.png" width = "50%">
 
-  Replaced by the Quickshell lock screen. Config is in `archive/hyprlock`.
+  - Hyprlock uses the current wallpaper from Pywal to generate a background, displays a greeting with your username, and applies Pywal colors.
+  - Config is in `archive/hyprlock`.
 </details>
 
 <details>
@@ -322,7 +401,8 @@ Makes Firefox use your `Pywal` colors.
 
   ![image](https://github.com/user-attachments/assets/7cbe58e3-7226-4537-8e69-bb316cdfaebc)
 
-  Wofi + `swww` + `Pywal`.
+  - A script that applied a wallpaper using `swww` and set the `Pywal` theme.
+  - The script uses Wofi to select wallpapers. I have not been able to optimize the wallpaper loading so it might load slowly but it should work.
 </details>
 
 </details>
@@ -568,42 +648,63 @@ Makes Firefox use your `Pywal` colors.
 
 `Alt+Enter` - Music Player
 
-`Alt+A` - Reload Bar
+`Alt+A` - Toggle Bar
 
 > [!NOTE]
-> Not every keybind. Tap `Super` → **Keybinds** to see all of them, or edit `~/.config/hypr/Modern/base/shortcuts.lua`.
+> This isnt every Keybind. Just some highlighted ones.
+>
+> Tap `Super` → **Keybinds** to see all of them, or change them in `~/.config/hypr/Modern/base/shortcuts.lua`
 
 ## Help
 
 <details>
   <summary><picture><img src="images/badges/apps-fuzzy-or-blurry-v2.svg" alt="Apps Fuzzy or Blurry?" align="absmiddle"></picture></summary>
 
-  Electron apps (`Spotify`, `Discord`) may need Wayland flags. Add this after the `Exec=` command in `/usr/share/applications/{app}.desktop`:
+  #### This may be because they need to be run with Wayland or are Electron applications
+
+  - The solution I found is to add the following to `/usr/share/applications/{app}.desktop` after `exec=/app/executable/app`
+  - Works on `Spotify` `Discord`
 
   ```
   --enable-features=UseOzonePlatform --ozone-platform=wayland --uri=%U
   ```
 
-  This gets reset when the app updates. Know a better fix? Let me know!
+  - ***NOTE*** This gets removed if the app is redownloaded! I'm not sure how to make this a global thing. I have tried and failed. Help?
+
 </details>
 
 <details>
   <summary><picture><img src="images/badges/cant-find-a-file-that-is-in-cache-v2.svg" alt="Cant Find a file that is in .cache?" align="absmiddle"></picture></summary>
 
-  Files like `/home/eli/.cache/wal/colors-waybar.css` are made by `Pywal`. Replace `eli` with your username, or define the colors yourself in the `style.css`:
+### You may be looking for a file that looks something like this:
 
-  ```
-  @define-color background <Color>;
-  @define-color color0 <Color>;
-  ```
+`@import url('../../.cache/wal/colors-waybar.css');`
+
+That file is one of many that is created by `Pywal`. Make sure `Pywal` has run at least once (picking a wallpaper does this) and see if that works. Alternatively, you can do one of the following:
+
+- create your own file which would look something like this:
+```
+@define-color background <Replace>;
+@define-color color0 <Replace>;
+@define-color color9 <Repace>;
+```
+Instead of those colors, you can use whichever color is needed by the style.css file.
+
+- create the colors manually in the style.css files you took those paths from.
+```
+@define-color <ColorName> <Color>;
+```
+
+- Find the sections of that file that are calling the missing file, such as `$color2` or `@color2` and replace it with a valid value.
+
 </details>
 
 ## Notes
-- Cava follows `Pywal` too. The config is in `.config/cava`.
+- Cava uses `Pywal` too. My `color-apply.sh` rewrites `~/.config/cava/config` every time the colors change.
 <details>
   <summary><picture><img src="images/badges/download-suggestions-v2.svg" alt="Download Suggestions" align="absmiddle"></picture></summary>
 
-  What I install on a new machine. Do your own research before installing all of it!
+  - This is everything I think is essential to have. At least for me. I would suggest doing your own research before blindly downloading everything here. This is here just so if I break my computer which we all know I will, I can remember what I need/want!
 
 ```txt
 git
