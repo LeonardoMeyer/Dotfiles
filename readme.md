@@ -27,6 +27,10 @@ Claude helped with some of the scripting and docs. The design, look, and tweakin
 
 -Eli F.
 
+<p align="center">
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/profiles.gif" width="50%">
+</p>
+
 > [!WARNING]
 > Everything is designed to work with `Pywal`.
 >
