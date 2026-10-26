@@ -50,7 +50,7 @@ Item {
             height: implicitHeight + 14
             verticalAlignment: Text.AlignTop
             wrapMode: Text.WordWrap
-            text: "Edit defaults in /home/$USER/.config/hypr/" + (Store.active.style || "the style") + "/ or make a new style in /home/$USER/.config/hypr/"
+            text: ""
             font.family: Theme.sans
             font.pixelSize: 11
             color: Theme.dim
