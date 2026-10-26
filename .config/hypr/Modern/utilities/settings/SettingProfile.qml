@@ -52,7 +52,8 @@ Item {
             height: implicitHeight + 14
             verticalAlignment: Text.AlignTop
             wrapMode: Text.WordWrap
-            text: "A style carries its own quickshells, waybar styles and animations. Every variant keeps its own tweaks, so laptop and desktop stay independent."
+            text: "Edit defaults in /home/$USER/.config/hypr/" + (Store.active.style || "the style") + "/ or make a new style in /home/$USER/.config/hypr/"
+            // text: "A style carries its own quickshells, waybar styles and animations. Every variant keeps its own tweaks, so laptop and desktop stay independent."
             font.family: Theme.sans
             font.pixelSize: 11
             color: Theme.dim

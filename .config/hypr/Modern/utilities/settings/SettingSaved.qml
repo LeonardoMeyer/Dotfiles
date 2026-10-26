@@ -257,9 +257,7 @@ Item {
             width: parent.width - Theme.pad * 2
             height: implicitHeight + 10
             wrapMode: Text.WordWrap
-            text: "Default runs " + (Store.active.style || "the style") + " / " + (Store.active.variant || "variant")
-                + " with no overrides; changing anything there switches to " + control.variantName()
-                + ". Changes update whichever entry is applied. Save under a new name to branch off a copy."
+            text: "Default runs /hypr/" + (Store.active.style || "the style") + "/" + (Store.active.variant || "variant") 
             font.family: Theme.sans
             font.pixelSize: 11
             color: Theme.dim

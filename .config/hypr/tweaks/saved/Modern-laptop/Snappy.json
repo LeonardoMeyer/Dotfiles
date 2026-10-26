@@ -1,37 +1,16 @@
 {
-  "animation": {
-    "curve": [
-      0.3,
-      1,
-      0.4,
-      1
-    ],
-    "preset": "snappy",
-    "speed": 1.7,
-    "window": "popin 60%",
-    "workspace": "slide"
-  },
   "bar": {
     "kind": "waybar"
   },
   "colors": {
-    "theme": "pywal"
+    "theme": "dark/gruvbox"
   },
   "config": {
     "animations": {
-      "enabled": false
+      "enabled": true
     },
     "decoration": {
-      "active_opacity": 1,
-      "blur": {
-        "brightness": 0.75,
-        "contrast": 0.75,
-        "enabled": true,
-        "noise": 0.055,
-        "passes": 8,
-        "size": 20,
-        "vibrancy": 0
-      },
+      "active_opacity": 0.76,
       "dim_inactive": true,
       "dim_strength": 0.25,
       "glow": {
@@ -68,13 +47,13 @@
   },
   "hyprglass": {
     "layers": false,
-    "quickshell": false
+    "quickshell": true
   },
   "quickshell": {
     "style": "full"
   },
   "wallpaper": {
-    "path": "/home/$USER/wallpapers/library/nature/nat-41.jpg"
+    "path": "/home/$USER/wallpapers/library/abstract/abs-08.jpg"
   },
   "waybar": {
     "style": "line"
