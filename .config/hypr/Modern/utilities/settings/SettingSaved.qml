@@ -251,7 +251,7 @@ Item {
             width: parent.width - Theme.pad * 2
             height: implicitHeight + 10
             wrapMode: Text.WordWrap
-            text: "Default runs /hypr/" + (Store.active.style || "the style") + "/" + (Store.active.variant || "variant") 
+            text: "" 
             font.family: Theme.sans
             font.pixelSize: 11
             color: Theme.dim
