@@ -63,6 +63,7 @@ hl.config({
     input = {
         kb_layout = "us",
         follow_mouse = 1,
+        focus_on_close = 1,
         sensitivity = require("machine").sensitivity,
         touchpad = {
             natural_scroll = true,
