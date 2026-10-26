@@ -1,8 +1,7 @@
 __pycache__/
 *.pyc
 .config/wal/colorschemes/dark/pywal16.json
-
-# Generated per machine by hypr-profile.sh / the settings panel (source of truth: hypr/<Style>/base/, hypr/<Style>/<variant>/ and hypr/tweaks/)
+# Generated per machine by hypr-profile.sh
 .config/hypr/.active-profile
 .config/hypr/.color-theme
 .config/hypr/.active-bar
@@ -25,12 +24,8 @@ __pycache__/
 .config/hypr/utilities/launcher
 .config/hypr/utilities/music
 .config/hypr/utilities/lock
-
-# cava writes its default shaders and themes back on every start
 .config/cava/shaders/
 .config/cava/themes/
-
-# Regenerated from the current wallpaper on each machine
 .config/cava/config
 .config/kitty/current-theme.conf
 wallpapers/pywallpaper.jpg
