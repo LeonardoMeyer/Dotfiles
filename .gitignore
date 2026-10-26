@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
 .config/wal/colorschemes/dark/pywal16.json
-# Generated per machine by hypr-profile.sh
 .config/hypr/.active-profile
 .config/hypr/.color-theme
 .config/hypr/.active-bar
