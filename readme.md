@@ -39,7 +39,7 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
 > </details>
 
 <p align="center">
-  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/profiles.gif" width="50%">
+  <img src="https://github.com/elifouts/Dotfiles/blob/main/images/v2/profiles.gif" width="70%">
 </p>
 
 # Install
