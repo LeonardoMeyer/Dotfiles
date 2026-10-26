@@ -17,7 +17,9 @@
 </p>
 
 > [!TIP]
-> Check out [MyFetch](https://github.com/elifouts/MyFetch) now!
+> Check out [MyFetch](https://github.com/elifouts/MyFetch)!!!!
+> 
+> A dynamic lightweight fetching tool forked from [NerdFetch](https://github.com/ThatOneCalculator/NerdFetch)
 
 This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprland** setup, built around **Quickshell**.
 
