@@ -21,12 +21,21 @@
 
 This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprland** setup, built around **Quickshell**.
 
-Built by me, with help from my own thoughts and ideas AKA Claude for some of the scripting and docs. The design, look, and tweaking are all mine.
+Built by me, with help from my own thoughts and ideas AKA Claude for some of the scripting and docs. The design, look, and result are all mine.
 
 ***ENJOY!!***
 
 -Eli F.
 
+<details>
+  <Summary>AI Policy</Summary>
+  
+## My AI Policy
+
+- No code in this repository was AI generated without intense review. I use Claude to create a lot of the Quickshell skeletons that you see. After creating a skeleton and some pseudocode, I go in and make changes to the configs until I like what I see. My text editor of choice is Nvim with some Lua plugins. This is where I do most of my work. If you want my config, you can install it [here](https://github.com/elifouts/MyNvim).
+---
+- I write and maintain a lot of the code and scripts in this repository myself. Working as an Applications Engineer has given me a better understanding of how applications are built and how to optimize systems. Combined with my Computer Science studies and experience with Quickshell and Linux, this helps me avoid bloated AI-generated code and build a more optimized, lightweight config.
+</details> 
 
 > [!WARNING]
 > All Configurations were meant to be used with `Pywal`
