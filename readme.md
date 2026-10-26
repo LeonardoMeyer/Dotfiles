@@ -21,7 +21,7 @@
 
 This contains My **Arch** Linux Dotfiles for a clean-looking lightweight **Hyprland** setup, built around **Quickshell**.
 
-Built by me, with help from my own thoughts and ideas AKA Claude for some of the scripting and docs. The design, look, and result are all mine.
+Built by me, with help from my own thoughts and ideas AKA Claude for some of the scripting and docs. The design, look, and result are all my own.
 
 ***ENJOY!!***
 
