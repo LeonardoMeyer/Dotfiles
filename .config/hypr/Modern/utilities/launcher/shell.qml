@@ -5,38 +5,33 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../common"
 
-// App launcher: a panel rising from the bottom edge, toggled by tapping Super (see shells.sh).
-// Apps are a searchable icon grid ranked by how often you open them, Home is a dial of session actions,
-// Commands is every bash command on a wheel, and Keybinds reads the live shortcuts.lua.
 ShellRoot {
     id: root
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string helper: Quickshell.shellPath("launcher/launcher.py")
-    // Terminal for Terminal=true entries and shell commands.
     readonly property string terminal: "kitty"
-    // Usage counts per tab ("<count> <key>" per line), created on first start.
+    // "<count> <key>" per line
     readonly property string cacheDir: home + "/.cache/launcher"
     readonly property string appCache: cacheDir + "/apps"
     readonly property string homeCache: cacheDir + "/commands"
     readonly property string shellCache: cacheDir + "/shell"
     readonly property string bindCache: cacheDir + "/keybinds"
 
-    // The window stays mapped (empty input region) so opening never waits on surface creation.
+    // stays mapped so opening is instant
     property bool active: false
     property bool leaving: false
-    property real t: 0         // enter/exit progress
+    property real t: 0
     property real gridIntro: 1
     property var targetScreen: null
 
-    // Order here is the tab bar's order; everything else refers to tabs by id.
+    // tab order
     readonly property var tabs: [
         { id: "home", label: "Home", title: "Home", icon: "", search: "" },
         { id: "apps", label: "Apps", title: "Applications", icon: "", search: "Search apps" },
         { id: "commands", label: "Commands", title: "Commands", icon: "", search: "Search commands" },
         { id: "keybinds", label: "Keybinds", title: "Keybinds", icon: "", search: "Search keybinds" }
     ]
-    // Opening without a tab named lands on Home; typing there still jumps to the app search.
     readonly property int homeTab: tabIndex("home")
     property int tab: homeTab
     readonly property string tabId: tabs[tab].id
@@ -45,7 +40,6 @@ ShellRoot {
     property real introHome: 0
     property real introBinds: 0
 
-    // Layout, per screen. Quickshell sizes are logical pixels, so fractional scaling is already applied.
     readonly property real u: {
         const s = win.screen
         if (!s) return 1
@@ -54,20 +48,18 @@ ShellRoot {
     readonly property int cols: 4
     readonly property real cell: Math.round(70 * u)
     readonly property real gap: Math.round(26 * u)
-    // The highlight keeps the margin it had with the original 14px spacing.
     readonly property real hlPad: Math.round(Math.round(14 * u) * 0.6) * 0.6
     readonly property real gridInset: Math.max(hlPad + 4, Math.round(gap * 0.4))
     readonly property real pad: Math.round(18 * u)
     readonly property real cardW: cols * cell + (cols - 1) * gap + gridInset * 2 + pad * 2
     readonly property real cardH: Math.round(Math.min((win.screen ? win.screen.height : 1080) * 0.72, 580 * u))
 
-    // OSD-style morph: a small half-capsule rises out of the bottom edge, stretches wide, then grows tall.
     readonly property real dot: Math.round(52 * u)
     readonly property real rise: Math.max(0, Math.min(1, t / 0.28))
     readonly property real mw: Math.max(0, Math.min(1.02, (t - 0.12) / 0.48))
     readonly property real mh: Math.max(0, Math.min(1.02, (t - 0.32) / 0.68))
 
-    // ---- Apps ------------------------------------------------------------------------------------------------
+    // Apps
 
     property var drun: ({ hide: [], paths: {} })
     property var appUses: ({})
@@ -79,7 +71,7 @@ ShellRoot {
     readonly property string query: search.text
     readonly property var picked: results.length > 0 ? results[Math.min(selected, results.length - 1)] : null
 
-    // Hidden/OnlyShowIn/NotShowIn/TryExec come from the helper; Quickshell already drops NoDisplay.
+    // quickshell already drops NoDisplay
     Process {
         id: scan
         command: ["python3", root.helper, "apps"]
@@ -91,7 +83,7 @@ ShellRoot {
         }
     }
 
-    // Entries arrive one at a time at startup; settle before building icons.
+    // wait for entries to settle at startup
     Connections {
         target: DesktopEntries.applications
         function onValuesChanged() { rebuild.restart(); rescan.restart() }
@@ -99,7 +91,6 @@ ShellRoot {
     Timer { id: rebuild; interval: 120; onTriggered: root.buildApps() }
     Timer { id: rescan; interval: 1500; onTriggered: scan.running = true }
 
-    // The music player publishes where its card sits (see music/shell.qml).
     readonly property var music: {
         try { return JSON.parse(musicFile.text()) } catch (e) { return { open: false } }
     }
@@ -111,7 +102,7 @@ ShellRoot {
         onFileChanged: reload()
     }
 
-    // A FileView only watches a file that existed when it loaded, so create missing caches, then reload.
+    // FileView only watches files that exist, so create them first
     Process {
         running: true
         command: ["python3", root.helper, "init", root.appCache, root.homeCache, root.shellCache, root.bindCache]
@@ -145,7 +136,7 @@ ShellRoot {
         if (key) Quickshell.execDetached(["python3", helper, "bump", cache, key])
     }
 
-    // A new apps array recreates every icon, so only replace it when the visible set actually changed.
+    // only replace when it actually changed, it rebuilds every icon
     property string appsKey: ""
     function buildApps() {
         const hide = new Set(drun.hide || [])
@@ -179,7 +170,6 @@ ShellRoot {
         return j === q.length
     }
 
-    // Coarse tiers, so within a tier the grid keeps its usual order and icons move as little as possible.
     function score(a, q) {
         if (a.n === q) return 100
         if (a.n.startsWith(q)) return 90
@@ -193,7 +183,6 @@ ShellRoot {
         return 0
     }
 
-    // Most used first, then by name; a query ranks by match quality first.
     function refresh() {
         const q = query.trim().toLowerCase()
         const hits = []
@@ -225,12 +214,11 @@ ShellRoot {
         const n = results.length
         if (n === 0) return
         const s = selected + d
-        // Up from the first row and down from the last stay put rather than wrapping.
         if (s < 0 || (s > n - 1 && Math.floor(selected / cols) === Math.floor((n - 1) / cols))) return
         selected = Math.max(0, Math.min(n - 1, s))
     }
 
-    // ---- Home, Commands and Keybinds -------------------------------------------------------------------------
+    // Home, Commands, Keybinds
 
     FileView {
         id: homeCacheFile
@@ -278,11 +266,11 @@ ShellRoot {
     function runHome(id, cmd, afterClose) {
         bump(homeCache, id)
         close()
-        // Anything that opens its own surface waits for the panel to finish leaving.
+        // wait for the panel to close first
         Quickshell.execDetached(["sh", "-c", (afterClose ? "sleep 0.3; " : "") + cmd])
     }
 
-    // Interactive bash, so .bashrc aliases and functions work; kitty --hold leaves a prompt behind when it finishes.
+    // interactive bash so aliases work
     function runShell(cmd, key, background) {
         bump(shellCache, key)
         close()
@@ -290,7 +278,7 @@ ShellRoot {
         else Quickshell.execDetached([terminal, "--hold", "bash", "-ic", cmd])
     }
 
-    // ---- Tabs, focus and keys --------------------------------------------------------------------------------
+    // Tabs and keys
 
     function setTab(i) {
         i = Math.max(0, Math.min(tabs.length - 1, i))
@@ -316,7 +304,6 @@ ShellRoot {
         close()
     }
 
-    // Shared by the search field and the panel; returns whether the key was used.
     function handleKey(event) {
         const k = event.key
         const ctrl = event.modifiers & Qt.ControlModifier
@@ -343,7 +330,7 @@ ShellRoot {
         return binds.handleKey(event)
     }
 
-    // ---- Open and close --------------------------------------------------------------------------------------
+    // Open/close
 
 
     Component.onCompleted: {
@@ -363,7 +350,6 @@ ShellRoot {
             if (i >= 0) setTab(i)
             return
         }
-        // Everything that resets between sessions already ran when the last one closed, so opening only animates.
         if (!active) {
             tab = i >= 0 ? i : homeTab
         } else if (i >= 0) {
@@ -371,7 +357,7 @@ ShellRoot {
         }
         const scr = focusedScreen()
         if (!active && scr !== targetScreen) {
-            // A different monitor needs a new surface; give it a moment before rising.
+            // new monitor needs a new surface, wait a bit
             targetScreen = scr
             moveDelay.restart()
             return
@@ -400,7 +386,6 @@ ShellRoot {
         else show("")
     }
 
-    // On Hyprland's curves, like the OSD: in the way windows open, out the way they close.
     function animateTo(target) {
         tween.stop()
         tween.from = t
@@ -410,8 +395,6 @@ ShellRoot {
         tween.start()
     }
 
-    // Contents fade in once the shape is nearly full; `from` staggers header, pages and tabs a beat apart.
-    // On the way out they leave together, before the shape starts to fold.
     function stage(from) {
         if (leaving) return Math.max(0, Math.min(1, (t - 0.7) / 0.3))
         return Math.max(0, Math.min(1, (t - from) / (1 - from)))
@@ -429,13 +412,12 @@ ShellRoot {
             root.active = false
             root.leaving = false
             root.searchPinned = false
-            // Reset for next time now, while hidden, so opening has no work to do before it animates.
+            // reset now so opening has nothing to do
             search.text = ""
             root.refresh()
             shellPage.dirty = true
             homePage.reset()
             binds.reset()
-            // Pick up new executables and .bashrc edits for next time.
             scanCommands.running = true
         }
     }
@@ -459,14 +441,12 @@ ShellRoot {
         }
         color: "transparent"
         exclusionMode: ExclusionMode.Normal
-        // While open the whole surface takes input, so a click outside the panel closes it.
-        // The music card, when it's open on this screen, is cut out so both can be used at once.
+        // whole surface takes input so clicking outside closes it
         mask: Region {
             item: root.active && !root.leaving ? keyRoot : null
             Region {
                 readonly property var m: root.music.open && root.music.screen === win.screen?.name ? root.music : null
                 intersection: Intersection.Subtract
-                // Wherever it has been dragged; older placements only gave the size, centered under the bar.
                 x: m ? (m.x ?? Math.round((win.width - m.side) / 2)) : 0
                 y: m ? (m.y ?? m.top) : 0
                 width: m ? m.side : 0
@@ -484,7 +464,6 @@ ShellRoot {
 
             Keys.onPressed: event => {
                 if (root.handleKey(event)) { event.accepted = true; return }
-                // Typing on Home jumps to the app search with that character.
                 const ch = event.text
                 if (ch.length === 1 && ch >= " " && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) {
                     root.setTab(root.tabIndex("apps"))
@@ -498,27 +477,21 @@ ShellRoot {
                 onPressed: root.close()
             }
 
-            // Never hidden, only transparent: hiding would drop every icon texture and rebuild them on the
-            // first frames of each opening, which is what made it stutter.
+            // never hide it, that drops the icon textures and it stutters on open
             Item {
                 id: card
                 width: root.dot + (root.cardW - root.dot) * root.mw
                 height: root.dot + (root.cardH - root.dot) * root.mh
-                // Fully round as a capsule, relaxing to Hyprland's own rounding as it opens.
                 readonly property real rest: Math.min(root.dot / 2, Theme.rounding)
                 readonly property real radius: Math.max(rest, root.dot / 2 - (root.dot / 2 - rest) * Math.min(1, root.mw))
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
-                // Solid the whole way (no faint tail for the blur to ghost on).
                 opacity: root.active ? Math.min(1, root.t * 8) : 0
-                // Starts below the edge and rises onto it; afterwards it only grows, so the bottom never lifts.
                 transform: Translate { y: (1 - root.rise) * (root.dot + 24) }
 
-                // Clicks on bare panel must not reach the close-on-outside-click backdrop.
                 MouseArea { anchors.fill: parent }
 
-                // Matches Hyprland: its rounding, translucent over compositor blur (and hyprglass where enabled).
-                // The bottom is pushed past the screen edge so only the top corners are rounded.
+                // pushed past the bottom edge so only the top corners round
                 Rectangle {
                     width: parent.width
                     height: parent.height + card.radius + 2
@@ -528,10 +501,8 @@ ShellRoot {
                     border.color: Theme.alpha(Theme.fg, 0.07)
                 }
 
-                // Contents keep their full-size layout and are revealed by the growing shape, so nothing reflows.
                 Item {
                     anchors.fill: parent
-                    // Always on: switching clipping as the shape finishes restructures the scene mid-animation.
                     clip: true
 
                 Item {
@@ -563,7 +534,6 @@ ShellRoot {
                                 if (!root.searchable) root.setTab(root.tabIndex("apps"))
                                 else root.focusTab()
                             }
-                            // The field forwards navigation to the panel and keeps everything else as text.
                             keyHandler: event => root.handleKey(event)
                         }
 
@@ -591,7 +561,6 @@ ShellRoot {
                             }
                         }
 
-                        // Names stay off the grid; the one under the highlight is spelled out here.
                         Text {
                             anchors.right: parent.right
                             anchors.left: title.right
@@ -633,7 +602,7 @@ ShellRoot {
                                 gap: root.gap
                                 hlPad: root.hlPad
                                 intro: root.gridIntro
-                                emptyText: root.apps.length === 0 ? "Loading applications…" : "Nothing matches “" + root.query + "”"
+                                emptyText: root.apps.length === 0 ? "Loading applications..." : "Nothing matches '" + root.query + "'"
                                 onLaunch: app => root.launch(app)
                                 onHover: slot => root.selected = slot
                             }
@@ -745,14 +714,12 @@ ShellRoot {
         }
     }
 
-    // Pages stay alive; the current one is opaque and in place, the others wait faded to the side they lie on.
     component Page: Item {
         required property string tab
         readonly property int index: root.tabIndex(tab)
         readonly property bool on: root.tab === index
         anchors.fill: parent
         enabled: on
-        // The incoming page is visible at once so it can take focus before it has faded in.
         visible: on || opacity > 0.01
         opacity: on ? 1 : 0
         property real slide: on ? 0 : (index < root.tab ? -1 : 1) * 28

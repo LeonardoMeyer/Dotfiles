@@ -1,7 +1,5 @@
 #!/bin/bash
-# Waybar on its own: one of the styles in hypr/<style>/waybar/<name>/, copied into ~/.config/waybar with its
-# scripts. Nothing else from these dotfiles is needed, and nothing points back into the repo, so it keeps working
-# if the repo is moved or deleted. Runs without the full install and without any other installer script.
+# installs just waybar with one of the styles, copied into ~/.config/waybar
 
 set -euo pipefail
 
@@ -14,7 +12,6 @@ warn()    { echo -e "${YELLOW}${BOLD}[!]${RESET} $*"; }
 error()   { echo -e "${RED}${BOLD}[✗]${RESET} $*" >&2; }
 section() { echo -e "\n${BOLD}${CYAN}══ $* ══${RESET}\n"; }
 
-# The repo this script sits in, wherever it was cloned.
 REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 DEST="$HOME/.config/waybar"
 STYLE_DIR=""
@@ -23,10 +20,10 @@ PACKAGES=(
     waybar otf-codenewroman-nerd hyprpicker wl-clipboard libnotify pacman-contrib
     kitty networkmanager bluez bluez-utils blueman
 )
-# AUR only: installed when an AUR helper is around, otherwise the bar falls back to a built-in palette.
+# AUR only, optional
 AUR_PACKAGES=(python-pywal16)
 
-# ── Packages ───────────────────────────────────────────────────────────────
+# packages
 
 install_packages() {
     local helper=""
@@ -43,7 +40,7 @@ install_packages() {
     fi
 }
 
-# ── Style ──────────────────────────────────────────────────────────────────
+# style
 
 select_style() {
     section "Waybar Style"
@@ -55,8 +52,7 @@ select_style() {
     [[ ${#styles[@]} -gt 0 ]] || { error "No waybar styles found under $REPO/.config/hypr/."; exit 1; }
 
     for d in "${styles[@]}"; do
-        # <style>/waybar/<name> → "Modern — default"
-        echo "$i. $(basename "$(dirname "$(dirname "$d")")") — $(basename "$d")"
+        echo "$i. $(basename "$(dirname "$(dirname "$d")")") / $(basename "$d")"
         ((i += 1))
     done
     echo "   (previews: $REPO/.config/hypr/<style>/waybar/<name>/preview.png)"
@@ -70,13 +66,12 @@ select_style() {
     success "Selected $(basename "$STYLE_DIR")"
 }
 
-# ── Config ─────────────────────────────────────────────────────────────────
+# config
 
 install_config() {
     section "Installing Waybar Config"
 
-    # A full install links ~/.config/waybar into the repo; writing through that link would change the repo, so
-    # the link is swapped for a real folder (the repo itself is left as it is).
+    # swap the repo symlink for a real folder
     if [[ -L "$DEST" ]]; then
         warn "$DEST was a link to $(readlink -f "$DEST"); replacing it with a standalone copy."
         rm "$DEST"
@@ -91,10 +86,8 @@ install_config() {
     cp "$STYLE_DIR/style.css" "$DEST/style.css"
     cp -a "$REPO/.config/waybar/scripts/." "$DEST/scripts/"
     chmod +x "$DEST"/scripts/*.sh
-    # Marks the folder as this installer's, so picking another style later replaces it without a backup.
     echo "$(basename "$STYLE_DIR")" > "$DEST/.standalone"
 
-    # The notification button opens the dotfiles' home screen, which only exists with the full install.
     if [[ ! -x "$HOME/.config/hypr/utilities/shells.sh" ]]; then
         sed -i 's|"custom/notification",\s*||' "$DEST/config"
     fi
@@ -102,7 +95,7 @@ install_config() {
     success "Installed to $DEST"
 }
 
-# style.css imports ~/.cache/wal/colors-waybar.css; without it waybar refuses the stylesheet and draws unstyled.
+# style.css needs colors-waybar.css or waybar won't style anything
 ensure_palette() {
     local css="$HOME/.cache/wal/colors-waybar.css" wallpaper="$REPO/wallpapers/pywallpaper.jpg"
 
@@ -110,12 +103,11 @@ ensure_palette() {
 
     if command -v wal >/dev/null && [[ -f "$wallpaper" ]]; then
         info "Generating a pywal palette from the default wallpaper."
-        # -n: leave the wallpaper alone; -s -t: don't recolor open terminals.
+        # -n keeps the wallpaper, -s -t skips terminals
         wal -q -n -s -t -i "$wallpaper" || true
     fi
     [[ -f "$css" ]] && { success "Pywal palette generated."; return; }
 
-    # Until pywal runs (wal -i <image>), a neutral dark palette with the same names.
     mkdir -p "$(dirname "$css")"
     cat > "$css" <<'EOF'
 @define-color foreground #c7c6c2;
@@ -141,7 +133,6 @@ EOF
     warn "pywal unavailable; wrote a default palette to $css (run 'wal -i <image>' later for wallpaper colors)."
 }
 
-# The bluetooth module only shows the adapter while bluez is running.
 enable_bluetooth() {
     command -v systemctl >/dev/null || return 0
     systemctl is-enabled --quiet bluetooth 2>/dev/null && return 0

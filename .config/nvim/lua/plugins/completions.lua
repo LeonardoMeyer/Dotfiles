@@ -41,7 +41,7 @@ return {
         if normalized == "menu" then
           vim.opt.completeopt = { "menu", "menuone", "noselect", "noinsert" }
         else
-          -- Use cmp's custom view to avoid native complete() E785 callbacks.
+          -- custom view avoids E785 from native complete()
           vim.opt.completeopt = { "noselect", "noinsert" }
         end
 

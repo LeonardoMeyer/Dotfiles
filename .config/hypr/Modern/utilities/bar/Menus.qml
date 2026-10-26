@@ -7,11 +7,7 @@ import Quickshell.Io
 import Quickshell.Services.Pipewire
 import "../common"
 
-// The bar's menus, drawn like the settings panel: rows (Entry) in tinted groups (Group), the shared Switch and
-// Slider from common. Network, Audio, Power and Tray are the pages the status chips open.
 QtObject {
-    // One row of a menu, styled like the settings panel's dropdown rows: a glyph or icon, a label with an
-    // optional second line, and a trailing note. Active rows take the accent tint.
     component Entry: Rectangle {
         id: row
 
@@ -51,7 +47,6 @@ QtObject {
                 font.family: Theme.sans
                 font.pixelSize: 15
                 color: row.active ? Theme.accent : Theme.fg
-                // A spinning glyph while something is in progress.
                 RotationAnimation on rotation {
                     running: row.busy
                     from: 0
@@ -119,7 +114,6 @@ QtObject {
         }
     }
 
-    // A menu's title row: an optional app icon, the title, a dim note, and anything else (a switch) on the right.
     component Header: Item {
         id: h
         property string title
@@ -164,8 +158,6 @@ QtObject {
         }
     }
 
-    // A labelled group of rows, laid out like a settings panel section: a small caps title over a tinted card.
-    // Rows scroll once there are more than fit in maxHeight.
     component Group: Column {
         id: sec
 
@@ -189,7 +181,6 @@ QtObject {
 
         Rectangle {
             width: parent.width
-            // Room for the empty note when there are no rows.
             height: Math.min(sec.maxHeight, Math.max(sec.empty !== "" && list.implicitHeight < 4 ? 40 : 0, list.implicitHeight + 8))
             radius: 12
             color: Theme.alpha(Theme.fg, 0.055)
@@ -220,7 +211,6 @@ QtObject {
         }
     }
 
-    // Wi-Fi and Bluetooth, opened from the network chip or the connected device beside it.
     component Network: Grid {
         id: menu
 
@@ -228,7 +218,6 @@ QtObject {
         signal run(string cmd)
 
         readonly property bool holdOpen: wifi.holdOpen
-        // Side by side when the card is wide (the one big pill), stacked otherwise.
         readonly property real colW: columns === 2 ? (width - columnSpacing) / 2 : width
 
         columns: width >= 600 ? 2 : 1
@@ -248,9 +237,6 @@ QtObject {
         }
     }
 
-    // Wi-Fi: the radio switch, the wired link if there is one, and nearby networks (scanned while the menu is
-    // open). Click to connect or disconnect; a secured network asks for its password inline. Right-click forgets.
-    // The top half of the network menu.
     component Wifi: Column {
         id: menu
 
@@ -265,9 +251,7 @@ QtObject {
             ? wifiDev.networks.values.filter(n => n.name !== "").slice().sort((a, b) =>
                 (b.connected - a.connected) || (b.known - a.known) || (strength(b) - strength(a)))
             : []
-        // The network waiting on a password, and why the last attempt failed.
         property string asking: ""
-        // Typing a password keeps the menu open and takes the keyboard.
         readonly property bool holdOpen: asking !== ""
         property var failed: ({})
 
@@ -304,7 +288,7 @@ QtObject {
 
         Header {
             title: "Wi-Fi"
-            note: Networking.wifiEnabled && menu.wifiDev && menu.wifiDev.scannerEnabled ? "Scanning…" : ""
+            note: Networking.wifiEnabled && menu.wifiDev && menu.wifiDev.scannerEnabled ? "Scanning..." : ""
             Switch {
                 checked: Networking.wifiEnabled
                 onToggled: Networking.wifiEnabled = !Networking.wifiEnabled
@@ -328,7 +312,7 @@ QtObject {
         Group {
             title: "Networks"
             maxHeight: 190
-            empty: !menu.wifiDev ? "No Wi-Fi adapter" : !Networking.wifiEnabled ? "Wi-Fi is off" : "Looking for networks…"
+            empty: !menu.wifiDev ? "No Wi-Fi adapter" : !Networking.wifiEnabled ? "Wi-Fi is off" : "Looking for networks..."
 
             Repeater {
                 model: Networking.wifiEnabled ? menu.networks : []
@@ -355,7 +339,7 @@ QtObject {
                         sub: {
                             const f = menu.failed[net.modelData.name]
                             if (f) return "Couldn't connect: " + f
-                            if (net.connecting) return "Connecting…"
+                            if (net.connecting) return "Connecting..."
                             if (net.modelData.connected) return "Connected"
                             return [net.modelData.known ? "Saved" : "", menu.secured(net.modelData) ? "Secured" : "Open"].filter(s => s).join(" · ")
                         }
@@ -366,7 +350,6 @@ QtObject {
                         onRightClicked: if (net.modelData.known) net.modelData.forget()
                     }
 
-                    // Password, inline under the network that needs it.
                     Rectangle {
                         visible: menu.asking === net.modelData.name
                         width: parent.width
@@ -436,9 +419,6 @@ QtObject {
         }
     }
 
-    // Bluetooth: the adapter switch, paired devices, and nearby ones (discovered while the menu is open).
-    // Click connects or disconnects, pairing first when needed; right-click forgets a paired device.
-    // The bottom half of the network menu.
     component Bluetooth: Column {
         id: menu
 
@@ -451,10 +431,9 @@ QtObject {
         readonly property var all: adapter ? adapter.devices.values : []
         readonly property var paired: all.filter(d => d.paired || d.connected)
             .sort((a, b) => (b.connected - a.connected) || label(a).localeCompare(label(b)))
-        // Unnamed devices only show their address, which is no use to pick from.
+        // skip devices with no name
         readonly property var nearby: all.filter(d => !d.paired && !d.connected && d.name && d.name !== d.address.replace(/:/g, "-"))
             .sort((a, b) => label(a).localeCompare(label(b)))
-        // Devices being paired so they can be connected once that finishes.
         property var pending: ({})
 
         Binding {
@@ -482,9 +461,9 @@ QtObject {
         }
 
         function status(d) {
-            if (d.pairing) return "Pairing…"
-            if (d.state === BluetoothDeviceState.Connecting) return "Connecting…"
-            if (d.state === BluetoothDeviceState.Disconnecting) return "Disconnecting…"
+            if (d.pairing) return "Pairing..."
+            if (d.state === BluetoothDeviceState.Connecting) return "Connecting..."
+            if (d.state === BluetoothDeviceState.Disconnecting) return "Disconnecting..."
             if (d.connected) return "Connected"
             return d.paired ? "Paired" : "Not paired"
         }
@@ -501,7 +480,7 @@ QtObject {
 
         Header {
             title: "Bluetooth"
-            note: menu.on && menu.adapter.discovering ? "Searching…" : ""
+            note: menu.on && menu.adapter.discovering ? "Searching..." : ""
             Switch {
                 checked: menu.on
                 onToggled: if (menu.adapter) menu.adapter.enabled = !menu.adapter.enabled
@@ -523,7 +502,7 @@ QtObject {
             title: "Nearby"
             maxHeight: 130
             visible: menu.on
-            empty: "Searching…"
+            empty: "Searching..."
 
             Repeater {
                 model: menu.on ? menu.nearby : []
@@ -532,7 +511,6 @@ QtObject {
         }
     }
 
-    // A Bluetooth device in the network menu; `owner` is the Bluetooth half it belongs to.
     component DeviceRow: Entry {
         id: dr
         property var owner
@@ -557,7 +535,6 @@ QtObject {
         }
     }
 
-    // Sound: output and microphone levels, and which device each one uses.
     component Audio: Grid {
         id: menu
 
@@ -565,7 +542,6 @@ QtObject {
         signal run(string cmd)
         signal done()
 
-        // Levels beside the devices when the card is wide (the one big pill), stacked otherwise.
         readonly property real colW: columns === 2 ? (width - columnSpacing) / 2 : width
         columns: width >= 600 ? 2 : 1
         columnSpacing: 22
@@ -659,7 +635,6 @@ QtObject {
         }
     }
 
-    // One volume row of the sound menu: a mute button, the level and the device it sets.
     component Level: Column {
         id: lv
         property var node
@@ -752,7 +727,7 @@ QtObject {
         }
     }
 
-    // Session: lock and suspend at once; log out, reboot and shut down wait for a second press.
+    // lock/suspend right away, the rest need a second press
     component Power: Column {
         id: menu
 
@@ -845,8 +820,6 @@ QtObject {
         }
     }
 
-    // A tray app's own menu, drawn like the other menus instead of as a plain popup. Submenus open in place
-    // with a back row; check and radio entries show their state.
     component Tray: Column {
         id: menu
 
@@ -857,7 +830,6 @@ QtObject {
 
         spacing: 10
 
-        // The submenus walked into, innermost last.
         property var stack: []
         readonly property var current: stack.length > 0 ? stack[stack.length - 1] : (item ? item.menu : null)
         onItemChanged: stack = []
@@ -906,7 +878,7 @@ QtObject {
                         visible: !entry.modelData.isSeparator
                         readonly property bool check: entry.modelData.buttonType !== QsMenuButtonType.None
                         readonly property bool checked: entry.modelData.checkState === Qt.Checked
-                        // Some apps escape their accelerators with underscores.
+                        // some apps use underscores for accelerators
                         label: (entry.modelData.text || "").replace(/_(?=[^_])/g, "")
                         iconSource: entry.modelData.icon || ""
                         glyph: check ? (checked ? (entry.modelData.buttonType === QsMenuButtonType.RadioButton ? "" : "") : (entry.modelData.buttonType === QsMenuButtonType.RadioButton ? "" : "")) : ""

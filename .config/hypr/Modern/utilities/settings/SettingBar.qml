@@ -1,6 +1,5 @@
 import QtQuick
 
-// Which bar runs: waybar or the quickshell bar (utilities/bar); the style list below follows it.
 Dropdown {
     id: control
 

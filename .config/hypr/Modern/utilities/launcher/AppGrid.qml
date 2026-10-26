@@ -3,26 +3,20 @@ import Quickshell
 import Quickshell.Widgets
 import "../common"
 
-// Every app keeps one icon for the life of the shell. Filtering only hands out slots: an icon that still matches
-// stays fully drawn and glides to its new slot, an icon that stops matching fades where it stands, and one that
-// starts matching again fades in at its new slot. Nothing is rebuilt or reloaded per keystroke.
 Flickable {
     id: grid
 
     property var apps: []           // [{ id, entry, ... }], fixed order
-    property var slots: ({})        // id -> slot index for the current results
+    property var slots: ({}) // id -> slot index
     property int count: 0
     property int selected: 0
     property int cols: 4
     property real cell: 68
     property real gap: 14
-    // The highlight's margin around a cell; fixed by the panel so spacing changes never resize it.
     property real hlPad: 5
     property string emptyText: ""
-    // Hover only selects after the pointer itself moves, so icons gliding under a resting cursor
-    // (or keyboard navigation) never steal the selection.
+    // only hover-select after the mouse actually moves
     property bool mouseMoved: false
-    // 0 -> 1 on open: icons rise in row by row.
     property real intro: 1
     signal launch(var app)
     signal hover(int slot)
@@ -48,7 +42,6 @@ Flickable {
         scrollAnim.start()
     }
 
-    // Keeps the selected row in view, with a little of the next row showing.
     function reveal(s) {
         if (s < 0) return
         const top = slotY(s) - inset
@@ -66,7 +59,7 @@ Flickable {
         onPointChanged: grid.mouseMoved = true
     }
 
-    // One row per wheel notch, eased; touchpads scroll by their own pixel deltas.
+    // one row per notch, touchpads scroll by pixels
     MouseArea {
         width: grid.contentWidth
         height: grid.contentHeight
@@ -82,7 +75,6 @@ Flickable {
         }
     }
 
-    // One highlight glides between icons; it is also the hover background.
     Rectangle {
         x: grid.slotX(grid.selected) - grid.hlPad
         y: grid.slotY(grid.selected) - grid.hlPad
@@ -109,11 +101,9 @@ Flickable {
             readonly property string src: Quickshell.iconPath(modelData.icon, true)
                 || Quickshell.iconPath("application-x-executable", true)
 
-            // Presence eases in a little slower than it leaves, so results bloom rather than pop.
             property real present: slot >= 0 ? 1 : 0
             Behavior on present { NumberAnimation { duration: Theme.ms(tile.slot >= 0 ? 300 : 200); easing.type: Easing.OutCubic } }
 
-            // Row-by-row rise on open; capped so long lists don't wait on their last rows.
             readonly property real rise: {
                 const row = Math.min(6, Math.floor(Math.max(0, slot) / grid.cols))
                 const e = Math.max(0, Math.min(1, (grid.intro - row * 0.07) / 0.58))
@@ -139,11 +129,9 @@ Flickable {
                 moveY.enabled = true
             }
 
-            // Reads slot, not a derived flag: this runs from onSlotChanged, before bindings that depend on slot update.
+            // read slot directly, bindings haven't updated yet here
             function place(instant) {
                 if (slot < 0) return
-                // Hidden (or still fading out): appear at the new slot rather than travel from the old one.
-                // A visible icon never fades to move, so it can't look like it is reloading.
                 if (instant || present < 0.2) jumpTo(grid.slotX(slot), grid.slotY(slot))
                 else { x = grid.slotX(slot); y = grid.slotY(slot) }
             }
@@ -163,7 +151,7 @@ Flickable {
                 Behavior on scale { NumberAnimation { duration: Theme.ms(220); easing.type: Easing.OutCubic } }
             }
 
-            // Last resort when not even the generic icon resolves: the app's initial in the accent color.
+            // fallback: first letter of the app name
             Text {
                 anchors.centerIn: parent
                 visible: !icon.visible

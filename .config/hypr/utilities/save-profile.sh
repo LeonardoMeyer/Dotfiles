@@ -3,7 +3,7 @@
 set -euo pipefail
 
 HYPR_DIR="${HYPR_DIR:-$HOME/.config/hypr}"
-EXCLUDE=("overrides.lua" "settings.lua")   # owned by the settings panel, not by a profile
+EXCLUDE=("overrides.lua" "settings.lua")
 
 [[ -f "$HYPR_DIR/.active-profile" ]] || { echo "No .active-profile in $HYPR_DIR" >&2; exit 1; }
 

@@ -1,8 +1,7 @@
 import QtQuick
 import "../common"
 
-// Collapsed row that expands in place into a list; used when there are five or more options.
-// options: [{ v, l, swatch?: [colors], image?: url, preview?: url }]; a preview is a wide layout strip under the name.
+// options: [{ v, l, swatch?, image?, preview? }]
 Item {
     id: dd
 
@@ -66,7 +65,7 @@ Item {
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: dd.selected ? dd.selected.l : "—"
+                    text: dd.selected ? dd.selected.l : "-"
                     font.family: Theme.sans
                     font.pixelSize: 12
                     color: Theme.bright

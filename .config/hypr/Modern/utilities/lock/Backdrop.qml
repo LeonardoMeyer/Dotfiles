@@ -1,9 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 
-// The lock's background: the wallpaper, blurred and dimmed, pushed in slightly by `amount` (1 = fully locked).
-// The lock surfaces and the handoff layers draw the same one, so the switch between them can't be seen.
-// The blur itself never animates (that re-blurs every frame and stutters); only opacity and scale move.
+// only opacity/scale animate, re-blurring every frame stutters
 Item {
     id: b
 
@@ -15,7 +13,6 @@ Item {
         visible: false
         source: Lock.wallpaper
         fillMode: Image.PreserveAspectCrop
-        // Blurred anyway, so decoded small and once: every monitor and layer shares the cached copy.
         sourceSize.width: 1280
         asynchronous: false
     }

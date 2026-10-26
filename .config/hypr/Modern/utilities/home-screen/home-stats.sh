@@ -1,5 +1,4 @@
 #!/bin/bash
-# One-shot snapshot for the home screen; cheap reads only.
 head -n1 /proc/stat
 grep -E '^(MemTotal|MemAvailable):' /proc/meminfo
 echo "UP $(cut -d' ' -f1 /proc/uptime)"

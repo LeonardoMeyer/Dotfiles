@@ -1,7 +1,6 @@
 #!/bin/bash
 set -uo pipefail
 
-# Applies a volume/brightness/caps/media action, then shows it on the Quickshell OSD.
 # usage: osd.sh vol-up|vol-down|vol-mute|mic-mute|bright-up|bright-down|caps|play|next|prev
 
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
@@ -10,7 +9,7 @@ show() {
     "$DIR/shells.sh" osd notify "$@"
 }
 
-# Prints "<volume 0-1> <muted true|false>" for a wpctl node.
+# prints "<volume> <muted>"
 audio_state() {
     local out v
     out="$(wpctl get-volume "$1")" || return 1

@@ -1,9 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 
-// Play/pause glyph that morphs between a triangle and two bars: `m` is 0 for play, 1 for pause.
-// The triangle is cut down the middle into two quads, and each quad's corners slide onto one bar's.
-// A round stroke in the fill color softens the corners; the shape is inset by half of it.
+// morphs play <-> pause, m: 0 = play, 1 = pause
 Shape {
     id: g
 
@@ -15,7 +13,7 @@ Shape {
     readonly property real sw: Math.max(1.5, width * 0.14)
     readonly property real w: width - sw
     readonly property real h: height - sw
-    // A triangle's weight sits left of its box, so play is nudged right to look centered.
+    // nudge play right so it looks centered
     readonly property real x0: sw / 2 + (1 - m) * w * 0.07
     readonly property real y0: sw / 2
 
@@ -23,7 +21,7 @@ Shape {
     function px(v) { return x0 + v }
     function py(v) { return y0 + v }
 
-    // Left half of the triangle -> left bar.
+    // left half -> left bar
     ShapePath {
         fillColor: g.color
         strokeColor: g.color
@@ -37,7 +35,7 @@ Shape {
         PathLine { x: g.px(0); y: g.py(0) }
     }
 
-    // Right half (the point) -> right bar.
+    // right half -> right bar
     ShapePath {
         fillColor: g.color
         strokeColor: g.color

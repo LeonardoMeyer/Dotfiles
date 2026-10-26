@@ -1,6 +1,5 @@
 import QtQuick
 
-// An on/off switch, for the settings panel and the bar's menus.
 Rectangle {
     id: sw
 

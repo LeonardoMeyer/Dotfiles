@@ -2,7 +2,6 @@
 
 shopt -u patsub_replacement 2>/dev/null
 
-
 FRAME=0.04
 FADE_MS=600
 PRESS_MS=320
@@ -12,7 +11,6 @@ TAIL=5
 TAIL_A=(75 52 33 18 8)
 COLORS_FILE="$HOME/.cache/wal/colors-hyprland"
 CARD_VAR=backgroundCol
-# ---------------------------------------------------------------------------------------
 
 DIR="${XDG_RUNTIME_DIR:-/tmp}/hyprlock-player"
 CARD_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/hyprlock-player"
@@ -25,7 +23,7 @@ case $1 in
     exit 0 ;;
   lock)
     setsid -f "$0" daemon >/dev/null 2>&1 </dev/null
-    for _ in {1..75}; do [[ -e $DIR/ready ]] && break; sleep 0.02; done   # give up after ~1.5s
+    for _ in {1..75}; do [[ -e $DIR/ready ]] && break; sleep 0.02; done
     exec hyprlock "${@:2}" ;;
   press)
     now_ms; printf '%s\n' "$NOW" > "$DIR/press-$2"
@@ -41,11 +39,11 @@ esac
 
 exec 9>"$DIR/lock"; flock -n 9 || exit 0
 trap 'rm -f "$DIR"/ready "$DIR"/title "$DIR"/artist "$DIR"/prev "$DIR"/toggle "$DIR"/next "$DIR"/.*.tmp; set_card clear; exit' EXIT TERM INT
-exec {sfd}<> <(:)                      # never-ready fd: `read -t` becomes a fork-free sleep
+exec {sfd}<> <(:) # lets read -t work as a sleep
 
 declare -A CUR PRV TCH LAST
 
-# card.png = solid pywal $backgroundCol (96x50 so hyprlock's size=200 gives 384x200), clear.png = transparent
+# card.png is the pywal background, clear.png is transparent
 make_cards() {
   python3 - "$COLORS_FILE" "$CARD_VAR" "$CARD_DIR" <<'PY'
 import re, struct, sys, zlib
@@ -83,7 +81,7 @@ set_card() {
   cp -f "$CARD_DIR/$1.png" "$CARD_DIR/.card.tmp" && mv -f "$CARD_DIR/.card.tmp" "$CARD_DIR/card.png"
 }
 
-smooth() { local t=$1; SM=$(( (3*t*t - 2*t*t*t/1000) / 1000 )); }          # smoothstep, 0..1000
+smooth() { local t=$1; SM=$(( (3*t*t - 2*t*t*t/1000) / 1000 )); } # smoothstep
 esc()    { REPLY=${1//&/&amp;}; REPLY=${REPLY//</&lt;}; REPLY=${REPLY//>/&gt;}; }
 put()    { [[ ${LAST[$1]-} == "$2" ]] && return; LAST[$1]=$2
            printf '%s' "$2" > "$DIR/.$1.tmp" && mv -f "$DIR/.$1.tmp" "$DIR/$1"; }
@@ -124,8 +122,8 @@ anim_btn() {  # <name> <glyph> <base font size>
 n=0; stat=""; title=""; artist=""
 while :; do
   now_ms
-  if (( n % 4 == 0 )); then                       # poll the player every 4 frames
-    (( n % 25 == 0 && n >= 100 )) && ! pgrep -x hyprlock >/dev/null && exit 0   # 4s grace: `lock` starts us first
+  if (( n % 4 == 0 )); then # poll every 4 frames
+    (( n % 25 == 0 && n >= 100 )) && ! pgrep -x hyprlock >/dev/null && exit 0
     if raw=$(playerctl metadata --format $'{{status}}\x1f{{xesam:title}}\x1f{{xesam:artist}}' 2>/dev/null) && [[ -n $raw ]]; then
       IFS=$'\x1f' read -r stat title artist <<< "$raw"
     else stat=""; fi
@@ -133,7 +131,7 @@ while :; do
 
   want=solid; [[ -z $stat ]] && want=clear
   if [[ ${CARD-} != "$want" ]]; then CARD=$want; set_card "$want"; pkill -USR2 -x hyprlock
-  elif (( n % 125 == 10 )); then pkill -USR2 -x hyprlock; fi   # safety net every ~5s
+  elif (( n % 125 == 10 )); then pkill -USR2 -x hyprlock; fi
 
   if [[ -z $stat ]]; then
     put title ""; put artist ""; put prev ""; put toggle ""; put next ""
@@ -146,6 +144,6 @@ while :; do
     if [[ $stat == Playing ]]; then anim_btn toggle '&#xf04c;' 30; else anim_btn toggle '&#xf04b;' 30; fi
     put toggle "$REPLY"
   fi
-  (( n++ )) || : > "$DIR/ready"          # first frame written
+  (( n++ )) || : > "$DIR/ready"
   read -rt "$FRAME" -u "$sfd" || :
 done

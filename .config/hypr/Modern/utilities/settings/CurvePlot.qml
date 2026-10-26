@@ -1,8 +1,7 @@
 import QtQuick
 import "../common"
 
-// Interactive cubic Bézier plot (time on x, progress on y). Drag the two handles; y may leave 0..1 to overshoot.
-// `t` and `p` place a moving dot on the curve while a preview plays.
+// bezier editor, y can go outside 0..1 for overshoot
 Item {
     id: plot
 
@@ -49,7 +48,6 @@ Item {
             const fg = Theme.fg
             const rgba = (col, a) => "rgba(" + Math.round(col.r * 255) + "," + Math.round(col.g * 255) + "," + Math.round(col.b * 255) + "," + a + ")"
 
-            // Quarter grid, with the 0 and 1 progress lines stronger.
             ctx.lineWidth = 1
             for (let i = 0; i <= 4; i++) {
                 const x = Math.round(plot.px(i / 4)) + 0.5
@@ -64,13 +62,11 @@ Item {
                 ctx.setLineDash([])
             }
 
-            // Handle arms.
             ctx.strokeStyle = rgba(Theme.accent, 0.55)
             ctx.lineWidth = 1.5
             ctx.beginPath(); ctx.moveTo(plot.px(0), plot.py(0)); ctx.lineTo(plot.px(c[0]), plot.py(c[1])); ctx.stroke()
             ctx.beginPath(); ctx.moveTo(plot.px(1), plot.py(1)); ctx.lineTo(plot.px(c[2]), plot.py(c[3])); ctx.stroke()
 
-            // The curve itself.
             ctx.strokeStyle = rgba(Theme.bright, 0.95)
             ctx.lineWidth = 2.5
             ctx.lineCap = "round"
@@ -79,7 +75,6 @@ Item {
             ctx.bezierCurveTo(plot.px(c[0]), plot.py(c[1]), plot.px(c[2]), plot.py(c[3]), plot.px(1), plot.py(1))
             ctx.stroke()
 
-            // End points.
             ctx.fillStyle = rgba(fg, 0.8)
             for (const pt of [[0, 0], [1, 1]]) {
                 ctx.beginPath(); ctx.arc(plot.px(pt[0]), plot.py(pt[1]), 3, 0, Math.PI * 2); ctx.fill()
@@ -87,7 +82,6 @@ Item {
         }
     }
 
-    // Moving dot: where the animation is at this moment.
     Rectangle {
         visible: plot.playing
         width: 10
@@ -123,7 +117,7 @@ Item {
         id: area
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        preventStealing: true          // stops the parent Flickable from grabbing the drag and scrolling
+        preventStealing: true
         hoverEnabled: true
         property int active: -1
         property real offX: 0
@@ -145,8 +139,7 @@ Item {
         onPressed: mouse => {
             if (mouse.button === Qt.RightButton) { plot.resetRequested(); return }
             active = nearest(mouse.x, mouse.y)
-            // Grabbing close to a handle keeps it under the cursor (no jump).
-            // Clicking elsewhere teleports the nearest handle to the pointer.
+            // grab near a handle to drag it, anywhere else moves the nearest one
             const hx = plot.px(plot.curve[active * 2])
             const hy = plot.py(plot.curve[active * 2 + 1])
             if (Math.hypot(hx - mouse.x, hy - mouse.y) <= 30) {

@@ -3,15 +3,10 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 
-// Lock screen, replacing hyprlock: the desktop blurs away into the wallpaper and the clock and password rise in;
-// unlocking hands the backdrop to a layer over the desktop, drops the lock under it, and fades it into the live
-// desktop. Modules toggle from the gear menu (Lock.qml keeps the settings). Runs on its own (lock.sh), not in the
-// shared process, and quits once unlocked. If it crashes the session stays locked; run lock.sh again from a tty.
-// lock.sh --preview shows it in windows without locking.
 ShellRoot {
     id: root
 
-    // Each monitor's last frame, taken before locking so there is something to fade from.
+    // last frame of each monitor, to fade from
     property bool captured: false
     Process {
         running: true
@@ -19,17 +14,15 @@ ShellRoot {
             Lock.shots].concat(Quickshell.screens.map(s => s.name))
         onExited: root.captured = true
     }
-    // grim takes ~30ms (uncompressed ppm, quick to write and to load), but a lock must never wait on it for long.
+    // don't wait on grim for long
     Timer { running: true; interval: 300; onTriggered: root.captured = true }
 
     WlSessionLock {
         id: lock
         locked: root.captured && !Lock.preview
-        // Starts once the compositor confirms nothing else is showing; one frame first so the fade never skips.
         onSecureChanged: if (secure) startTimer.restart()
 
-        // Transparent (with black drawn under the backdrop): an opaque surface gets a low-precision format,
-        // and the blur bands.
+        // transparent, opaque surfaces get a low precision format and the blur bands
         WlSessionLockSurface {
             color: "transparent"
             Face {
@@ -39,8 +32,7 @@ ShellRoot {
         }
     }
 
-    // The handoff: mapped (and empty) under the lock the whole time, so on unlock they are already up. They take
-    // the backdrop just before the lock drops, then fade and sharpen into the live desktop.
+    // handoff layers sit under the lock so unlocking is seamless
     Variants {
         model: !Lock.preview && root.captured ? Quickshell.screens : []
         PanelWindow {
@@ -54,7 +46,6 @@ ShellRoot {
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             mask: Region {}
 
-            // Fading out while it eases back from pushed-in, so the desktop comes up through it.
             Backdrop {
                 anchors.fill: parent
                 visible: Lock.handoff

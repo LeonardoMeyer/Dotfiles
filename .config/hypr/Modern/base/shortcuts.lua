@@ -1,5 +1,3 @@
--- Keyboard, mouse, and gesture shortcuts.
-
 local terminal = "kitty"
 local fileManager = "thunar"
 local mainMod = "SUPER"
@@ -7,8 +5,7 @@ local mainMod = "SUPER"
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + B", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
--- Popping a window out floats it at a tidy size centered on its monitor (16:10 at 60% width on landscape,
--- 4:5 at 85% width on portrait); popping it back in re-tiles it.
+-- float at a sane size, or re-tile if it's already floating
 local function pop_out()
     local w = hl.get_active_window()
     if not w then return end
@@ -20,7 +17,7 @@ local function pop_out()
     hl.dispatch(hl.dsp.window.float({ action = "enable", window = target }))
     local m = w.monitor
     if not m then return end
-    -- Monitor sizes are before rotation and scaling; window sizes are after.
+    -- monitor size is before rotation/scale
     local sw, sh = m.width / m.scale, m.height / m.scale
     if m.transform % 2 == 1 then sw, sh = sh, sw end
     local width, height

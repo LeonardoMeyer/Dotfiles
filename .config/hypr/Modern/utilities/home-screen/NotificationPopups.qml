@@ -5,19 +5,17 @@ import Quickshell.Wayland
 import Quickshell.Services.Notifications
 import "../common"
 
-// Floating pop-ups for new notifications, bottom left of the focused monitor; hidden while the home screen is open.
 PanelWindow {
     id: win
 
     required property var shell
     readonly property var focusScreen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
-    // Sized from the shorter screen side so cards stay the same width on portrait and landscape monitors.
+    // sized off the short side so portrait looks the same
     readonly property real u: focusScreen ? Math.max(0.6, Math.min(1.6, Math.min(focusScreen.width, focusScreen.height) / 900)) : 1
     readonly property int wanted: shell.popups.length
-    // Stays mapped briefly after the last card so its exit animation finishes.
+    // keep mapped a bit so the exit animation finishes
     property bool alive: false
 
-    // The list only builds its cards once the window is mapped, so mapping follows the data rather than list.count.
     onWantedChanged: {
         if (wanted > 0) {
             linger.stop()
@@ -28,15 +26,14 @@ PanelWindow {
     screen: focusScreen
     visible: !shell.shown && alive
     anchors { top: true; left: true; bottom: true }
-    // Extra width leaves room for the card shadows, which would otherwise be clipped at the surface edge.
+    // extra room for shadows
     implicitWidth: 440 * u
     color: "transparent"
-    // Auto would reserve this strip's width as an exclusive zone and push tiled windows aside.
+    // don't reserve an exclusive zone
     exclusionMode: ExclusionMode.Normal
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "notification-popup"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    // Only the cards take clicks; the rest of the strip passes input through.
     mask: Region { item: list }
 
     Timer { id: linger; interval: Theme.ms(600); onTriggered: win.alive = false }
@@ -51,7 +48,6 @@ PanelWindow {
         height: contentHeight
         interactive: false
         spacing: 10 * win.u
-        // Newest last, so it lands at the bottom and older cards stack above it.
         model: ScriptModel { values: win.shell.popups.slice().reverse() }
 
         delegate: Item {
@@ -62,15 +58,13 @@ PanelWindow {
                 || (modelData.urgency === NotificationUrgency.Critical && modelData.expireTimeout < 0)
             property real remain: 1
 
-            // 0 = collapsed at the left edge, 1 = fully open. Can overshoot past 1 on entry.
+            // 0 collapsed, 1 open, can overshoot
             property real reveal: 0
             readonly property real r: Math.max(0, Math.min(1, reveal))
 
             width: list.width
-            // Slot height follows the reveal, so the stack makes room (and closes the gap) smoothly.
             height: card.height * r
 
-            // Entry: morph out of the left edge with a soft overshoot.
             NumberAnimation {
                 id: enter
                 target: slot
@@ -83,7 +77,6 @@ PanelWindow {
             }
             Component.onCompleted: enter.start()
 
-            // Exit: hold the delegate alive, fold back into the left edge, then release it.
             ListView.onRemove: SequentialAnimation {
                 PropertyAction { target: slot; property: "ListView.delayRemove"; value: true }
                 NumberAnimation {
@@ -104,7 +97,6 @@ PanelWindow {
                 opacity: Math.max(0, Math.min(1, slot.reveal * 2.2))
                 x: -56 * win.u * (1 - slot.r)
 
-                // Covers the full card area, not just the text or buttons inside it.
                 HoverHandler { id: hover }
 
                 transform: Scale {

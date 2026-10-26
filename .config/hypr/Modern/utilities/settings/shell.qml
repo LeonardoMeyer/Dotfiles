@@ -6,8 +6,6 @@ import Quickshell.Wayland
 import "Schema.js" as Schema
 import "../common"
 
-// Hyprland settings sheet: slides in from the left edge below waybar, toggled with Alt+S (see shells.sh).
-// The right edge drags to resize; the width is remembered between sessions.
 ShellRoot {
     id: root
 
@@ -16,7 +14,7 @@ ShellRoot {
     readonly property real minFrac: 0.2
     readonly property real maxFrac: 0.6
 
-    // The window stays mapped (empty input region) so opening never waits on surface creation.
+    // stays mapped so opening is instant
     property bool active: false
     property bool leaving: false
     property real t: 0
@@ -51,7 +49,7 @@ ShellRoot {
         return Quickshell.screens.find(s => s.name === mon?.name) ?? Quickshell.screens[0]
     }
 
-    // shells.sh passes the monitor under the cursor; Hyprland's focused monitor is only the fallback.
+    // shells.sh passes the monitor under the cursor
     function screenNamed(name) {
         return Quickshell.screens.find(s => s.name === name) ?? focusedScreen()
     }
@@ -60,7 +58,7 @@ ShellRoot {
         showOn(name ? screenNamed(name) : focusedScreen())
     }
 
-    // The sheet never goes to a portrait (rotated) monitor: it stays where it is, or takes the first landscape one.
+    // skip portrait monitors
     function landscape(scr) {
         return !!scr && scr.width >= scr.height
     }
@@ -75,7 +73,6 @@ ShellRoot {
         scr = usableScreen(scr)
         if (active && !leaving && scr === targetScreen) return
         if (scr !== targetScreen) {
-            // Another monitor (even mid-close): drop this sheet; the new surface needs a moment before sliding in.
             tween.stop()
             active = false
             leaving = false
@@ -87,12 +84,11 @@ ShellRoot {
         begin()
     }
 
-    // The monitor whose layout box holds a point; Quickshell screens are in the same logical coordinates as hyprctl.
     function screenAt(x, y) {
         return Quickshell.screens.find(s => x >= s.x && x < s.x + s.width && y >= s.y && y < s.y + s.height) ?? null
     }
 
-    // While open, the sheet follows the cursor to whichever monitor it moves onto.
+    // follow the cursor to other monitors while open
     function followCursor(text) {
         if (!active || leaving || dragging) return
         let pos
@@ -129,7 +125,6 @@ ShellRoot {
     }
 
     function toggle(name) {
-        // Compared after the portrait skip, so the shortcut on a vertical monitor closes the sheet too.
         const scr = usableScreen(name ? screenNamed(name) : focusedScreen())
         if (active && !leaving && scr === targetScreen) close()
         else show(name)
@@ -150,7 +145,6 @@ ShellRoot {
         s.start()
     }
 
-    // Which way the last tab change moved, and a counter that replays every entrance (also on open).
     property int pageDir: 1
     property int enterSerial: 0
 
@@ -164,7 +158,6 @@ ShellRoot {
         keyRoot.forceActiveFocus()
     }
 
-    // On Hyprland's curves: in the way windows open, out the way they close.
     function animateTo(target) {
         tween.stop()
         tween.from = t
@@ -182,7 +175,6 @@ ShellRoot {
         target: root
         property: "t"
         onFinished: {
-            // Stay resident and hidden (shells.sh reopens over IPC); fully closed lets the next open pick a monitor.
             if (root.leaving) { root.active = false; root.leaving = false }
             else Store.refresh()
         }
@@ -198,9 +190,7 @@ ShellRoot {
         function page(id: string): void { root.selectPage(id); root.show("") }
     }
 
-    // Rows appear only when they would do something: a dependency is met, the hardware exists, styles are present.
     function controlShown(c, values, caps, waybar) {
-        // The style list follows whichever bar is up.
         if (c.type === "waybar" && ((Store.bar === "quickshell" ? Store.quickshell : waybar).styles || []).length === 0) return false
         return Schema.shown(c, values, caps)
     }
@@ -217,7 +207,6 @@ ShellRoot {
         return "Setting" + type.charAt(0).toUpperCase() + type.slice(1) + ".qml"
     }
 
-    // A click on any other monitor counts as outside the sheet too.
     Variants {
         model: Quickshell.screens
 
@@ -254,9 +243,8 @@ ShellRoot {
             right: true
         }
         color: "transparent"
-        // Normal exclusion keeps the sheet below waybar's reserved strip.
         exclusionMode: ExclusionMode.Normal
-        // While open the whole surface takes input, so a click outside the sheet can close it.
+        // whole surface takes input so clicking outside closes it
         mask: Region { item: root.active && !root.leaving ? keyRoot : null }
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "settings-panel"
@@ -268,7 +256,7 @@ ShellRoot {
             anchors.fill: parent
             focus: true
             Keys.onEscapePressed: root.close()
-            // Arrows and vim keys: h/l (or left/right, Tab/Shift+Tab) change tab, j/k (or down/up) turn the wheel or scroll the page.
+            // h/l or tab switches tabs, j/k turns the wheel or scrolls
             Keys.onPressed: event => {
                 const k = event.key
                 if (k === Qt.Key_Left || k === Qt.Key_H || k === Qt.Key_Backtab) root.stepPage(-1)
@@ -292,11 +280,9 @@ ShellRoot {
                 height: parent.height
                 x: (root.t - 1) * width
 
-                // Clicks on bare sheet must not reach the close-on-outside-click backdrop.
                 MouseArea { anchors.fill: parent }
 
-                // Matches Hyprland: its rounding (as set here, override or profile default), no border, translucent
-                // background over compositor blur. The left side is pushed off-screen so only the right corners are rounded.
+                // pushed off the left edge so only the right corners round
                 Rectangle {
                     readonly property real rounding: Store.values["config.decoration.rounding"] ?? 10
                     x: -(rounding + 2)
@@ -352,7 +338,6 @@ ShellRoot {
                         readonly property real cell: (width - gap * (Schema.PAGES.length - 1)) / Schema.PAGES.length
                         readonly property int index: Math.max(0, Schema.PAGES.findIndex(p => p.id === root.page))
 
-                        // One highlight that glides between tabs instead of each tab recoloring.
                         Rectangle {
                             width: tabs.cell
                             height: parent.height
@@ -440,7 +425,6 @@ ShellRoot {
                                     width: body.width
                                     spacing: 6
 
-                                    // Entrance: each section slides in from the side you came from, one after another.
                                     property real enter: 0
                                     opacity: enter
                                     transform: Translate { x: (1 - sec.enter) * 22 * root.pageDir; y: (1 - sec.enter) * 10 }
@@ -485,11 +469,10 @@ ShellRoot {
                                                     required property int index
                                                     readonly property bool on: root.controlShown(modelData, Store.values, Store.caps, Store.waybar)
                                                     readonly property int lead: root.firstShown(sec.modelData.controls, Store.values, Store.caps, Store.waybar)
-                                                    // Animating a 0..1 amount (not the height) keeps live resizes, like an expanding dropdown, immediate.
+                                                    // animate an amount, not the height, so live resizes stay instant
                                                     property real reveal: on ? 1 : 0
                                                     Behavior on reveal { NumberAnimation { duration: Theme.ms(220); easing.type: Easing.OutCubic } }
 
-                                                    // Each control fades up a beat after the one above it.
                                                     property real rowEnter: 0
                                                     SequentialAnimation {
                                                         id: rowAnim
@@ -537,7 +520,6 @@ ShellRoot {
                         }
                     }
 
-                    // The color page is a wheel instead of a list.
                     Loader {
                         id: wheelHost
                         anchors.top: tabs.bottom
@@ -552,7 +534,7 @@ ShellRoot {
                     }
                 }
 
-                // Right edge: drag to resize; pull it far enough back and the sheet snaps closed.
+                // drag the right edge to resize, drag far enough back to close
                 Item {
                     id: grab
                     anchors.right: parent.right
@@ -579,7 +561,6 @@ ShellRoot {
                         property real startX: 0
                         property real startWidth: 0
 
-                        // The pointer's position in window space is the truth; the card follows it.
                         function windowX(mouse) {
                             return mapToItem(win.contentItem, mouse.x, mouse.y).x
                         }

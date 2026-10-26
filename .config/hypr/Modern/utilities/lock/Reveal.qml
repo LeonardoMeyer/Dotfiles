@@ -1,7 +1,5 @@
 import QtQuick
 
-// A module's entrance, exit and on/off: it rises in on its slice of Lock.t, and switching it off (settings, idle)
-// fades it out and folds its height away so the modules around it close up smoothly.
 Item {
     id: r
 
@@ -18,7 +16,6 @@ Item {
     implicitHeight: body.childrenRect.height * shown
     width: implicitWidth
     height: implicitHeight
-    // Leaving, everything sinks a little and fades together.
     opacity: p * shown * (1 - Lock.out)
     visible: opacity > 0.001
     scale: (0.96 + 0.04 * p) * (1 - 0.03 * Lock.out)

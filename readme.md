@@ -34,7 +34,7 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
 > <details>
 >   <summary><picture><img src="images/badges/color-schemes-more-info-v2.svg" alt="Color Schemes (more info)" align="absmiddle"></picture></summary>
 >
->   If you do not want this, **you can pick a fixed color scheme in the settings panel (`Alt+S` → Colors)** or remove it in the given applications `style.css` and add valid color values. Although I highly recommend `Pywal` It's Pretty cool!
+>   If you do not want this, **you can pick a fixed color scheme in the settings panel (`Alt+S` > Colors)** or remove it in the given applications `style.css` and add valid color values. Although I highly recommend `Pywal` It's Pretty cool!
 >
 > </details>
 
@@ -86,16 +86,7 @@ Built by me, with help from my own thoughts and ideas AKA Claude for some of the
 
   ![profiles](https://github.com/elifouts/Dotfiles/blob/main/images/v2/profiles.gif)
 
-  ```
-  hypr/
-    Modern/                 <- a style
-      base/                 <- shared hyprland config
-      laptop/  desktop/     <- variants
-      utilities/            <- quickshells
-      waybar/<name>/        <- waybar styles
-      quickshellbar/<name>/ <- quickshell bar styles
-    tweaks/                 <- your tweaks and saved profiles
-  ```
+  How the folders and scripts fit together is in [`.config/hypr/utilities/readme.md`](.config/hypr/utilities/readme.md).
 </details>
 
 ## My Applications
@@ -139,7 +130,7 @@ Every screenshot below is shown three times, once for each of my saved profiles:
 
 - **`Alt+S`** to open it.
 - This is where you change pretty much everything. Profiles, bar, colors, gaps, blur, animations, cursor, and more. It all updates live.
-- Save your own profile in **Profile → Saved profiles**. Right-click any setting to reset it.
+- Save your own profile in **Profile > Saved profiles**. Right-click any setting to reset it.
 </details>
 
 <details>
@@ -185,7 +176,7 @@ Every screenshot below is shown three times, once for each of my saved profiles:
 
 ![boot](https://github.com/elifouts/Dotfiles/blob/main/images/v2/boot.gif)
 
-- Plays when Hyprland starts. You can turn it off in **Settings → System**.
+- Plays when Hyprland starts. You can turn it off in **Settings > System**.
 </details>
 
 <details>
@@ -196,7 +187,7 @@ Every screenshot below is shown three times, once for each of my saved profiles:
   ![waybar-zen](https://github.com/elifouts/Dotfiles/blob/main/images/v2/waybar-zen.png)
 
   ## Overview
-  This is my minimal Waybar setup for Hyprland, designed to be clean and efficient. There are 4 styles (`default`, `experimental`, `line`, `zen`). Pick one in **Settings → Profile**, and `Alt+A` turns it on and off.
+  This is my minimal Waybar setup for Hyprland, designed to be clean and efficient. There are 4 styles (`default`, `experimental`, `line`, `zen`). Pick one in **Settings > Profile**, and `Alt+A` turns it on and off.
 
   ## Workspaces
   I’ve configured the workspaces so that if there is content on a workspace, the dot appears darker. This helps you keep track of your open content! Inspiration from [Gbar](https://github.com/scorpion-26/gBar).
@@ -233,7 +224,7 @@ Every screenshot below is shown three times, once for each of my saved profiles:
   ![quickshellbar-attached](https://github.com/elifouts/Dotfiles/blob/main/images/v2/quickshellbar-attached.gif)
 
   ## Overview
-  My Quickshell version of Waybar. There are 5 styles (`default`, `attached`, `experimental`, `full`, `zen`). Pick one in **Settings → Profile**, and `Alt+A` turns it on and off.
+  My Quickshell version of Waybar. There are 5 styles (`default`, `attached`, `experimental`, `full`, `zen`). Pick one in **Settings > Profile**, and `Alt+A` turns it on and off.
 
   When you hover the pills they grow into cards for your workspaces, music, wifi, sound and power. Inspiration from [NabyScape](https://github.com/BillyNabil/nabyscape).
 
@@ -653,7 +644,7 @@ Every screenshot below is shown three times, once for each of my saved profiles:
 > [!NOTE]
 > This isnt every Keybind. Just some highlighted ones.
 >
-> Tap `Super` → **Keybinds** to see all of them, or change them in `~/.config/hypr/Modern/base/shortcuts.lua`
+> Tap `Super` > **Keybinds** to see all of them, or change them in `~/.config/hypr/Modern/base/shortcuts.lua`
 
 ## Help
 

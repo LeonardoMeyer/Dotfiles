@@ -8,26 +8,21 @@ import Quickshell.Services.Pipewire
 import Quickshell.Widgets
 import "../common"
 
-// Music player: a square that drops out from under waybar at the top center, toggled with Alt+Enter (see shells.sh).
-// It follows Spotify when that's running, else whichever player is playing; the chip top left switches players.
-// It never takes focus or closes on outside clicks: only the card itself takes input, and keys work once it's clicked.
-// The bottom edge drags to resize (it stays square and centered); the size is remembered between sessions.
-// Drag the card anywhere else to move it around the screen like a window; double-click puts it back.
 ShellRoot {
     id: root
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string uiPath: home + "/.local/state/music-player/ui.json"
 
-    // The window stays mapped (empty input region) so opening never waits on surface creation.
+    // stays mapped so opening is instant
     property bool active: false
     property bool leaving: false
-    // Folded away for a moment (a quickshell bar card opening over it), still open; it drops back in when untucked.
+    // tucked = hidden for a moment while a bar card is over it
     property bool tucked: false
     property real t: 0
     property var targetScreen: null
 
-    // ---- Size -------------------------------------------------------------------------------------------------
+    // Size
 
     readonly property real u: {
         const s = win.screen
@@ -37,7 +32,6 @@ ShellRoot {
     readonly property real screenH: win.screen ? win.screen.height : 1080
     readonly property real defaultSide: Math.round(380 * u)
     readonly property real minSide: Math.round(300 * u)
-    // Never reaches the bottom half's launcher, which rises from the other edge.
     readonly property real maxSide: Math.max(minSide, Math.round(Math.min(720 * u, screenH * 0.55)))
     property real side: defaultSide
     property real dragSide: defaultSide
@@ -45,12 +39,11 @@ ShellRoot {
     readonly property real shown: Math.max(minSide, Math.min(maxSide, dragging ? dragSide : side))
     Behavior on side { enabled: !root.dragging; NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
 
-    // Everything inside is laid out for a 380px card and scales with it, so a resize never reflows.
+    // laid out for 380px and scaled
     readonly property real k: shown / 380
     function px(v) { return Math.round(v * k) }
     readonly property real pad: px(30)
 
-    // The profile's own rounding and outer gap, so the card sits like a window would.
     readonly property real rounding: Theme.rounding
     property real gapsOut: 8
     readonly property real topGap: Math.max(8, gapsOut)
@@ -63,30 +56,25 @@ ShellRoot {
         printErrors: false
     }
 
-    // ---- Position ---------------------------------------------------------------------------------------------
+    // Position
 
-    // How far the card has been dragged from its home under the bar, while it stays open (tucking keeps it;
-    // opening again starts back home).
     property real offX: 0
     property real offY: 0
     property bool moving: false
     Behavior on offX { enabled: !root.moving; NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
     Behavior on offY { enabled: !root.moving; NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-    // Where the open card rests in the window, kept on screen.
     readonly property real homeX: (win.width - shown) / 2
     readonly property real baseX: Math.max(8, Math.min(win.width - shown - 8, homeX + offX))
     readonly property real baseY: Math.max(topGap, Math.min(win.height - shown - 8, topGap + offY))
 
     function resetPosition() {
-        // Jumps rather than glides: it only happens while the card is hidden.
         moving = true
         offX = 0
         offY = 0
         moving = false
     }
 
-    // Where the card sits while open, so the launcher can let clicks on it through instead of closing, and the
-    // quickshell bar can fold it away while one of its cards opens over it.
+    // published so the launcher and bar know where it is
     readonly property string placement: JSON.stringify({
         open: active && !leaving, tucked: tucked, screen: targetScreen?.name ?? "", side: Math.round(shown), top: topGap,
         x: Math.round(baseX), y: Math.round(baseY)
@@ -105,7 +93,6 @@ ShellRoot {
                                  uiPath, JSON.stringify({ side: v / u })])
     }
 
-
     Process {
         id: gapsProc
         command: ["hyprctl", "-j", "getoption", "general:gaps_out"]
@@ -120,10 +107,10 @@ ShellRoot {
         }
     }
 
-    // ---- Players ----------------------------------------------------------------------------------------------
+    // Players
 
     readonly property var players: Theme.players
-    // Chosen with the chip; otherwise Spotify, then whatever is playing, then anything.
+    // picked from the chip, else spotify, else whatever's playing
     property string pinned: ""
     readonly property var player: {
         const ps = players
@@ -143,13 +130,11 @@ ShellRoot {
         pinned = ps[(i + 1) % ps.length].dbusName
     }
 
-    // Quickshell estimates position between updates; asking every frame keeps the bar gliding.
     FrameAnimation {
         running: root.active && root.playing
         onTriggered: if (root.player) root.player.positionChanged()
     }
 
-    // The last skip's direction, so the new track slides in from that side.
     property int dir: 1
     function next() { if (player && player.canGoNext) { dir = 1; player.next() } }
     function previous() { if (player && player.canGoPrevious) { dir = -1; player.previous() } }
@@ -164,7 +149,7 @@ ShellRoot {
         close()
     }
 
-    // ---- Volume -----------------------------------------------------------------------------------------------
+    // Volume
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property real volume: sink && sink.audio ? sink.audio.volume : 0
@@ -174,7 +159,7 @@ ShellRoot {
     function setVolume(v) {
         if (!sink || !sink.audio) return
         sink.audio.volume = Math.max(0, Math.min(1, v))
-        // Moving the volume while muted would otherwise change nothing audible.
+        // unmute when the volume changes
         if (v > 0 && sink.audio.muted) sink.audio.muted = false
     }
     function toggleMute() { if (sink && sink.audio) sink.audio.muted = !muted }
@@ -187,7 +172,7 @@ ShellRoot {
                        : m + ":" + String(r).padStart(2, "0")
     }
 
-    // ---- Open and close ---------------------------------------------------------------------------------------
+    // Open/close
 
     property real vizIntro: 0
 
@@ -214,7 +199,7 @@ ShellRoot {
         gapsProc.running = true
         const scr = focusedScreen()
         if (!active && scr !== targetScreen) {
-            // A different monitor needs a new surface; give it a moment before dropping. It starts at home there.
+            // new monitor needs a new surface, wait a bit
             targetScreen = scr
             resetPosition()
             moveDelay.restart()
@@ -238,7 +223,6 @@ ShellRoot {
         animateTo(0)
     }
 
-    // The same fold and drop as closing and opening, without closing.
     function tuck() {
         if (!active || leaving || tucked) return
         tucked = true
@@ -258,7 +242,6 @@ ShellRoot {
         else show()
     }
 
-    // Both ways on the shared curve, like the bar's cards: the height unfolds and folds in place.
     function animateTo(target) {
         tween.stop()
         tween.from = t
@@ -268,7 +251,6 @@ ShellRoot {
         tween.start()
     }
 
-    // Contents fade in once the shape is nearly full, a beat apart; on the way out they leave together first.
     function stage(from) {
         if (leaving) return Math.max(0, Math.min(1, (t - 0.7) / 0.3))
         return Math.max(0, Math.min(1, (t - from) / (1 - from)))
@@ -289,7 +271,6 @@ ShellRoot {
         }
     }
 
-    // Waits for the card to fill out, so the center bars' pop isn't spent while still faded.
     SequentialAnimation {
         id: vizAnim
         PropertyAction { target: root; property: "vizIntro"; value: 0 }
@@ -306,37 +287,31 @@ ShellRoot {
         function untuck(): void { root.untuck() }
     }
 
-    // ---- Window -----------------------------------------------------------------------------------------------
+    // Window
 
     PanelWindow {
         id: win
         screen: root.targetScreen ?? Quickshell.screens[0]
-        // The whole screen below the bar, so the card can be dragged anywhere; only the card takes input.
         anchors {
             top: true
             bottom: true
             left: true
             right: true
         }
-        // Normal exclusion keeps it below the bar's reserved strip.
         exclusionMode: ExclusionMode.Normal
         color: "transparent"
-        // Only the card takes input, and only while open; everything around it clicks through.
         mask: Region { item: root.active && !root.leaving && !root.tucked ? card : null }
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "music-player"
-        // Never grabs the keyboard; clicking the card lends it focus for the shortcuts below.
+        // never grabs the keyboard, clicking the card focuses it
         WlrLayershell.keyboardFocus: root.active && !root.leaving && !root.tucked ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
         Item {
             id: card
-            // Opens and closes where it rests: full width, its height unfolding from nothing and folding back.
             width: root.shown
             height: root.shown * Math.max(0, Math.min(1, root.t))
-            // Grows from the middle of where it rests, and drops in from the top edge above it.
             x: root.baseX + (root.shown - width) / 2
             y: root.baseY
-            // Solid the whole way (no faint tail for the blur to ghost on).
             opacity: root.active ? Math.min(1, root.t * 8) : 0
             focus: true
 
@@ -355,8 +330,7 @@ ShellRoot {
                 event.accepted = true
             }
 
-            // The card's background: a click focuses it for the keys above, a drag moves it around the screen
-            // (controls on top keep their own presses and drags), and a double-click sends it home.
+            // click focuses, drag moves, double-click resets
             MouseArea {
                 anchors.fill: parent
                 cursorShape: pressed && root.moving ? Qt.ClosedHandCursor : Qt.ArrowCursor
@@ -384,7 +358,6 @@ ShellRoot {
                 }
                 onReleased: {
                     if (!root.moving) return
-                    // Keep what is stored within reach, so the next drag starts from where the card is.
                     root.offX = root.baseX - root.homeX
                     root.offY = root.baseY - root.topGap
                     root.moving = false
@@ -392,7 +365,6 @@ ShellRoot {
                 onDoubleClicked: { root.offX = 0; root.offY = 0 }
             }
 
-            // Matches Hyprland: the profile's rounding, translucent over compositor blur (and hyprglass where enabled).
             Rectangle {
                 anchors.fill: parent
                 radius: Math.min(card.height / 2, root.radius)
@@ -401,7 +373,6 @@ ShellRoot {
                 border.color: Theme.alpha(Theme.fg, 0.07)
             }
 
-            // Contents keep their full-size layout and are revealed by the growing shape, so nothing reflows.
             Item {
                 anchors.fill: parent
                 clip: true
@@ -413,7 +384,7 @@ ShellRoot {
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: root.pad
 
-                    // ---- Top row: player chip and the Spotify button ------------------------------------------
+                    // top row
 
                     Item {
                         id: topRow
@@ -437,7 +408,6 @@ ShellRoot {
                                 anchors.centerIn: parent
                                 spacing: root.px(7)
 
-                                // Breathes while something plays.
                                 Rectangle {
                                     id: liveDot
                                     anchors.verticalCenter: parent.verticalCenter
@@ -499,7 +469,7 @@ ShellRoot {
                         }
                     }
 
-                    // ---- Now playing --------------------------------------------------------------------------
+                    // now playing
 
                     Item {
                         id: nowPlaying
@@ -517,7 +487,6 @@ ShellRoot {
                             url: root.player ? (root.player.trackArtUrl || "") : ""
                         }
 
-                        // Title and artist trade places as a unit: out toward the old side, in from the new one.
                         Item {
                             id: info
                             anchors.left: art.right
@@ -592,7 +561,7 @@ ShellRoot {
                         }
                     }
 
-                    // ---- Bottom: visualizer, controls and the seek bar stacked upward -------------------------
+                    // bottom
 
                     Visualizer {
                         id: viz
@@ -658,7 +627,7 @@ ShellRoot {
                 }
             }
 
-            // Bottom edge: drag to resize. It stays square and centered; near the default it snaps back to it.
+            // drag the bottom edge to resize, snaps near the default size
             Item {
                 id: grab
                 anchors.bottom: parent.bottom
@@ -700,7 +669,6 @@ ShellRoot {
                     }
                     onPositionChanged: mouse => {
                         if (!pressed) return
-                        // Gentle resistance past either end, so the limits feel soft rather than hit.
                         const want = startSide + (windowY(mouse) - startY)
                         const lo = root.minSide, hi = root.maxSide
                         root.dragSide = want < lo ? lo - Math.sqrt(lo - want) * 2
@@ -719,9 +687,6 @@ ShellRoot {
         }
     }
 
-    // ---- Pieces -----------------------------------------------------------------------------------------------
-
-    // A round icon button: a soft disc fades in on hover, presses sink, and `nudge` kicks the glyph that way on click.
     component Glyph: Item {
         id: btn
         property real size: 40
@@ -780,7 +745,6 @@ ShellRoot {
         }
     }
 
-    // The home screen's volume bar, pill-sized: click or drag along it, wheel over it, the speaker toggles mute.
     component Volume: Item {
         id: vb
         height: root.px(24)
@@ -798,7 +762,6 @@ ShellRoot {
                 width: Math.max(parent.height, parent.width * vb.level)
                 radius: height / 2
                 color: root.muted ? Theme.dim : Theme.accent
-                // Follows the pointer exactly while dragging, eases otherwise.
                 Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: Theme.ms(120); easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
             }
@@ -841,7 +804,6 @@ ShellRoot {
         }
     }
 
-    // The accent disc with the morphing glyph; each toggle sends a ring out from its edge.
     component PlayButton: Item {
         id: pb
         property real size: 56
@@ -894,7 +856,6 @@ ShellRoot {
         }
     }
 
-    // Seek bar with times under its ends. Hover thickens it and brings out the knob; dragging previews, release seeks.
     component Seek: Item {
         id: sk
         height: root.px(36)
@@ -926,8 +887,7 @@ ShellRoot {
                     radius: parent.radius
                     width: Math.max(height, parent.width * sk.frac)
                     color: Theme.accent
-                    // Glides to a new spot while paused, but tracks the playhead and the pointer directly: the playhead
-                    // moves every frame, which would restart the animation before it ever advanced and freeze the fill.
+                    // no animation while playing, it would restart every frame and freeze
                     Behavior on width {
                         enabled: !sk.seeking && !root.playing
                         NumberAnimation { duration: Theme.ms(160); easing.type: Easing.OutCubic }
@@ -986,14 +946,12 @@ ShellRoot {
         }
     }
 
-    // Album art that cross-fades: a new cover loads behind the current one and fades in once it's ready.
     component Art: Item {
         id: art
         property string url: ""
         property bool useA: true
 
-        // Whichever image already holds the new cover shows at once; otherwise the hidden one loads it and swaps
-        // in when ready. Re-setting an unchanged source never re-fires onStatusChanged, so that case can't wait on it.
+        // setting the same source doesn't fire onStatusChanged
         onUrlChanged: {
             const front = useA ? imgA : imgB
             const back = useA ? imgB : imgA
@@ -1006,7 +964,6 @@ ShellRoot {
         function swapTo(img) {
             useA = img === imgA
         }
-        // A cover that can't load falls back to the placeholder rather than leaving the last track's up.
         function settled(img) {
             if (img.source != url) return
             if (img.status === Image.Ready || img.status === Image.Error) swapTo(img)

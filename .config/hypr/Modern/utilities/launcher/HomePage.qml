@@ -1,9 +1,6 @@
 import QtQuick
 import "../common"
 
-// Home: session and desktop actions on a dial. Home, Settings and Wallpaper always lead from twelve o'clock;
-// the rest follow, most used first.
-// Logging out, rebooting and powering off take a second press.
 Item {
     id: page
 
@@ -24,7 +21,6 @@ Item {
         { id: "settings", icon: "", label: "Settings", sub: "Hyprland settings", after: true, cmd: util + "shells.sh settings" }
     ]
     readonly property var pinned: ["home", "settings", "wallpaper"]
-    // Pinned first in that order, then usage order; ties keep the order above.
     readonly property var entries: pinned.map(id => commands.find(c => c.id === id)).concat(commands
         .filter(c => !pinned.includes(c.id))
         .map((c, i) => ({ c: c, i: i, n: counts[c.id] || 0 }))
@@ -60,7 +56,7 @@ Item {
         return true
     }
 
-    // Esc first backs out of a pending confirmation.
+    // esc cancels a pending confirm first
     function cancel() {
         if (armed < 0) return false
         armed = -1

@@ -56,7 +56,7 @@ Item {
         }
     }
 
-    // Right-click puts the setting back to the profile's own value.
+    // right-click resets to the profile value
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton

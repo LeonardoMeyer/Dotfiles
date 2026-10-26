@@ -1,16 +1,13 @@
--- ~/.config/nvim/lua/plugins/telescope.lua
 return {
     {
         "nvim-telescope/telescope.nvim",
         tag = "0.1.8",
         dependencies = {
             "nvim-lua/plenary.nvim",
-            "nvim-treesitter/nvim-treesitter",  -- ensure Treesitter loads first
+            "nvim-treesitter/nvim-treesitter",
         },
         config = function()
-            -- Telescope current_buffer_fuzzy_find on 0.1.x uses
-            -- require("nvim-treesitter.parsers").ft_to_lang(). Some parser builds
-            -- don't expose it, so provide a compatibility shim.
+            -- shim for parser builds missing ft_to_lang
             local ok_parsers, ts_parsers = pcall(require, "nvim-treesitter.parsers")
             if ok_parsers and ts_parsers and ts_parsers.ft_to_lang == nil then
                 ts_parsers.ft_to_lang = function(ft)
@@ -28,12 +25,11 @@ return {
 
             local ts_ok, ts_utils = pcall(require, "telescope.previewers.utils")
             if ts_ok and ts_utils then
-                -- override ts_highlighter to prevent ft_to_lang errors
                 local original_ts_highlighter = ts_utils.ts_highlighter
                 ts_utils.ts_highlighter = function(...)
                     local ok, _ = pcall(original_ts_highlighter, ...)
                     if not ok then
-                        return -- silently ignore unsupported filetypes
+                        return
                     end
                 end
             end
@@ -42,7 +38,7 @@ return {
             telescope.setup({
                 defaults = {
                     preview = {
-                        treesitter = true,  -- keep TS preview
+                        treesitter = true,
                     },
                 },
                 extensions = {
@@ -55,7 +51,6 @@ return {
             vim.keymap.set("n", "<C-p>", builtin.find_files, { desc = "Telescope: Find files" })
             vim.keymap.set("n", "<A-f>", builtin.live_grep, { desc = "Telescope: Live grep" })
 
-            -- Global function for folder search
             _G.search_and_scope_into_directory = function()
                 builtin.find_files({
                     prompt_title = "Search Directories",

@@ -1,6 +1,5 @@
 import QtQuick
 
-// A small button: accent-filled when primary, a quiet tint otherwise.
 Rectangle {
     id: b
 

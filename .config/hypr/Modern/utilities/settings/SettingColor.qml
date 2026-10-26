@@ -1,7 +1,7 @@
 import QtQuick
 import "../common"
 
-// A 0xRRGGBBAA color: type the hex, or pick a palette swatch (which keeps the current alpha).
+// 0xRRGGBBAA, swatches keep the current alpha
 Item {
     id: control
 
@@ -72,7 +72,6 @@ Item {
             font.pixelSize: 12
             color: Theme.bright
             selectionColor: Theme.alpha(Theme.accent, 0.6)
-            // Shows the live value until you start typing.
             text: "#" + control.hex
             onActiveFocusChanged: if (activeFocus) selectAll()
             onEditingFinished: {
@@ -114,7 +113,6 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    // A fully transparent color would show nothing; picking a swatch makes it visible.
                     onClicked: control.commit(String(chip.modelData).slice(1).toLowerCase(),
                                               control.alphaHex === "00" ? "33" : control.alphaHex)
                 }
@@ -122,7 +120,7 @@ Item {
         }
     }
 
-    // Right-click puts the setting back to the profile's own value.
+    // right-click resets to the profile value
     MouseArea {
         anchors.fill: parent
         z: -1

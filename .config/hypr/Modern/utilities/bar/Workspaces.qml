@@ -6,14 +6,10 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import "../common"
 
-// Everything about workspaces: the bar's dots, the Exposé page its pill grows into, and the full-screen
-// overview (Super+Tab). The root is what they draw from: Hyprland's windows, workspaces and monitor geometry,
-// kept fresh only while a view is showing (`active`), by refetching on window events and a slow poll.
 Item {
     id: ex
 
     property bool active: false
-    // Bumped after every refetch, so anything reading lastIpcObject re-evaluates.
     property int rev: 0
 
     readonly property string wallpaper: wallFile.text().trim()
@@ -32,7 +28,6 @@ Item {
         Hyprland.refreshMonitors()
         settle.restart()
     }
-    // The refetch lands asynchronously; re-read once it has.
     Timer { id: settle; interval: 60; onTriggered: ex.rev++ }
 
     onActiveChanged: if (active) refresh()
@@ -48,7 +43,7 @@ Item {
     Timer { id: debounce; interval: 80; onTriggered: ex.refresh() }
     Timer { running: ex.active; interval: 1500; repeat: true; onTriggered: ex.refresh() }
 
-    // A monitor's area in layout coordinates: rotated monitors swap sides, scale shrinks both.
+    // layout coords: rotation swaps sides, scale shrinks both
     function geometry(mon) {
         rev
         if (!mon) return { x: 0, y: 0, w: 1920, h: 1080 }
@@ -60,7 +55,7 @@ Item {
         return { x: o.x ?? mon.x, y: o.y ?? mon.y, w: w, h: h }
     }
 
-    // Windows on a workspace, oldest first so the most recently used is drawn on top.
+    // oldest first so the newest draws on top
     function windowsOn(id) {
         rev
         return Hyprland.toplevels.values
@@ -69,7 +64,6 @@ Item {
             .sort((a, b) => (b.lastIpcObject.focusHistoryID ?? 0) - (a.lastIpcObject.focusHistoryID ?? 0))
     }
 
-    // A monitor's workspaces in order, then the next free number for starting a new one.
     function workspacesOn(screenName) {
         rev
         const all = Hyprland.workspaces.values.filter(w => w.id > 0)
@@ -100,11 +94,6 @@ Item {
         Theme.dispatch("hl.dsp.focus({ workspace = " + id + " })", "workspace " + id)
     }
 
-    // ---- Dots -------------------------------------------------------------------------------------------------
-
-    // Workspaces 1-5 always, plus any others, the same on every monitor like waybar's: the focused one stretches
-    // into a pill that slides along as focus moves, occupied ones are solid, empty ones faint. Click to go
-    // there, scroll to step through them.
     component Dots: Row {
         id: dots
 
@@ -166,11 +155,6 @@ Item {
         }
     }
 
-    // ---- Tile -------------------------------------------------------------------------------------------------
-
-    // One workspace in miniature: the monitor's shape over the wallpaper, each window at its real place with a
-    // live preview and its app icon. Click a window to focus it, anywhere else to go to the workspace. `big`
-    // (the overview) labels every window; the small tiles name a window while it is hovered.
     component Tile: Item {
         id: tile
 
@@ -178,7 +162,6 @@ Item {
         property int wsId: 1
         property var monitor: null
         property bool current: false
-        // The "new workspace" tile: no windows, a plus instead.
         property bool isNew: false
         property bool big: false
         signal windowPicked(var toplevel)
@@ -265,7 +248,6 @@ Item {
                             constraintSize: Qt.size(Math.ceil(win.width * 2), Math.ceil(win.height * 2))
                         }
 
-                        // The app's icon: centered until the preview arrives, then a small badge.
                         IconImage {
                             readonly property real full: Math.min(48, Math.min(win.width, win.height) * 0.4)
                             implicitSize: shot.hasContent ? Math.min(full, tile.big ? 22 : 14) : full
@@ -317,7 +299,6 @@ Item {
             }
         }
 
-        // The accent marks the workspace on screen.
         Rectangle {
             anchors.fill: parent
             scale: screen.scale
@@ -329,10 +310,6 @@ Item {
         }
     }
 
-    // ---- Page -------------------------------------------------------------------------------------------------
-
-    // The workspaces pill's page: this monitor's workspaces as tiles, as many columns as the card has room for
-    // (so it fits a portrait monitor too), and the way into the overview.
     component Page: Column {
         id: page
 
@@ -349,7 +326,6 @@ Item {
         readonly property int cols: Math.max(1, Math.min(3, cells.length, Math.floor((width + gap) / (150 + gap))))
         readonly property int rows: Math.ceil(cells.length / cols)
         readonly property var geom: expose.geometry(monitor)
-        // Wide as the columns allow, and short enough that every row fits under the bar.
         readonly property real tileW: Math.min((width - (cols - 1) * gap) / cols, (420 / rows - 18) * geom.w / geom.h)
 
         spacing: 12
@@ -401,12 +377,6 @@ Item {
         }
     }
 
-    // ---- Overview ---------------------------------------------------------------------------------------------
-
-    // Every workspace on a monitor as a large tile with live, labelled windows, over the blurred desktop. Click a
-    // window to focus it, a workspace to go there, the backdrop (or Escape) to close; 1-9 jump to a workspace.
-    // The window stays mapped and only takes input while showing, so it never waits on a new surface: it fades
-    // in and settles into place the way windows open, and leaves the way they close.
     component Overview: PanelWindow {
         id: ov
 
@@ -427,7 +397,6 @@ Item {
         WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         mask: Region { item: ov.open ? backdrop : null }
 
-        // 0 hidden, 1 showing; the tiles only exist (and capture windows) while it is above 0.
         property real t: 0
         readonly property bool shown: open || t > 0
         onOpenChanged: {
@@ -448,7 +417,6 @@ Item {
         readonly property real gap: 28
         readonly property int rows: Math.ceil(tiles.length / cols)
         readonly property var geom: expose ? expose.geometry(monitor) : ({ x: 0, y: 0, w: 1920, h: 1080 })
-        // As large as fits both ways, so portrait monitors don't run off the screen.
         readonly property real tileW: Math.min(620, (width - 160 - (cols - 1) * gap) / cols,
             (height - 200 - (rows - 1) * (gap + 30)) / rows * geom.w / geom.h)
 
@@ -531,7 +499,6 @@ Item {
                         readonly property int wsId: isNew ? ov.spaces.next : modelData
                         readonly property var windows: ov.expose.windowsOn(wsId)
                         spacing: 10
-                        // Tiles settle in one after another.
                         opacity: Math.max(0, Math.min(1, ov.t * 1.6 - index * 0.06))
 
                         Row {

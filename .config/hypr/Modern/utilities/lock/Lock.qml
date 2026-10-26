@@ -8,21 +8,17 @@ import Quickshell.Services.Pam
 import Quickshell.Services.Mpris
 import Quickshell.Services.UPower
 
-// Everything the lock's monitors share: palette, motion, the settings, the password and its check, the player.
-// Self-contained like boot: quickshell only loads files under the folder it was started on, so ../common is out,
-// and its look (cards, accent, Hyprland's rounding) is copied from there.
+// shared state for every monitor's lock. can't import ../common, so the theme is copied
 Singleton {
     id: root
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string user: Quickshell.env("USER")
     readonly property string sans: "CodeNewRoman Nerd Font Propo"
-    // lock.sh --preview: a window per monitor instead of a real lock, for trying the settings.
     readonly property bool preview: Quickshell.env("LOCK_PREVIEW") === "1"
-    // Where shell.qml leaves each monitor's last frame before locking, to fade from.
     readonly property string shots: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/quickshell-lock"
 
-    // ---- Palette (same roles as common/Theme) -----------------------------------------------------------------
+    // Palette
 
     FileView {
         id: walFile
@@ -47,7 +43,6 @@ Singleton {
     }
     FileView { id: walPath; path: root.home + "/.cache/wal/wal"; printErrors: false }
 
-    // The visualizer's gradient, left to right (common/Theme's).
     readonly property var spectrum: wal
         ? [wal.colors.color4, wal.colors.color9, wal.colors.color13, wal.colors.color12, wal.colors.color14]
         : ["#5f87af", "#8fd3ff", "#c3a6ff", "#87afd7", "#9fe0d0"]
@@ -61,12 +56,10 @@ Singleton {
         const a = Qt.color(stops[i]), b = Qt.color(stops[i + 1]), m = x - i
         return Qt.rgba(a.r + (b.r - a.r) * m, a.g + (b.g - a.g) * m, a.b + (b.b - a.b) * m, 1)
     }
-    // Corners follow Hyprland's rounding like the other utilities, never past a pill.
     function corner(h, u) { return Math.min(h / 2, rounding * u) }
 
-    // ---- Motion ----------------------------------------------------------------------------------------------
+    // Motion
 
-    // Hyprland's own rounding; cards take it as is and smaller pieces scale with it, as on the home screen.
     property real rounding: 10
     readonly property var settle: [0.2, 0.9, 0.3, 1, 1, 1]
     Process {
@@ -77,14 +70,12 @@ Singleton {
         }
     }
 
-    // t runs 0 -> 1 as the lock comes in; every module reads its own slice of it.
+    // t: 0 -> 1 as it locks
     property real t: 0
     function seg(delay) { return Math.max(0, Math.min(1, (t - delay) / (1 - delay))) }
     NumberAnimation { id: tween; target: root; property: "t"; to: 1; duration: 750; easing.type: Easing.OutCubic }
     function enter() { if (!leaving && !tween.running && t < 1) tween.start() }
 
-    // Leaving: the modules sink away (out 0 -> 1), then shell.qml's handoff layers take over the backdrop, the lock
-    // drops beneath them, and they fade and sharpen into the live desktop (fade 1 -> 0).
     property bool leaving: false
     property real out: 0
     property bool handoff: false
@@ -101,7 +92,7 @@ Singleton {
         id: outro
         NumberAnimation { target: root; property: "out"; to: 1; duration: 200; easing.type: Easing.InQuad }
         ScriptAction { script: root.handoff = true }
-        // Two frames for the handoff layers to draw before the lock drops from over them.
+        // two frames for the handoff layers to draw
         PauseAnimation { duration: 34 }
         ScriptAction { script: root.unlock() }
         PauseAnimation { duration: 16 }
@@ -109,7 +100,7 @@ Singleton {
         ScriptAction { script: root.finish() }
     }
 
-    // ---- Settings (the gear menu), kept in ~/.local/state ------------------------------------------------------
+    // Settings, saved in ~/.local/state
 
     readonly property var defaults: ({ clock: true, greeter: true, music: true, battery: true, power: true, idleHide: true })
     readonly property var labels: [
@@ -132,9 +123,8 @@ Singleton {
     }
     property bool menuOpen: false
 
-    // ---- Password ------------------------------------------------------------------------------------------
+    // Password
 
-    // Shared by every monitor's field, so typing follows the keyboard focus wherever it lands.
     property string password: ""
     property bool failed: false
     property bool checking: false
@@ -167,7 +157,6 @@ Singleton {
         onError: { root.checking = false; root.password = ""; root.failed = true; root.rejected() }
     }
 
-    // Caps Lock, asked of Hyprland as keys come in.
     property bool capsLock: false
     Process {
         id: capsProc
@@ -180,7 +169,7 @@ Singleton {
     }
     function checkCaps() { if (!capsProc.running) capsProc.running = true }
 
-    // ---- Idle: after a while only the clock stays; any input brings the rest back ---------------------------
+    // Idle: only the clock stays after a while
 
     property bool idle: false
     function poke() {
@@ -194,9 +183,9 @@ Singleton {
         onTriggered: root.idle = root.cfg.idleHide && root.password === "" && !root.menuOpen
     }
 
-    // ---- Media and battery -----------------------------------------------------------------------------------
+    // Media and battery
 
-    // Spotify, then whatever is playing, then anything (the music utility's order); playerctld only mirrors them.
+    // spotify first, then whatever's playing
     readonly property var player: {
         const ps = Mpris.players.values.filter(p => !(p.dbusName || "").includes("playerctld"))
         if (ps.length === 0) return null
@@ -216,7 +205,7 @@ Singleton {
     readonly property bool charging: hasBattery
         && (battery.state === UPowerDeviceState.Charging || battery.state === UPowerDeviceState.FullyCharged)
 
-    // The monitor the controls go on (unless they go everywhere): the one focused when the lock came up.
+    // controls go on the monitor that was focused
     readonly property string mainScreen: Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : ""
     property string lockedOn: ""
     onMainScreenChanged: if (lockedOn === "") lockedOn = mainScreen

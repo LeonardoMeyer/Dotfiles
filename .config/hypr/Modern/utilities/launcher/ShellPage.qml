@@ -2,25 +2,21 @@ import QtQuick
 import Quickshell.Io
 import "../common"
 
-// Every bash command (PATH executables plus .bashrc aliases and functions) on a vertical wheel.
-// Enter runs the centered one in kitty, Shift+Enter runs it in the background. Typing arguments offers the
-// line exactly as typed.
+// enter runs in kitty, shift+enter in the background
 Item {
     id: page
 
     property var commands: []
     property var counts: ({})
     property string query: ""
-    // True while this tab is on screen. Off screen, changes only mark the list stale, so typing in another
-    // tab never pays for sorting thousands of commands.
+    // only re-sort when visible
     property bool live: false
     property bool dirty: true
     signal run(string cmd, string key, bool background)
 
     readonly property var current: wheel.n > 0 ? wheel.entries[wheel.cur] : null
 
-    // Your own aliases and functions, then names that start with a letter (before ones like ".."), then by name.
-    // Sorted once per scan, so each search only orders its hits.
+    // own aliases/functions first, then letters, then by name
     readonly property var kindRank: ({ alias: 0, "function": 1, bin: 2 })
     readonly property var ordered: {
         const list = commands.map(e => ({ n: e.n, k: e.k, d: e.d, l: e.n.toLowerCase(), dl: (e.d || "").toLowerCase(), sym: /^[a-z0-9]/i.test(e.n) ? 0 : 1 }))
@@ -51,7 +47,6 @@ Item {
         const word = q.toLowerCase().split(/\s+/)[0]
         let list
         if (q === "") {
-            // Used commands first, most used on top; everything else keeps the base order. No full sort needed.
             const used = ordered.filter(e => counts[e.n])
             used.sort((a, b) => counts[b.n] - counts[a.n] || a.order - b.order)
             list = used.concat(ordered.filter(e => !counts[e.n]))
@@ -61,14 +56,13 @@ Item {
                 const s = score(e, word)
                 if (s > 0) hits.push({ e: e, s: s, u: counts[e.n] || 0 })
             }
-            // Best match, then most used, then the shortest name (closest to what was typed).
+            // best match, most used, shortest
             hits.sort((a, b) => b.s - a.s || b.u - a.u || a.e.n.length - b.e.n.length || a.e.order - b.e.order)
             list = hits.map(h => h.e)
         }
         if (q !== "") {
             const typed = { n: q, k: "run", d: "run as typed" }
             const exact = list.length > 0 && list[0].n.toLowerCase() === word
-            // Arguments mean the typed line is the command; otherwise it trails the matches.
             if (/\s/.test(q)) list.unshift(typed)
             else if (!exact) list.push(typed)
         }
@@ -93,7 +87,6 @@ Item {
         return true
     }
 
-    // The man-page summary of the centered command, looked up once scrolling pauses.
     property string summary: ""
     onCurrentChanged: {
         summary = ""
@@ -138,7 +131,7 @@ Item {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
-            text: !page.current ? (page.commands.length === 0 ? "Loading commands…" : "Nothing matches “" + page.query + "”")
+            text: !page.current ? (page.commands.length === 0 ? "Loading commands..." : "Nothing matches '" + page.query + "'")
                 : page.current.k === "alias" ? "alias  ·  " + page.current.d
                 : page.current.k === "function" ? "function from .bashrc"
                 : page.current.k === "run" ? "runs the line as typed"

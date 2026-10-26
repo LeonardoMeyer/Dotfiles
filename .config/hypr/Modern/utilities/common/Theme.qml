@@ -6,22 +6,14 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Services.Mpris
 
-// The palette, motion and small helpers every utility shares (import "../common"). Same roles as waybar:
-// color9 accent, color7 text, background translucent.
+// shared palette, animation timing and helpers
 Singleton {
     id: root
 
     readonly property string sans: "CodeNewRoman Nerd Font Propo"
     readonly property int pad: 14
 
-    // ---- Hyprland's own look and motion, kept live --------------------------------------------------------------
-
-    // Corner rounding, and motion that follows the windows: the curves they open (settle) and close (leave) on,
-    // their speed, and nothing moving at all while Hyprland's animations are off. The settings panel's "default
-    // quickshell animations" (utilities.animations) gives the utilities their own curve and pace instead, even then.
-    // Every duration goes through ms(): `ms(280)` is about as long as a window takes to open.
     property real rounding: 10
-    // hyprglass glasses Quickshell's layers (the settings panel's "Glass on Quickshell"); false without the plugin.
     property bool glass: false
     property bool hyprAnimates: true
     property real hyprPace: 1
@@ -37,8 +29,7 @@ Singleton {
     readonly property int fast: ms(160)
     readonly property int move: ms(280)
 
-    // A corner drawn at Hyprland's default rounding (10), scaled to the live one, so every utility's cards, tabs
-    // and buttons round off together (and go square with it).
+    // corner radius scaled to hyprland's rounding
     function r(px) {
         return px * rounding / 10
     }
@@ -68,7 +59,7 @@ Singleton {
         }
     }
 
-    // Asked on its own: without the plugin hyprctl answers with an error rather than JSON.
+    // hyprctl errors instead of JSON without the plugin
     Process {
         id: glassProc
         command: ["sh", "-c", "for o in enabled namespaces exclude_namespaces; do hyprctl -j getoption plugin:hyprglass:layers:$o; done"]
@@ -76,7 +67,6 @@ Singleton {
             onStreamFinished: {
                 try {
                     const [on, only, except] = text.trim().split(/\n(?=\{)/).map(s => JSON.parse(s))
-                    // overrides.lua narrows layer glass to Quickshell's namespaces, or leaves them out.
                     const ns = "quickshell-bar"
                     const has = o => (o.str || "").split(",").includes(ns)
                     root.glass = on.int === 1 && (!only.str || only.str === "[[EMPTY]]" || has(only)) && !has(except)
@@ -92,7 +82,6 @@ Singleton {
             onStreamFinished: {
                 try {
                     const [leaves, beziers] = JSON.parse(text)
-                    // A leaf left unset follows its parent.
                     const parent = { windowsIn: "windows", windowsOut: "windows", windows: "global" }
                     const leaf = (name, has) => {
                         for (let n = name; n; n = parent[n]) {
@@ -108,7 +97,7 @@ Singleton {
                     }
                     root.hyprSettle = curve("windowsIn") ?? root.own
                     root.hyprLeave = curve("windowsOut") ?? root.hyprSettle
-                    // Speed is in tenths of a second; 3 is the pace these utilities were timed at.
+                    // speed is in deciseconds, 3 is what everything was tuned at
                     const w = leaf("windowsIn", l => l.speed > 0)
                     root.hyprPace = w ? Math.max(0.2, Math.min(3, w.speed / 3)) : 1
                 } catch (e) {}
@@ -116,7 +105,7 @@ Singleton {
         }
     }
 
-    // The file is written just before the compositor applies it, so ask a few times as it settles.
+    // file is written right before hyprland applies it, so retry a few times
     FileView {
         id: settingsFile
         path: Quickshell.env("HOME") + "/.config/hypr/settings.lua"
@@ -137,8 +126,7 @@ Singleton {
         function onRawEvent(event) { if (event.name === "configreloaded") root.refresh() }
     }
 
-    // Hyprland configured in Lua (hyprland.lua, read over hyprland.conf) takes Lua dispatches, otherwise the classic
-    // ones; the bar can be installed on its own next to either (InstallScripts/quickshellbarinstall.sh).
+    // lua dispatch if hyprland.lua is in use
     FileView {
         id: luaFile
         path: Quickshell.env("HOME") + "/.config/hypr/hyprland.lua"
@@ -151,24 +139,18 @@ Singleton {
         Hyprland.dispatch(root.lua ? lua : classic)
     }
 
-    // Media players, without playerctld: it only mirrors the real ones, and keeps the last track once they stop.
+    // skip playerctld, it keeps the last track after players stop
     readonly property var players: Mpris.players.values.filter(p => !(p.dbusName || "").includes("playerctld"))
 
-    // Whether a media player or tray app is Spotify.
     function isSpotify(x) {
         return !!x && [x.identity, x.dbusName, x.id, x.title, x.tooltipTitle].some(s => (s || "").toLowerCase().includes("spotify"))
     }
 
-    // Opens Spotify: focuses its window, or reveals its pypr scratchpad when it is hidden there or not running.
     function openSpotify() {
         Quickshell.execDetached([Quickshell.shellDir + "/common/spotify.sh"])
     }
 
-    // ---- The monitor under the cursor ---------------------------------------------------------------------------
-
-    // Hands done(screen) the monitor under the cursor, for a utility opening there. Hyprland.focusedMonitor can be
-    // stale until the first focus event after startup, so this asks for the cursor directly; the focused monitor
-    // is only the fallback.
+    // focusedMonitor can be stale at startup, so ask for the cursor position
     function locate(done) {
         located.push(done)
         cursorQuery.running = true
@@ -198,8 +180,6 @@ Singleton {
         onExited: code => { if (code !== 0) root.found(null) }
     }
 
-    // ---- Palette ----------------------------------------------------------------------------------------------
-
     FileView {
         id: walFile
         path: Quickshell.env("HOME") + "/.cache/wal/colors.json"
@@ -210,7 +190,7 @@ Singleton {
     readonly property var saved: {
         try { return JSON.parse(walFile.text()) } catch (e) { return null }
     }
-    // The wallpaper picker's selection, shown before it is applied: its 16 colors, or null for the saved palette.
+    // wallpaper picker preview palette, null when not previewing
     property var preview: null
     readonly property var wal: preview ? {
         colors: preview.reduce((o, c, i) => (o["color" + i] = c, o), {}),
@@ -219,12 +199,10 @@ Singleton {
     readonly property color accent: wal ? wal.colors.color9 : "#8fd3ff"
     readonly property color fg: wal ? wal.colors.color7 : "#c7c6c2"
     readonly property color bright: wal ? wal.colors.color15 : "#ffffff"
-    // Derived from the text color so it stays readable on every palette (color8 is too dark on schemes like Nord).
+    // based on the text color, color8 is too dark on some schemes
     readonly property color dim: Qt.rgba(fg.r, fg.g, fg.b, 0.5)
     readonly property color bg: wal ? wal.special.background : "#101418"
-    // Destructive actions waiting for a second press.
     readonly property color warn: wal ? wal.colors.color1 : "#e06c75"
-    // The visualizer's gradient, left to right.
     readonly property var spectrum: wal
         ? [wal.colors.color4, wal.colors.color9, wal.colors.color13, wal.colors.color12, wal.colors.color14]
         : ["#5f87af", "#8fd3ff", "#c3a6ff", "#87afd7", "#9fe0d0"]
@@ -233,7 +211,6 @@ Singleton {
         return Qt.rgba(c.r, c.g, c.b, a)
     }
 
-    // A color f (0-1) of the way along a list of stops.
     function along(stops, f) {
         if (!stops || stops.length === 0) return accent
         if (stops.length === 1) return stops[0]

@@ -1,7 +1,5 @@
 import QtQuick
 
-// A thin track with a knob that comes out under the cursor: drag or click to set, scroll to nudge. Reports
-// values between `from` and `to`; whoever owns the value rounds or snaps it.
 Item {
     id: sl
 
@@ -9,7 +7,6 @@ Item {
     property real from: 0
     property real to: 1
     property bool dimmed: false
-    // Scrolling over it nudges the value; off where the scroll belongs to the page around it (settings).
     property bool scrollable: true
     readonly property bool hot: area.containsMouse || area.pressed
     signal moved(real value)

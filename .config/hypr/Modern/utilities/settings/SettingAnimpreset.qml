@@ -1,8 +1,6 @@
 import QtQuick
 import "Schema.js" as Schema
 
-// Animation preset: picking one writes its whole curve/speed/style set; "Profile" hands control back to
-// the active profile's own animations. Editing the curve by hand switches to "Custom".
 Dropdown {
     id: control
 
@@ -31,7 +29,7 @@ Dropdown {
         }
     }
 
-    // Right-click puts the setting back to the profile's own value.
+    // right-click resets to the profile value
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton

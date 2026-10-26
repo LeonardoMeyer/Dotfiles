@@ -1,5 +1,4 @@
 # ~/.bashrc
-# Interactive shells only
 [[ $- != *i* ]] && return
 # Environment
 export EDITOR=nvim
@@ -7,10 +6,9 @@ export VISUAL=nvim
 export NVM_DIR="$HOME/.nvm"
 export PATH="$HOME/.npm-global/bin:$PATH"
 export wallpaper="$HOME/wallpapers/pywallpaper.jpg"
-# Fast startup
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 myfetch -c 8 -C " █" && eval "$(starship init bash)"
-# General aliases
+# aliases
 alias lsd='eza --icons'
 alias grep='grep --color=auto'
 alias c='clear'
@@ -36,15 +34,13 @@ alias pacq='pacman -Qs'
 alias pacinfo='pacman -Qi'
 alias pacfiles='pacman -Ql'
 alias pacclean='sudo paccache -r'
-# Hyprland plugins are built against the installed Hyprland, so rebuild them
-# after anything that can change either side.
+# rebuild hyprglass after updates
 hyprplugins() {
     command -v hyprpm >/dev/null || return 0
     hyprpm list 2>/dev/null | grep -qi hyprglass || return 0
     hyprpm update && hyprpm reload -n >/dev/null
 }
 pacup() { sudo pacman -Syu "$@" && hyprplugins; }
-# Remove orphaned packages
 pacorphans() {
     local packages
     packages=$(pacman -Qdtq) || return
@@ -91,7 +87,6 @@ alias bye='sudo shutdown -h now'
 alias loop='sudo reboot'
 # Dotfiles
 dotpull() { git -C ~/Dotfiles pull && hyprplugins; }
-# Show changes, prompt for a commit message, then commit and push everything
 dotpush() {
     local dir=~/Dotfiles msg
     [[ -z "$(git -C "$dir" status --porcelain)" ]] && {
@@ -114,7 +109,7 @@ alias UpdateLocal='~/Dotfiles/InstallScripts/apply.sh'
 alias Savepro='~/.config/hypr/utilities/save-profile.sh'
 alias Nvim='cd ~/.config/nvim/ && nvim'
 
-# Optional command-result sounds
+# error/success sounds, enable with PROMPT_COMMAND='lol'
 lol() {
     local status=$?
     if (( status != 0 )); then
@@ -123,6 +118,4 @@ lol() {
         paplay "$HOME/.config/sounds/good.mp3" >/dev/null 2>&1 &
     fi
 }
-# Uncomment to enable command-result sounds
-# PROMPT_COMMAND='lol'
 export PATH="$HOME/.local/bin:$PATH"

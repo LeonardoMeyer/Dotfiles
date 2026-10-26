@@ -1,8 +1,5 @@
 #!/bin/bash
-# Symlink everything in the dotfiles repo into $HOME. Edits on either side are
-# the same files, so no syncing is needed; new top-level entries are picked up
-# by re-running this script. Plugins are rebuilt too, since pulled configs may
-# use options only a newer plugin release knows.
+# symlinks the repo into $HOME and rebuilds plugins
 
 set -euo pipefail
 

@@ -1,12 +1,12 @@
 #!/bin/bash
-# Prints "<output><TAB><screen-sized copy>" per monitor, plus "*" for the wal wallpaper; decoding the originals is what makes opening slow.
+# prints "<output>\t<screen copy>" per monitor, plus "*" for the wal wallpaper
 set -uo pipefail
 
 dir="$HOME/.cache/hypr-home"
 mkdir -p "$dir"
 used=()
 
-# Sets $result rather than printing, so $used survives (command substitution would lose it).
+# sets $result so $used isn't lost in a subshell
 cache() {
     local src="$1" key
     [ -f "$src" ] || return 1
@@ -22,7 +22,6 @@ if wal_src="$(< "$HOME/.cache/wal/wal")" && cache "$wal_src"; then
     printf '*\t%s\n' "$result"
 fi
 
-# Each monitor's own wallpaper, as awww reports it.
 re='^: ?([^:]+):.*image: (.+)$'
 while IFS= read -r line; do
     if [[ "$line" =~ $re ]]; then

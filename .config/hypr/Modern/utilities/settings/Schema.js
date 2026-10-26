@@ -1,14 +1,5 @@
 .pragma library
 
-// Every page and option of the panel. Keys are dotted paths into the active profile's tweaks:
-//   config.*  -> hl.config() options (live values come from hyprctl getoption)
-//   glass.*  -> hyprglass preset values, layered over hyprglass.lua's preset by overrides.lua
-//   hyprglass.layers / hyprglass.quickshell -> which layers get glass, worked out by overrides.lua
-//   animation.*, border.*, cursor.*, boot.* -> handled by overrides.lua / startup.lua
-// Adding an option is one line here. Choices with 5+ options render as a dropdown.
-// A control can carry `when` (hide unless another option has a value) or `cap` (hide unless
-// the hardware has it), so the panel never shows a setting that would do nothing.
-
 function slider(key, label, min, max, step, unit, extra) {
     return Object.assign({ type: "slider", key: key, label: label, min: min, max: max, step: step, unit: unit || "" }, extra)
 }
@@ -29,16 +20,14 @@ function opt(v, l, extra) {
 }
 
 var ON = { eq: true }
-// Windows, other apps' layers and Quickshell are glassed separately; the look applies wherever any is on.
 var WINDOWS = { key: "config.plugin.hyprglass.enabled", eq: true }
 var LAYER_KEYS = ["hyprglass.layers", "hyprglass.quickshell"]
 var LAYERS = { any: [{ key: "hyprglass.layers", eq: true }, { key: "hyprglass.quickshell", eq: true }] }
 var GLASS = { any: [WINDOWS, { key: "hyprglass.layers", eq: true }, { key: "hyprglass.quickshell", eq: true }] }
-// Layer/subsurface presets: "" follows the windows' preset; then this setup's preset and the built-ins.
+// "" follows the window preset
 var PRESET_OPTIONS = [opt("", "Same as windows", { dflt: true }), opt("apple_extreme", "Apple extreme"),
     opt("glass", "Glass"), opt("pomme", "Pomme"), opt("clear", "Clear"), opt("subtle", "Subtle"), opt("high_contrast", "High contrast")]
 
-// Glass rows only exist while the plugin is loaded.
 function glass(controls) {
     return controls.map(function (c) { c.cap = "hyprglass"; return c })
 }
@@ -233,7 +222,6 @@ var PAGES = [
         sections: [
             section("Motion", [
                 toggle("config.animations.enabled", "Animations"),
-                // Off: the quickshells follow Hyprland's curve and speed, and stand still when it does.
                 toggle("utilities.animations", "Default quickshell animations"),
                 { type: "animpreset", when: { key: "config.animations.enabled", eq: true } },
                 slider("animation.speed", "Speed", 0.3, 2.5, 0.05, "×", { when: NOT_THEME }),
@@ -321,7 +309,7 @@ var PAGES = [
     }
 ];
 
-// Layers and Quickshell are saved together, since overrides.lua reads a missing one as on.
+// saved together, overrides.lua treats a missing one as on
 function glassTargets(entries, values) {
     if (!LAYER_KEYS.some(function (k) { return k in entries })) return entries
     var out = Object.assign({}, entries)
@@ -329,11 +317,10 @@ function glassTargets(entries, values) {
     return out
 }
 
-// Whether a control should currently be shown, given the live values and device capabilities.
 function shown(c, values, caps) {
     if (c.cap && !(caps && caps[c.cap])) return false
     if (!c.when) return true
-    // A list of conditions comes back from QML's model as a list wrapper, not an Array.
+    // QML hands this over as a list wrapper, not an Array
     var conds = c.when.key === undefined && c.when.any === undefined ? c.when : [c.when]
     for (var i = 0; i < conds.length; i++)
         if (!holds(conds[i], values)) return false

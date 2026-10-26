@@ -12,12 +12,11 @@ ShellRoot {
     readonly property string sans: "CodeNewRoman Nerd Font Propo"
     readonly property string home: Quickshell.env("HOME")
 
-    // Resident and hidden; present() drives every appearance.
     property bool active: false
     property bool leaving: false
-    property real t: 0          // enter/exit progress
-    property real pulse: 0      // quick bump on each update
-    property real wiggle: 0     // icon rotation on state toggle (mute, caps, mic)
+    property real t: 0
+    property real pulse: 0
+    property real wiggle: 0
     property int fillDuration: 110
 
     property string kind: "volume"
@@ -25,13 +24,10 @@ ShellRoot {
     property string label: ""
     property real shownValue: 0
 
-    // Morph geometry: circle (dot) -> full pill.
     readonly property real dotSize: 52
     readonly property real fullWidth: 300
-    // Width progress starts after the dot has begun rising.
     readonly property real w: Math.max(0, (t - 0.2) / 0.8)
 
-    // The shared palette (common/Theme.qml); background drawn at 0.6.
     readonly property color accent: Theme.accent
     readonly property color fg: Theme.fg
     readonly property color bright: Theme.bright
@@ -69,7 +65,6 @@ ShellRoot {
     }
     readonly property bool readoutLit: kind === "caps" ? flag : (kind === "mic" ? !flag : !off)
 
-    // Staggered progress: 0 until `from`, then ramps to 1 as t completes.
     function stage(from) {
         return Math.max(0, Math.min(1, (t - from) / (1 - from)))
     }
@@ -83,7 +78,6 @@ ShellRoot {
         label = text
 
         if (fresh) {
-            // Bar starts empty and sweeps to its value as the card morphs open.
             barBehavior.enabled = false
             shownValue = 0
             fillDuration = 420
@@ -110,7 +104,6 @@ ShellRoot {
         if (toggled) wiggleAnim.restart()
     }
 
-    // On Hyprland's curves: in the way windows open, out the way they close.
     function animateTo(target) {
         tween.stop()
         tween.from = t
@@ -160,7 +153,7 @@ ShellRoot {
         visible: root.active
         screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
         anchors.bottom: true
-        // Window sits on the screen edge so the card can slide fully off-screen.
+        // sits on the edge so the card can slide fully off
         margins.bottom: 0
         implicitWidth: 340
         implicitHeight: 156
@@ -177,14 +170,10 @@ ShellRoot {
             height: root.dotSize
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            // Rests 76px above the screen edge; starts and ends fully below it.
             anchors.bottomMargin: 76 - 132 * (1 - root.t)
-            // Solid the whole way (no faint tail for the blur to ghost on).
             opacity: Math.min(1, root.t * 8)
             scale: 1 + 0.015 * root.pulse
 
-            // Matches Hyprland at rest: 10px rounding, translucent background over compositor blur.
-            // Fully round as a dot, relaxing to 10px as the pill opens.
             Rectangle {
                 anchors.fill: parent
                 radius: Math.max(10, root.dotSize / 2 - (root.dotSize / 2 - 10) * Math.min(1, root.w))
@@ -203,7 +192,6 @@ ShellRoot {
                 font.pixelSize: 18
                 color: root.off ? root.dim : root.accent
                 rotation: root.wiggle
-                // Icon is the dot's face: present from the start, bumps on each update.
                 scale: (0.75 + 0.25 * root.stage(0.1)) * (1 + 0.18 * root.pulse)
                 Behavior on color { ColorAnimation { duration: Theme.ms(120) } }
             }
@@ -246,7 +234,6 @@ ShellRoot {
                     color: root.off ? root.dim : root.accent
                     Behavior on color { ColorAnimation { duration: Theme.ms(90) } }
 
-                    // Solid knob riding the leading edge of the fill.
                     Rectangle {
                         visible: root.shownValue > 0.01 && !root.off
                         anchors.verticalCenter: parent.verticalCenter

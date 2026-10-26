@@ -1,8 +1,6 @@
 import QtQuick
 import "../common"
 
-// One shape that is a search button when closed and the search field when open: the width grows with a fixed
-// half-height radius, so the circle stretches into an oval instead of being swapped for another widget.
 Item {
     id: pill
 
@@ -12,11 +10,10 @@ Item {
     property string placeholder: "Search apps"
     property alias text: input.text
     readonly property alias input: input
-    // Called with each key event before the field sees it; returning true consumes the key.
+    // return true to eat the key
     property var keyHandler: null
     signal clicked()
 
-    // Opening stretches out and settles with the faintest overshoot; closing eases straight back.
     property real open: 0
     onExpandedChanged: {
         morph.stop()
@@ -28,10 +25,8 @@ Item {
     }
     NumberAnimation { id: morph; target: pill; property: "open"; easing.type: Easing.BezierSpline }
 
-    // Peaks mid-morph; the glyph tips slightly as the shape stretches.
     readonly property real wobble: Math.sin(Math.max(0, Math.min(1, open)) * Math.PI)
 
-    // 0 until `from` of the morph, then ramps to 1, so the text arrives once there is room for it.
     function stage(from) {
         return Math.max(0, Math.min(1, (open - from) / (1 - from)))
     }
@@ -72,7 +67,7 @@ Item {
         anchors.rightMargin: pill.height * 0.4
         height: parent.height
         clip: true
-        // Stays visible while transparent: an invisible item can't hold keyboard focus.
+        // invisible items can't hold focus
         opacity: pill.stage(0.35)
 
         TextInput {
@@ -87,7 +82,6 @@ Item {
             selectionColor: Theme.alpha(Theme.accent, 0.5)
             selectedTextColor: Theme.bright
             clip: true
-            // A hidden field keeps focus so the first keystroke both opens it and lands in it.
             cursorVisible: activeFocus && pill.expanded
             Keys.onPressed: event => { if (pill.keyHandler && pill.keyHandler(event)) event.accepted = true }
             transform: Translate { x: -14 * (1 - pill.stage(0.35)) }
@@ -117,7 +111,6 @@ Item {
         }
     }
 
-    // While closed the whole circle is a button; once open, clicks go straight to the text field.
     MouseArea {
         id: area
         anchors.fill: parent

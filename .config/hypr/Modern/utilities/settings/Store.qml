@@ -5,8 +5,7 @@ import Quickshell
 import Quickshell.Io
 import "Schema.js" as Schema
 
-// Panel state. Every change updates the UI at once, then is batched to hypr-settings.py,
-// which writes the active settings.lua and applies it to the running compositor.
+// changes show right away and get batched to hypr-settings.py
 Singleton {
     id: root
 
@@ -22,16 +21,14 @@ Singleton {
     property var cursors: []
     property var waybar: ({ styles: [], active: "" })
     property string waybarActive: ""
-    // waybar or quickshell, and the quickshell bar's styles.
     property string bar: "waybar"
     property var quickshell: ({ styles: [], active: "" })
     property string quickshellActive: ""
     property var caps: ({})
     property var pywalPalette: []
-    // The profile page's list: Default, each variant's tweaks, saved snapshots; and which one is live.
     property var saved: ({ entries: [], active: "default" })
     property var pending: ({})
-    // Wheels currently on screen; the newest one receives the panel's up/down keys.
+    // newest wheel gets the up/down keys
     property var wheels: []
     property string lastSnapshot: ""
     property bool refreshAfter: false
@@ -47,24 +44,21 @@ Singleton {
         setMany({ [key]: value })
     }
 
-    // Drops a tweak so the active profile's own value applies again.
     function reset(...keys) {
         const entries = {}
         for (const k of keys) entries[k] = null
         setMany(entries)
     }
 
-    // Updates what the panel shows without writing anything.
     function setValues(entries) {
         values = Object.assign({}, values, entries)
     }
 
-    // A null value removes the key; the true value is then re-read from the backend.
+    // null removes the key
     function setMany(entries) {
         entries = Schema.glassTargets(entries, values)
         const next = Object.assign({}, values)
         for (const key of Object.keys(entries)) {
-            // A removed tweak keeps its shown value until the profile's real default is read back.
             if (entries[key] !== null) next[key] = entries[key]
             pending[key] = entries[key]
             if (entries[key] === null) refreshAfter = true
@@ -91,7 +85,6 @@ Singleton {
         Quickshell.execDetached(["setsid", "-f", util + "/hypr-profile.sh", "apply", style, variant])
     }
 
-    // Colors, the bar and waybar are part of the applied profile entry too, recorded like any other edit.
     function applyTheme(id) {
         colorTheme = id
         Quickshell.execDetached(["setsid", "-f", util + "/color-apply.sh", id])
@@ -113,14 +106,13 @@ Singleton {
     function applyBar(id) {
         bar = id
         Quickshell.execDetached(["env", "HYPR_SETTINGS_NO_RECORD=1", "setsid", "-f", util + "/bar.sh", "apply", id])
-        // bar.sh puts waybar back to its default style while the quickshell bar is up.
         if (id === "quickshell") {
             waybarActive = "default"
             setMany({ "bar.kind": id, "waybar.style": "default" })
         } else setMany({ "bar.kind": id })
     }
 
-    // action: save NAME | apply ID | delete ID | wipe. Runs one at a time; the panel re-reads everything afterwards.
+    // action: save NAME | apply ID | delete ID | wipe
     function savedRun(action, name) {
         if (savedProc.running) return
         savedProc.command = ["python3", py, "saved", action].concat(name ? [name] : [])
@@ -136,7 +128,6 @@ Singleton {
     Process {
         id: setProc
         onExited: {
-            // An edit on Default makes the active variant's tweaks live; re-read the list once so it shows.
             if (root.saved.active === "default") root.refreshAfter = true
             root.flush()
         }
@@ -153,11 +144,11 @@ Singleton {
             onStreamFinished: {
                 let data
                 try { data = JSON.parse(text) } catch (e) { return }
-                // Skip identical snapshots so an unchanged refresh never re-evaluates every control.
+                // skip identical snapshots
                 const snapshot = text
                 if (snapshot === root.lastSnapshot) return
                 root.lastSnapshot = snapshot
-                // Never clobber a value the user has changed but not yet flushed.
+                // don't overwrite unflushed edits
                 if (Object.keys(root.pending).length === 0 && !setProc.running) root.values = data.values
                 root.styles = data.styles
                 root.active = data.active

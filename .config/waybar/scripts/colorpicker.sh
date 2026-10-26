@@ -21,7 +21,6 @@ limit=10
   text=${text:-#FFFFFF} #if we start for the first time ever the file is empty and thus waybar will throw an error and not display the colorpicker. here is a fallback for that
 
   mapfile -t allcolors < <(tail -n +2 "$loc/colors")
-  # allcolors=($(tail -n +2 "$loc/colors"))
   tooltip="<b>   COLORS</b>\n\n"
 
   tooltip+="-> <b>$text</b>  <span color='$text'></span>  \n"

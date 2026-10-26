@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-"""Desktop-entry facts Quickshell doesn't expose, plus the shared usage caches.
-
-usage:
-  launcher.py apps                 JSON: {"hide": [ids a drun launcher would skip], "paths": {id: desktop file}}
-  launcher.py commands             JSON: [{"n": name, "k": alias|function|bin, "d": detail}] for every bash command
-  launcher.py init <cache>...      create any missing usage cache (empty) so the launcher can watch it
-  launcher.py bump <cache> <key>   add one use of <key> to a usage cache ("<count> <key>" per line)
-"""
+# usage: launcher.py apps | commands | init <cache>... | bump <cache> <key>
 import json
 import os
 import re
@@ -52,7 +45,7 @@ def tryexec_ok(v):
     return shutil.which(v) is not None
 
 
-# Same rules as GLib's g_app_info_should_show plus the TryExec check, which is what drun launchers use.
+# same rules as g_app_info_should_show plus TryExec
 def hidden(entry, desktops):
     if entry.get("Hidden", "").lower() == "true" or entry.get("NoDisplay", "").lower() == "true":
         return True
@@ -76,7 +69,6 @@ def apps():
                     continue
                 path = os.path.join(dirpath, name)
                 did = os.path.relpath(path, root)[: -len(".desktop")].replace("/", "-")
-                # Earlier data dirs shadow later ones, as in the XDG spec.
                 if did in seen:
                     continue
                 seen.add(did)
@@ -86,7 +78,7 @@ def apps():
     json.dump({"hide": hide, "paths": paths}, sys.stdout)
 
 
-# What an interactive bash would offer: .bashrc aliases and functions shadow executables on PATH.
+# aliases and functions shadow PATH, like bash
 def commands():
     home = os.path.expanduser("~")
     try:

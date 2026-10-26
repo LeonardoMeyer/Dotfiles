@@ -1,10 +1,6 @@
 import QtQuick
 import "../common"
 
-// The list the live settings come from: Default (no overrides, can't be deleted), each variant's own
-// tweaks (desktop, laptop, ...) and named saved profiles. Style folders are presets and never change.
-// Edits change the applied entry; on Default they go to the active variant's tweaks, which becomes applied.
-// Deleting asks for a second click.
 Item {
     id: control
 
@@ -32,7 +28,7 @@ Item {
         release()
     }
 
-    // Hands the keyboard back to the panel so h/j/k/l and Escape work again.
+    // give the keyboard back to the panel
     function release() {
         let p = input.parent
         while (p && p.objectName !== "keyRoot") p = p.parent
@@ -51,7 +47,6 @@ Item {
                 required property var modelData
                 required property int index
                 readonly property bool current: modelData.id === Store.saved.active
-                // A variant without a tweaks file has nothing to apply yet; edits will create it.
                 readonly property bool usable: modelData.exists
                 readonly property bool deletable: modelData.kind !== "default" && modelData.exists
                 readonly property bool hot: rowArea.containsMouse || binArea.containsMouse
@@ -162,7 +157,6 @@ Item {
                     }
                 }
 
-                // Keeps the row height for entries without a delete button (Default).
                 Item { visible: !entry.deletable; anchors.right: parent.right; width: Theme.pad + 24; height: 1 }
             }
         }
@@ -174,7 +168,7 @@ Item {
             color: Theme.alpha(Theme.fg, 0.07)
         }
 
-        // Name field + save. Saving under an existing name overwrites it.
+        // saving with an existing name overwrites it
         Item {
             width: parent.width
             height: 52
@@ -263,7 +257,7 @@ Item {
             color: Theme.dim
         }
 
-        // Back to presets: every saved profile and every variant's tweaks go; style folders are untouched.
+        // deletes all saved profiles and variant tweaks, style folders stay
         Item {
             width: parent.width
             height: 52

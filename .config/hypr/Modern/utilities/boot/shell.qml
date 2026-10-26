@@ -65,7 +65,7 @@ ShellRoot {
         }).slice(0, 18)
     }
 
-    // Black-screen delay before the animation starts; each profile's startup.lua sets BOOT_BLACK_MS.
+    // BOOT_BLACK_MS comes from startup.lua
     readonly property int blackMs: {
         var v = parseInt(Quickshell.env("BOOT_BLACK_MS"))
         return isNaN(v) || v < 0 ? 2500 : v

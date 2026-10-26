@@ -1,8 +1,6 @@
 import QtQuick
 import "../common"
 
-// Buttons on a circle, starting at twelve o'clock and going clockwise. One highlight travels the ring along the
-// shortest arc to the current entry; children sit in the middle of the ring.
 // entries: [{ icon }]
 Item {
     id: ring
@@ -12,7 +10,6 @@ Item {
     property real btn: 46
     property real radius: Math.min(width, height) / 2 - btn / 2 - 2
     property real intro: 1
-    // Highlight color, e.g. a warning tint while an entry waits for confirmation.
     property color tint: Theme.accent
     signal picked(int index)
     signal activated(int index)
@@ -23,7 +20,7 @@ Item {
     function mod(i) { return n > 0 ? ((i % n) + n) % n : 0 }
     function angle(p) { return -Math.PI / 2 + p * 2 * Math.PI / Math.max(1, n) }
 
-    // Unwrapped position of the highlight, so stepping past the last entry continues forward instead of spinning back.
+    // unwrapped so going past the end keeps moving forward
     property real pos: current
     onCurrentChanged: {
         let d = mod(current - mod(Math.round(pos)))
@@ -35,13 +32,12 @@ Item {
     NumberAnimation { id: glide; target: ring; property: "pos"; duration: Theme.ms(320); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
 
     function local(i) {
-        // Entries fan out a beat apart, so the ring opens like a dial rather than all at once.
         const s = 0.35
         const e = Math.max(0, Math.min(1, (intro - s * i / Math.max(1, n)) / (1 - s)))
         return 1 - Math.pow(1 - e, 3)
     }
 
-    // Hover only picks after the pointer itself moves, so buttons fanning out under a resting cursor don't.
+    // only hover-select after the mouse actually moves
     property bool moved: false
     onIntroChanged: if (intro === 0) moved = false
     HoverHandler {
@@ -61,7 +57,6 @@ Item {
         }
     }
 
-    // Faint track the buttons ride on.
     Rectangle {
         anchors.centerIn: parent
         width: ring.radius * 2 * ring.local(0)

@@ -7,15 +7,13 @@ call() {
     qs -p "$UTIL" ipc call "$@" >/dev/null 2>&1
 }
 
-# Starts the shared process unless it is up, and waits until it answers IPC. One caller at a time: startup.lua runs
-# shells.sh and bar.sh together, and two launches racing past `qs -n` would give two of everything.
+# start the shared process if it isn't running, locked so two calls can't race
 launch() (
     exec 9>"${XDG_RUNTIME_DIR:-/tmp}/quickshell-utilities.lock"
     flock -w 5 9 || exit 1
     qs ipc -p "$UTIL" show 2>/dev/null | grep -q '^target' && exit 0
-    # The shell loads whichever utilities/<name> links exist, so make sure they match the active style first.
     "$UTIL/hypr-profile.sh" links >/dev/null 2>&1 || true
-    # 9>&-: the daemon must not inherit the lock, or it holds it for its whole life and every later launch times out.
+    # 9>&- so the daemon doesn't keep the lock
     qs -n -p "$UTIL" --daemonize </dev/null >/dev/null 2>&1 9>&-
     for _ in $(seq 1 60); do
         qs ipc -p "$UTIL" show 2>/dev/null | grep -q '^target' && exit 0
@@ -24,8 +22,7 @@ launch() (
     exit 1
 )
 
-# The monitor under the cursor (not just the focused one), in layout coordinates: a rotated
-# monitor swaps width and height, and scale shrinks both.
+# monitor under the cursor, in layout coords
 cursor_monitor() {
     python3 -c '
 import json, subprocess
@@ -46,7 +43,7 @@ case "${1:-}" in
         ;;
     stop)
         qs kill -p "$UTIL" </dev/null >/dev/null 2>&1
-        # kill returns before the process is gone; a start right after would see it and do nothing.
+        # kill returns before the process is gone
         for _ in $(seq 1 40); do
             qs list -p "$UTIL" 2>/dev/null | grep -q '^Instance' || break
             sleep 0.05
@@ -68,7 +65,6 @@ target="$1"
 shift
 [ $# -gt 0 ] || set -- toggle
 
-# Settings opens on the monitor under the cursor.
 if [ "$target" = settings ] && { [ "$1" = toggle ] || [ "$1" = open ]; }; then
     set -- "$1On" "$(cursor_monitor)"
 fi

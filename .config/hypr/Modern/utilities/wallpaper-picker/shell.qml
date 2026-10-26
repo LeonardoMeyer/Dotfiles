@@ -17,32 +17,25 @@ ShellRoot {
     property string theme: "all"
     property int cur: 0
     property real pos: 0
-    // The shell stays resident and hidden; show() and close() drive each open.
     property bool shown: false
     property bool leaving: false
     property real t: 0
     property string indexText: ""
     property var targetScreen: null
     property bool locating: false
-    // Chosen wallpaper until wallpaper-apply.sh has written it to the cache.
     property string pendingPath: ""
-    // The preview stays up after applying until awww has drawn the same image under it.
+    // keep the preview up until awww draws the same image
     property bool holding: false
-    // The full-screen preview follows the selection at once, from its screen-sized copy (wallpaper-index.py), which
-    // decodes in a few milliseconds; the original only if the index has none yet.
+    // preview uses the screen-sized copy from wallpaper-index.py
     property var previewed: null
     readonly property string previewSrc: previewed ? "file://" + (previewed.screen || previewed.path) : ""
-    // The blur behind the panel and the preview under it change together: each waits until the other's new image
-    // is decoded too (the picker monitor's preview reports here).
+    // blur and preview wait for each other so they change together
     property bool previewReady: true
 
-    // Hyprland's live rounding (override or profile default) for the wallpaper cards.
-
-    // The panel's height and the soft edge its shade fades in over, in stage units.
     readonly property real panelH: 540
     readonly property real fadeH: 320
 
-    // The stage lays out in a fixed 1600x900 space and is scaled to the screen; portrait fits 1100 units across instead.
+    // laid out at 1600x900 (1100 wide on portrait) and scaled
     readonly property real u: unitFor(win.screen)
 
     function unitFor(s) {
@@ -52,7 +45,7 @@ ShellRoot {
             : Math.min(s.width / 1600, s.height / 900)
         return Math.max(0.5, v)
     }
-    // The bars' colours wait for scrolling to pause, so flicking past never rewrites them for each one.
+    // wait for scrolling to stop before recoloring the bars
     onCurrentChanged: { previewed = current; previewTimer.restart() }
     Timer {
         id: previewTimer
@@ -60,14 +53,12 @@ ShellRoot {
         onTriggered: if (root.shown && !root.leaving && root.current) root.tint(root.current.colors)
     }
 
-    // Both bars take the selection's colors while it is shown: the quickshell bar through Theme, waybar through
-    // the colors file its style imports. Waybar only watches style.css itself, so its bytes are rewritten in
-    // place (never truncated) to make it reload. Only with pywal colors, which follow the wallpaper.
+    // preview colors on both bars. waybar only watches style.css, so rewrite it in place
     FileView { id: colorTheme; path: root.home + "/.config/hypr/.color-theme"; blockLoading: true; printErrors: false }
     FileView { id: activeBar; path: root.home + "/.config/hypr/.active-bar"; blockLoading: true; printErrors: false }
     property bool tinted: false
 
-    // Null puts the saved palette back.
+    // null restores the saved palette
     function tint(p) {
         if (!["", "pywal"].includes(colorTheme.text().trim()) || (!p && !tinted)) return
         Theme.preview = p
@@ -80,21 +71,18 @@ ShellRoot {
         terminals(c)
     }
 
-    // Open terminals take the colors too, through the escape sequences wal sends them (applying sends wal's own).
     function terminals(c) {
         const seq = c.map((x, i) => "\x1b]4;" + i + ";" + x + "\x1b\\").join("")
             + "\x1b]10;" + c[15] + "\x1b\\\x1b]11;" + c[0] + "\x1b\\\x1b]12;" + c[15] + "\x1b\\"
         Quickshell.execDetached(["sh", "-c", 'for t in /dev/pts/[0-9]*; do [ -O "$t" ] && printf %s "$0" > "$t" 2>/dev/null & done; wait', seq])
     }
 
-    // Writes waybar's colors (or keeps wal's, given nothing) and has it reload them; skipped while it isn't the bar.
     function waybar(css) {
         if (activeBar.text().trim() === "quickshell") return
         Quickshell.execDetached(["sh", "-c", '[ -z "$0" ] || printf %s "$0" > ~/.cache/wal/colors-waybar.css; s=~/.config/waybar/style.css; dd if="$s" of="$s" conv=notrunc status=none', css])
     }
     readonly property var current: items.length > 0 ? items[Math.max(0, Math.min(cur, items.length - 1))] : null
     readonly property var palette: current ? current.colors : []
-    // Darkest to lightest so the strip blends smoothly.
     readonly property var ramp: palette.length === 16
         ? palette.slice().sort((a, b) => lum(a) - lum(b))
         : []
@@ -106,7 +94,7 @@ ShellRoot {
 
     Behavior on pos { id: posBehavior; NumberAnimation { duration: Theme.ms(380); easing.type: Easing.OutCubic } }
 
-    // Last applied wallpaper; read synchronously so the open never jumps mid-animation.
+    // read synchronously so opening doesn't jump
     FileView {
         id: curFile
         path: root.home + "/.cache/wallpaper-picker/current"
@@ -116,9 +104,7 @@ ShellRoot {
     readonly property string applied: curFile.text().trim()
     readonly property string landing: pendingPath !== "" ? pendingPath : applied
 
-    // Re-centres while hidden so the next open finds the wheel already positioned and its thumbnails decoded.
     onAppliedChanged: {
-        // wal has written the real palette by now (wallpaper-apply.sh records the wallpaper last).
         if (applied === pendingPath) { pendingPath = ""; holding = false; Theme.preview = null; tinted = false; waybar("") }
         if (!shown) rebuild(landing)
     }
@@ -134,7 +120,7 @@ ShellRoot {
         posBehavior.enabled = true
     }
 
-    // Reuses the existing item list when unchanged so opening never rebuilds the carousel.
+    // reuse the list if nothing changed
     function rebuild(path) {
         const list = theme === "all" ? all : all.filter(w => w.theme === theme)
         if (items !== list) items = list
@@ -167,7 +153,7 @@ ShellRoot {
         Theme.refresh()
         watchdog.stop()
         if ((shown && !leaving) || locating) return
-        // Re-read each open: the bar or color scheme may have changed since (written by rename, which watches miss).
+        // re-read every open, renames don't trigger the watcher
         activeBar.reload()
         colorTheme.reload()
         locating = true
@@ -180,7 +166,7 @@ ShellRoot {
         leaving = false
         t = 0
         if (!current || current.path !== landing) rebuild(landing)
-        // Frozen for this open so moving the cursor to another monitor never drags the window along.
+        // lock to this monitor while open
         targetScreen = screen
         previewed = current
         shown = true
@@ -193,7 +179,7 @@ ShellRoot {
         else show()
     }
 
-    // Unmapping (rather than exiting) hands focus and the pointer straight back to the desktop.
+    // unmap instead of exiting so focus goes straight back
     function finish() {
         watchdog.stop()
         startTimer.stop()
@@ -205,10 +191,9 @@ ShellRoot {
         rebuild(landing)
     }
 
-    // A failed apply never leaves the preview covering the desktop.
     Timer { id: holdTimer; interval: 8000; onTriggered: { root.holding = false; root.tint(null) } }
 
-    // Last resort: a stalled close must never leave the full-screen surface grabbing input.
+    // failsafe so a stuck close doesn't keep grabbing input
     Timer { id: watchdog; interval: Theme.ms(1200) + 100; onTriggered: root.finish() }
 
     function animateTo(target) {
@@ -216,7 +201,6 @@ ShellRoot {
         tween.from = t
         tween.to = target
         tween.duration = Theme.ms(target === 1 ? 900 : 380)
-        // A gentle close, so the preview dissolves back into the current wallpaper rather than blinking out.
         tween.easing.type = target === 1 ? Easing.OutCubic : Easing.InOutSine
         tween.start()
     }
@@ -236,18 +220,16 @@ ShellRoot {
         else animateTo(0)
     }
 
-    // One value drives the whole entrance and exit; Hyprland's own layer animation is off for this namespace.
     NumberAnimation {
         id: tween
         target: root
         property: "t"
         onFinished: {
             if (root.leaving) root.finish()
-            // Indexing is deferred so its CPU use never competes with the entrance.
+            // index after the animation so it doesn't stutter
             else if (root.t >= 1) indexer.running = true
         }
     }
-    // One frame at t=0 is drawn first so the fade never skips.
     Timer { id: startTimer; interval: 30; onTriggered: root.tryStart() }
 
     IpcHandler {
@@ -257,7 +239,7 @@ ShellRoot {
         function close(): void { root.close() }
     }
 
-    // Picks up newly added wallpapers; serialized so overlapping runs never read a half-written index.
+    // serialized so runs don't overlap
     Process {
         id: indexer
         running: true
@@ -266,8 +248,7 @@ ShellRoot {
         onExited: { idx.running = true; if (reindex.again) { reindex.again = false; running = true } }
     }
 
-    // New wallpapers are indexed as they land: the library and each theme folder in it are watched, and a change
-    // runs the indexer once things settle (again after it, if it was already running).
+    // reindex when wallpapers are added
     readonly property string library: home + "/wallpapers/library"
     Variants {
         model: [""].concat(root.themes.slice(1))
@@ -312,15 +293,13 @@ ShellRoot {
         }
     }
 
-    // A new image only fades in once decoded, so quick flips never show a blank frame.
+    // only fade in once decoded
     component CrossImage: Item {
         id: ci
         property string src: ""
         property var front: imgA
         readonly property var back: front === imgA ? imgB : imgA
-        // Holds a decoded image back instead of fading it in, so two of these can change in the same frame.
         property bool hold: false
-        // The new image is decoded: showing, or waiting to.
         readonly property bool ready: src === "" || [front, back].some(i => i.status === Image.Ready && i.source.toString() === src)
         property int zTop: 0
 
@@ -332,15 +311,11 @@ ShellRoot {
             front = img
         }
 
-        // A change during a fade waits for it to finish (the image under it is still showing), so the picture
-        // never jumps mid-blend.
-        // Emptied, it lets its images go (while hidden, the real wallpaper underneath is the same picture).
+        // wait for the current fade to finish
         onSrcChanged: {
             if (src === "") { fade.stop(); imgA.source = ""; imgB.source = "" }
             else if (!fade.running) load()
         }
-        // Deferred to the end of the update that released it (still before the next frame), so every image
-        // waiting on the same release swaps together without re-entering it.
         onHoldChanged: Qt.callLater(tryPromote)
         function load() {
             if (back.source.toString() === src) tryPromote()
@@ -351,7 +326,7 @@ ShellRoot {
             if (!hold && !fade.running && b.status === Image.Ready && b.source.toString() === src) promote(b)
         }
 
-        // The image faded out is let go, so each screen holds one decoded wallpaper.
+        // only keep one decoded wallpaper per screen
         NumberAnimation {
             id: fade
             property: "opacity"
@@ -381,7 +356,6 @@ ShellRoot {
         }
     }
 
-    // A chip's colour easing along with the wallpaper's crossfade, and its name.
     component Tint: ColorAnimation { duration: Theme.ms(300); easing.type: Easing.InOutSine }
     component Label: Text {
         anchors.centerIn: parent
@@ -389,7 +363,6 @@ ShellRoot {
         font.pixelSize: Math.round(14 * root.u)
     }
 
-    // One pass of the backdrop's blur (blur.frag), rendered small and drawn smoothly scaled up.
     component Pass: ShaderEffect {
         anchors.fill: parent
         layer.enabled: true
@@ -402,9 +375,7 @@ ShellRoot {
         fragmentShader: Qt.resolvedUrl("blur.frag.qsb")
     }
 
-    // A chip's shape, drawn like the old selector's cards and glass pane: into a texture at twice its size with a
-    // margin of clear pixels, then mipmapped down, so the curve comes out even; and the same faint edge as the other
-    // utilities' cards laid over the fill rather than around it, so there is one clean edge.
+    // drawn at 2x and mipmapped so the curve is smooth
     component Pill: Item {
         property color fill
         property color edge
@@ -432,16 +403,10 @@ ShellRoot {
         }
     }
 
-    // The theme chips, each on a card like the other utilities' backgrounds with a white name; the selected one is
-    // the reverse, accent behind dark text. The highlight stretches between them, its leading edge ahead of its
-    // trailing one, and every colour eases along with the wallpaper's crossfade. Drawn on the glass layer when
-    // hyprglass is on (tabGlass), otherwise in the picker, which always keeps a copy for the clicks. Laid out in
-    // whole screen pixels rather than the stage's scaled units, so every edge lands on a pixel and cuts clean.
     component ChipRow: Item {
         id: row
         property bool drawn: true
         property Item sel: null
-        // The first placement after (re)building the chips lands without sliding in from the left.
         property bool settled: false
         readonly property int h: Math.round(36 * root.u)
         readonly property int pad: Math.round(36 * root.u)
@@ -481,7 +446,6 @@ ShellRoot {
         }
         Timer { id: settleChips; interval: 50; onTriggered: row.settled = true }
 
-        // Over the chips, gliding between them.
         Item {
             id: highlight
             visible: row.drawn && !!row.sel
@@ -495,7 +459,7 @@ ShellRoot {
 
             Pill { radius: row.radius; fill: Theme.accent; edge: "transparent" }
 
-            // The names again in the dark colour, clipped to the highlight, so each turns dark where it passes.
+            // names again in the dark color, clipped to the highlight
             Item {
                 anchors.fill: parent
                 clip: true
@@ -521,9 +485,7 @@ ShellRoot {
         }
     }
 
-    // The selected wallpaper, full screen and sharp on every monitor, under the windows and the bar: a live preview
-    // over the real wallpaper. After applying it stays until awww has drawn the same image beneath it. Empty while
-    // hidden, so opening never flashes an image left from before (the wallpaper beneath shows until it loads).
+    // full screen preview under everything
     Variants {
         model: Quickshell.screens
         delegate: PanelWindow {
@@ -542,18 +504,15 @@ ShellRoot {
                 anchors.fill: parent
                 src: root.shown || root.holding ? root.previewSrc : ""
                 hold: modelData === win.screen && !backdrop.ready
-                // Fades with the panel, so closing without applying dissolves back into the current wallpaper beneath.
                 opacity: root.holding ? 1 : root.t
             }
             Binding { target: root; property: "previewReady"; value: shot.ready; when: modelData === win.screen }
-            // The desktop above the panel closes it, like clicking outside any other utility.
+            // clicking above the panel closes it
             MouseArea { anchors.fill: parent; onClicked: root.close() }
         }
     }
 
-    // The chips' glass. hyprglass glasses whole layers by their alpha (wallpaper-picker-tab in hyprglass.lua), so
-    // with it on they are drawn on a layer of their own over the picker, the panel's size. It maps once the
-    // picker has, so it stacks above it, and takes no input: the picker's own copy underneath gets the clicks.
+    // separate layer so hyprglass can glass the chips; clicks go to the copy underneath
     PanelWindow {
         id: tabGlass
         visible: root.shown && Theme.glass && root.t > 0
@@ -570,7 +529,6 @@ ShellRoot {
         ChipRow {}
     }
 
-    // The picker: a panel along the bottom that leaves the bar uncovered.
     PanelWindow {
         id: win
         visible: root.shown
@@ -583,11 +541,7 @@ ShellRoot {
         WlrLayershell.namespace: "wallpaper-picker"
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-        // Backdrop: the selection's thumbnail laid out full screen, so it lines up with the preview behind, under one
-        // progressive blur (blur.frag): its radius grows smoothly from nothing at the panel's top edge, fading in from
-        // clear as it starts, so there is no edge anywhere and no sharp image showing through a soft one. Run at a
-        // third of the screen's resolution, and only redrawn when the picture changes. Hazed with pywal's
-        // background. Never 0 opacity: Qt skips invisible items, which would defer their first render.
+        // progressive blur at 1/3 res, never 0 opacity or Qt skips the first render
         Item {
             id: area
             width: parent.width
@@ -663,12 +617,10 @@ ShellRoot {
                 onWheel: wheel => root.go(root.cur + (wheel.angleDelta.y + wheel.angleDelta.x < 0 ? 1 : -1))
             }
 
-            // The wallpapers in a row, on a shallow curve: each turns a few degrees more the further out it sits.
             Item {
                 id: wheel
                 anchors.left: parent.left
                 anchors.right: parent.right
-                // Below the chips (drawn over the stage, in screen pixels: 110 down, 36 tall).
                 anchors.top: parent.top
                 anchors.topMargin: 180
                 height: 250
@@ -678,7 +630,7 @@ ShellRoot {
                 readonly property real cardW: 400
                 readonly property real cardH: 225
                 readonly property real step: cardW + 28
-                // Cards past the screen's edge are skipped; a few more stay loaded so they are decoded on arrival.
+                // skip offscreen cards but keep a few loaded
                 readonly property real reach: width / 2 / step + 1
 
                 Repeater {
@@ -713,13 +665,10 @@ ShellRoot {
 
                         Component {
                             id: frame
-                            // Drawn once into a texture at twice the size it lands on screen (the stage is scaled by u)
-                            // and mipmapped, so scaling it down evens out the thin border on the curves and the turned
-                            // cards stay clean. The margin of empty pixels around it means the edge that turns in 3D is
-                            // the border's own smooth edge, never the texture's hard one.
+                            // 2x texture + mipmaps so the border stays clean when the cards turn
                             Item {
                                 readonly property real k: 2 * root.u * (win.devicePixelRatio || 1)
-                                // The stage is scaled by u, so this undoes it to land on Hyprland's own pixels.
+                                // undo the stage scale
                                 readonly property real radius: Theme.rounding / root.u
                                 anchors.fill: parent
                                 anchors.margins: -2
@@ -754,7 +703,6 @@ ShellRoot {
                                     }
                                 }
 
-                                // Over the image rather than around it, so there is one edge and no seam between two.
                                 Rectangle {
                                     anchors.fill: parent
                                     anchors.margins: 2
@@ -775,7 +723,6 @@ ShellRoot {
                 }
             }
 
-            // Name and palette of the focused wallpaper.
             Column {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: wheel.bottom
@@ -795,8 +742,6 @@ ShellRoot {
                     color: "#ffffff"
                 }
 
-                // Its 16 colors side by side in one skinny bar, rounded like Hyprland's windows. On a switch they
-                // change in a wave from left to right, with a glint riding along it.
                 ClippingRectangle {
                     id: strip
                     anchors.horizontalCenter: parent.horizontalCenter

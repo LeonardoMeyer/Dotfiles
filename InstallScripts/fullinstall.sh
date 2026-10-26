@@ -1,6 +1,5 @@
 
 #!/bin/bash
-# Dotfiles Installer — EF
 
 set -euo pipefail
 
@@ -19,7 +18,7 @@ section() { echo -e "\n${BOLD}${CYAN}══ $* ══${RESET}\n"; }
 DOTFILES_DIR="$HOME/Dotfiles"
 HYPRLAND_STYLE_DIR=""
 
-# ── Backups ────────────────────────────────────────────────────────────────
+# backups
 
 backup_config() {
     local timestamp="$(date +%Y%m%d_%H%M%S)" item src dest backed_up=false
@@ -39,7 +38,7 @@ backup_config() {
             success "Backed up $(basename "$src")"
             backed_up=true
         else
-            warn "$(basename "$src") not found — skipping."
+            warn "$(basename "$src") not found, skipping."
         fi
     done
 
@@ -56,12 +55,11 @@ backup_bashrc() {
     success "Backed up .bashrc to $dest"
 }
 
-# ── Hyprland profile ───────────────────────────────────────────────────────
+# hyprland profile
 
 select_hyprland_style() {
     section "Hyprland Style"
 
-    # Every <style>/<variant> folder under hypr/ is offered, so new styles need no installer change.
     local profiles=() entry i=1 choice
     while IFS= read -r entry; do
         profiles+=("$entry")
@@ -70,7 +68,7 @@ select_hyprland_style() {
     [[ ${#profiles[@]} -gt 0 ]] || { error "No Hyprland profiles found."; return 1; }
 
     for entry in "${profiles[@]}"; do
-        echo "$i. ${entry/\// — }"
+        echo "$i. ${entry/\// / }"
         ((i += 1))
     done
 
@@ -82,12 +80,11 @@ select_hyprland_style() {
         { error "Invalid style."; return 1; }
 
     HYPRLAND_STYLE_DIR="${profiles[$((choice - 1))]}"
-    success "Selected ${HYPRLAND_STYLE_DIR/\// — }"
+    success "Selected ${HYPRLAND_STYLE_DIR/\// / }"
 }
 
-# ── Apply dotfiles ─────────────────────────────────────────────────────────
+# apply dotfiles
 
-# Symlink ~/<entry> -> repo for every top-level entry, so edits go both ways.
 link_entry() {
     local target="$1" link="$2" backup="$3"
 
@@ -119,10 +116,8 @@ apply_dotfiles() {
     done
     shopt -u nullglob dotglob
 
-    # Patched pypr wrapper; ~/.local/bin is ahead of /usr/bin on PATH so `pypr` picks it up.
     link_entry "$HOME/.config/hypr/utilities/pypr.py" "$HOME/.local/bin/pypr" "$backup/.local/bin"
 
-    # The profile's files become the active config (written through the symlink into the repo).
     if [[ -n "$HYPRLAND_STYLE_DIR" ]]; then
         "$src/hypr/utilities/hypr-profile.sh" apply "${HYPRLAND_STYLE_DIR%%/*}" "${HYPRLAND_STYLE_DIR#*/}" --offline
     fi
@@ -130,8 +125,7 @@ apply_dotfiles() {
     success "Dotfiles linked."
     nohup bash -c 'sleep 1; hyprctl reload' >/dev/null 2>&1 &
 
-    # Inside a running session the quickshells were loaded from the old utilities; restart them so new ones
-    # (and the profile's bar) show up now instead of after the next login.
+    # restart the shells so the new utilities load now
     if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
         "$src/hypr/utilities/shells.sh" restart
         "$src/hypr/utilities/bar.sh" boot
@@ -149,7 +143,7 @@ run_wallpaper_selector() {
     fi
 }
 
-# ── System setup ───────────────────────────────────────────────────────────
+# system setup
 
 setup_mirrors() {
     section "Updating Pacman Mirrorlist"
@@ -205,8 +199,7 @@ autologin() {
         *) error "Invalid option."; return 1 ;;
     esac
 }
-# hyprpm builds plugins against the running Hyprland, so they have to be rebuilt whenever
-# Hyprland updates or the config starts using options from a newer plugin release.
+# hyprpm plugins need rebuilding after hyprland updates
 update_plugins() {
     command -v hyprpm >/dev/null || return 0
     hyprpm list 2>/dev/null | grep -qi hyprglass || return 0
@@ -279,11 +272,11 @@ optional_reboot() {
 finish() {
     success "Installation complete!"
     notify-send "Dotfiles Installed" \
-        "Open Terminal with MOD+Q\nHello $USER — Thanks for using my Dotfiles!\n-EF" \
+        "Open Terminal with MOD+Q\nHello $USER, thanks for using my dotfiles!\n-EF" \
         2>/dev/null || true
 }
 
-# ── Installation modes ─────────────────────────────────────────────────────
+# installation modes
 
 auto_install() {
     section "Automatic Installation"
@@ -345,7 +338,7 @@ manual_install() {
     optional_reboot
 }
 
-# ── Entry point ─────────────────────────────────────────────────────────────
+# entry point
 
 main() {
     echo -e "${CYAN}${BOLD}"
@@ -367,7 +360,7 @@ EOF
     select_hyprland_style
 
     local install_choice backup_choice
-    read -rp "Installation mode — (A)utomatic or (M)anual? [A]: " install_choice
+    read -rp "Installation mode: (A)utomatic or (M)anual? [A]: " install_choice
     install_choice="${install_choice:-a}"
 
     read -rp "Back up current dotfiles? (Y/n): " backup_choice
@@ -383,7 +376,6 @@ EOF
     esac
 }
 
-# Only run the full installer when executed directly.
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     main "$@"
 fi

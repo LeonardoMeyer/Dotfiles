@@ -10,7 +10,7 @@ return {
         local color5 = vim.g.color5 or "#ffffff"
 
         require("noice").setup({
-            -- notify_system owns vim.notify, so noice must not replace it
+            -- notify_system handles vim.notify
             notify = { enabled = false },
             lsp = {
                 override = {
@@ -29,8 +29,7 @@ return {
             messages = { enabled = true },
             routes = {
                 {
-                    -- error messages only: forward to a system notification
-                    -- and hide noice's own popup for them
+                    -- send errors to a system notification instead
                     filter = {
                         event = "msg_show",
                         cond = function(message)

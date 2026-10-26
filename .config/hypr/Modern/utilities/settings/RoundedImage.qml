@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Effects
 import "../common"
 
-// Image clipped to rounded corners.
 Item {
     id: root
 

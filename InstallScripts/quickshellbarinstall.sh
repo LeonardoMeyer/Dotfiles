@@ -1,9 +1,5 @@
 #!/bin/bash
-# The quickshell bar on its own: hypr/Modern/utilities/bar and what it imports, copied into a quickshell config of
-# its own (~/.config/quickshell/dotfiles-bar, run with `qs -c dotfiles-bar`) with one of the styles in
-# hypr/<style>/quickshellbar/<name>/ as its style.json. Nothing else from these dotfiles is needed, and nothing
-# points back into the repo, so it keeps working if the repo is moved or deleted. Runs without the full install
-# and without any other installer script.
+# installs just the quickshell bar to ~/.config/quickshell/dotfiles-bar (run with qs -c dotfiles-bar)
 
 set -euo pipefail
 
@@ -16,7 +12,6 @@ warn()    { echo -e "${YELLOW}${BOLD}[!]${RESET} $*"; }
 error()   { echo -e "${RED}${BOLD}[✗]${RESET} $*" >&2; }
 section() { echo -e "\n${BOLD}${CYAN}══ $* ══${RESET}\n"; }
 
-# The repo this script sits in, wherever it was cloned.
 REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 NAME="dotfiles-bar"
 DEST="$HOME/.config/quickshell/$NAME"
@@ -28,10 +23,10 @@ PACKAGES=(
     pipewire pipewire-pulse wireplumber pavucontrol cava curl jq wl-clipboard
     libnotify pacman-contrib kitty hyprpicker
 )
-# AUR only: installed when an AUR helper is around, otherwise the bar keeps its built-in palette.
+# AUR only, optional
 AUR_PACKAGES=(python-pywal16)
 
-# ── Packages ───────────────────────────────────────────────────────────────
+# packages
 
 install_packages() {
     local helper=""
@@ -48,7 +43,7 @@ install_packages() {
     fi
 }
 
-# ── Style ──────────────────────────────────────────────────────────────────
+# style
 
 select_style() {
     section "Quickshell Bar Style"
@@ -60,8 +55,7 @@ select_style() {
     [[ ${#styles[@]} -gt 0 ]] || { error "No quickshell bar styles found under $REPO/.config/hypr/."; exit 1; }
 
     for f in "${styles[@]}"; do
-        # <style>/quickshellbar/<name>/config.json → "Modern — default"
-        echo "$i. $(basename "$(dirname "$(dirname "$(dirname "$f")")")") — $(basename "$(dirname "$f")")"
+        echo "$i. $(basename "$(dirname "$(dirname "$(dirname "$f")")")") / $(basename "$(dirname "$f")")"
         ((i += 1))
     done
     echo "   (previews: $REPO/.config/hypr/<style>/quickshellbar/<name>/preview.svg)"
@@ -75,7 +69,7 @@ select_style() {
     success "Selected $(basename "$(dirname "$STYLE_FILE")")"
 }
 
-# ── Config ─────────────────────────────────────────────────────────────────
+# config
 
 install_config() {
     section "Installing the Quickshell Bar"
@@ -85,20 +79,16 @@ install_config() {
         mv "$DEST" "$backup"
         warn "Moved the old $DEST to $backup"
     fi
-    # Replaced whole (keeping nothing but the folder), so files dropped from the repo don't linger.
     rm -rf "$DEST"
     mkdir -p "$DEST/music" "$DEST/styles"
 
-    # The same host the full install uses: it loads every <folder>/shell.qml beside it, here only the bar's.
     cp "$REPO/.config/hypr/utilities/shell.qml" "$DEST/shell.qml"
     cp -a "$UTIL/bar" "$UTIL/common" "$DEST/"
-    # The bar's waveform reads the music player's cava settings; only the settings are needed, not the player.
+    # the waveform reads the music player's cava.conf
     cp "$UTIL/music/cava.conf" "$DEST/music/cava.conf"
-    # The color picker, for when waybar (which normally carries it) isn't installed.
     cp "$REPO/.config/waybar/scripts/colorpicker.sh" "$DEST/colorpicker.sh"
     chmod +x "$DEST/colorpicker.sh" "$DEST/common/spotify.sh"
 
-    # Every style, so switching is just copying another one over style.json (the bar picks it up at once).
     local f
     for f in "$REPO"/.config/hypr/*/quickshellbar/*/config.json; do
         cp "$f" "$DEST/styles/$(basename "$(dirname "$f")").json"
@@ -108,7 +98,6 @@ install_config() {
     success "Installed to $DEST"
 }
 
-# The bar takes its colors from ~/.cache/wal/colors.json, and keeps a built-in dark palette without it.
 ensure_palette() {
     local json="$HOME/.cache/wal/colors.json" wallpaper="$REPO/wallpapers/pywallpaper.jpg"
 
@@ -116,7 +105,7 @@ ensure_palette() {
 
     if command -v wal >/dev/null && [[ -f "$wallpaper" ]]; then
         info "Generating a pywal palette from the default wallpaper."
-        # -n: leave the wallpaper alone; -s -t: don't recolor open terminals.
+        # -n keeps the wallpaper, -s -t skips terminals
         wal -q -n -s -t -i "$wallpaper" || true
     fi
     if [[ -f "$json" ]]; then
@@ -126,7 +115,6 @@ ensure_palette() {
     fi
 }
 
-# Wi-Fi and Bluetooth pages talk to NetworkManager and bluez; audio to PipeWire.
 enable_services() {
     command -v systemctl >/dev/null || return 0
     local unit choice

@@ -35,11 +35,10 @@ local function apply_pywal_plugin_overrides()
     local color5 = vim.g.color5 or color_fg
     local color9 = vim.g.color9 or color_fg
 
-    -- These are configured during startup in cmdline/noice config and need to
-    -- be reapplied when returning to pywal.
+    -- reapply cmdline/noice highlights when switching back to pywal
     vim.api.nvim_set_hl(0, "NoiceCmdlineIcon", { fg = color9 })
     vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", { fg = color5 })
-    -- Neo-tree groups are not covered by pywal.nvim (it supports nvim-tree).
+    -- pywal.nvim doesn't cover neo-tree
     vim.api.nvim_set_hl(0, "NeoTreeNormal", { fg = color_fg, bg = color_bg })
     vim.api.nvim_set_hl(0, "NeoTreeNormalNC", { fg = color_fg, bg = color_bg })
     vim.api.nvim_set_hl(0, "NeoTreeWinSeparator", { fg = color1, bg = color_bg })
@@ -68,9 +67,9 @@ end
 function M.use_pywal()
     vim.cmd("source ~/.cache/wal/colors-wal.vim")
 
-    -- Prefer official colorscheme path so plugins listening to ColorScheme update.
+    -- use :colorscheme so ColorScheme listeners fire
     if not set_colorscheme("pywal") then
-        -- Fallback for pywal.nvim variants that only expose setup().
+        -- some pywal.nvim versions only have setup()
         local ok, pywal = pcall(require, "pywal")
         if ok and pywal.setup then
             pywal.setup()
@@ -84,7 +83,7 @@ function M.use_pywal()
     vim.g.current_theme = "pywal"
     state.set("theme", "pywal")
 
-    -- Schedule once to run after colorscheme listeners from other plugins.
+    -- run after other ColorScheme listeners
     vim.schedule(function()
         apply_pywal_plugin_overrides()
         sync_lualine_theme("pywal-nvim")

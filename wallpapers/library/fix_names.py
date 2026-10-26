@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Renumber files in each category folder as <prefix>-NN.<ext> with no gaps.
-
-Files keep their existing relative order (by number in the name, then by name);
-files with bad names are placed after the correctly numbered ones.
-Usage: python3 fix_names.py [--dry-run]
-"""
+# renames files in each folder to <prefix>-NN.<ext>, usage: fix_names.py [--dry-run]
 import re
 import sys
 from pathlib import Path
@@ -35,7 +30,7 @@ def fix_folder(folder, dry_run):
     if dry_run or not plan:
         return
 
-    # Two phases so renames never overwrite a file that hasn't moved yet.
+    # two passes so nothing gets overwritten
     temps = []
     for old, new in plan:
         tmp = old.with_name(f".tmp_{old.name}")

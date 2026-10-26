@@ -4,8 +4,6 @@ import Quickshell.Io
 import "Binds.js" as Binds
 import "../common"
 
-// The live shortcuts.lua, grouped: a small dial picks the category, its binds list underneath.
-// Categories you end up on most often move to the top of the dial.
 Item {
     id: page
 
@@ -26,7 +24,6 @@ Item {
         .sort((a, b) => b.n - a.n || a.i - b.i)
         .map(x => x.c)
 
-    // A search lists matching binds from every category; the dial steps back while it does.
     readonly property var matches: {
         const q = query.trim().toLowerCase()
         if (q === "") return null
@@ -43,12 +40,10 @@ Item {
     }
 
     property int current: 0
-    // Only a category you went looking for counts as a use.
     property bool touched: false
     readonly property var cur: cats.length > 0 ? cats[Math.min(current, cats.length - 1)] : null
     readonly property string currentId: cur ? cur.id : ""
 
-    // The list swaps at the midpoint of its own transition, sliding the way the dial turned.
     property var shown: null
     property int dir: 1
     onCurChanged: {
@@ -79,7 +74,6 @@ Item {
 
     function handleKey(event) {
         const k = event.key
-        // While searching, left/right belong to the text field.
         if (k === Qt.Key_Right && !matches) step(1)
         else if (k === Qt.Key_Left && !matches) step(-1)
         else if (k === Qt.Key_Down) list.scrollBy(list.rowH * 2)

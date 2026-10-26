@@ -5,7 +5,6 @@ import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import "../common"
 
-// One notification, shared by the home tile (popup: false) and the pop-up window (popup: true).
 Item {
     id: card
 
@@ -14,7 +13,7 @@ Item {
     property real u: 1
     property bool popup: false
     property bool expanded: false
-    // 1 to 0 while a pop-up counts down; negative hides the bar.
+    // 1 -> 0 countdown, negative hides it
     property real progress: -1
 
     readonly property bool hovered: area.containsMouse || closeArea.containsMouse
@@ -52,7 +51,6 @@ Item {
         border.width: card.popup || card.critical ? 1 : 0
         border.color: card.critical ? "#b3ff6b6b" : Qt.alpha(shell.accent, 0.4)
         Behavior on color { ColorAnimation { duration: Theme.ms(150) } }
-        // Soft drop shadow lifts pop-ups off the desktop; faint enough that the blur rule ignores it.
         layer.enabled: card.popup
         layer.effect: MultiEffect {
             shadowEnabled: true

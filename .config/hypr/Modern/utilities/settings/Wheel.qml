@@ -1,9 +1,7 @@
 import QtQuick
 import "../common"
 
-// Vertical wheel: scroll (or arrow keys) to turn it, click or Enter to apply.
-// entries: [{ id, name, sub, colors?: [hex...], image?: url }]. Colors render as discrete swatch pills
-// that rise and spread on the centered entry; images render in a rounded plate.
+// entries: [{ id, name, sub, colors?, image? }]
 Item {
     id: wheel
 
@@ -12,10 +10,9 @@ Item {
     property real barH: 0
     property real maxPitch: 140
     property real fixedPitch: 0
-    // Where the centered entry sits in the stage (0 = top, 1 = bottom); lower leaves less dead space above the first entry.
+    // 0 top, 1 bottom
     property real centerFrac: 0.5
     property bool showHint: true
-    // Shows the centered entry's name once above the whole stack instead of under that entry.
     property bool titleAbove: false
     readonly property real stageH: stage.height
     signal applied(string id)
@@ -23,9 +20,7 @@ Item {
     readonly property int n: entries.length
     readonly property int activeIndex: Math.max(0, entries.findIndex(e => e.id === activeId))
 
-    // Shortest signed distance around the loop, in [-n/2, n/2). Every entry is drawn once, at this offset.
-    // The seam (where an entry jumps from one end to the other) sits half a step off the rest positions,
-    // so every entry is fully visible at rest, including the far one on even-sized lists.
+    // signed distance around the loop, seam is offset half a step
     readonly property real lo: -n / 2 - (n % 2 === 0 ? 0.5 : 0)
     function wrap(x) {
         return n > 0 ? (((x - lo) % n) + n) % n + lo : 0
@@ -41,7 +36,6 @@ Item {
     property real pos: 0
     property real wheelAcc: 0
 
-    // Slow free-running phase for the centered entry's subtle drift.
     property real t: 0
     NumberAnimation on t {
         from: 0
@@ -51,7 +45,6 @@ Item {
         running: wheel.visible && wheel.n > 0
     }
 
-    // The panel's key handling drives whichever wheel is on the current page.
     Component.onCompleted: {
         cur = activeIndex
         pos = cur
@@ -60,7 +53,6 @@ Item {
     }
     Component.onDestruction: Store.wheels = Store.wheels.filter(w => w !== wheel)
 
-    // Entries fan out from the centered one when the wheel appears.
     property real intro: 0
     property int introDelay: 0
     SequentialAnimation {
@@ -93,7 +85,7 @@ Item {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
         onWheel: event => {
-            // Trackpads send many small deltas; a notch is one step either way.
+            // one step per notch
             wheel.wheelAcc += event.angleDelta.y
             while (Math.abs(wheel.wheelAcc) >= 120) {
                 wheel.step(wheel.wheelAcc > 0 ? -1 : 1)
@@ -122,18 +114,16 @@ Item {
                 readonly property bool centered: wheel.mod(Math.round(wheel.pos)) === index
                 readonly property bool isImage: !!modelData.image
 
-                // 1 when exactly centered, 0 once a full step away (smoothstepped). Used by image entries.
+                // 1 centered, 0 a step away
                 readonly property real lift: Math.max(0, 1 - ad)
                 readonly property real ease: lift * lift * (3 - 2 * lift)
 
-                // An entry fades out as it nears the seam and back in on the other side, so it never shows twice or pops.
                 readonly property real edge: Math.max(0, Math.min(1, Math.min(d - wheel.lo, wheel.lo + wheel.n - d) / 0.5))
                 visible: ad < 3.6 && edge > 0.01
                 width: stage.width - 28
                 height: wheel.rowH
                 x: (stage.width - width) / 2
                 y: stage.height * wheel.centerFrac - height / 2 + d * wheel.pitch * (1 - 0.05 * Math.min(ad, 3)) * wheel.intro
-                // Image entries stay one size and only the centered one swells; color entries keep the original falloff.
                 scale: isImage ? 1 + 0.05 * ease : Math.max(0.62, 1 - 0.09 * ad)
                 opacity: Math.max(0, 1 - 0.26 * ad) * Math.min(1, wheel.intro * 1.6) * edge
                 z: 10 - ad
@@ -156,7 +146,6 @@ Item {
                             width: (cells.width - cells.spacing * (n - 1)) / n
                             height: cells.height
 
-                            // Eases the drift in and out as this entry enters or leaves the center.
                             property real breath: item.centered ? 1 : 0
                             Behavior on breath { NumberAnimation { duration: Theme.ms(400); easing.type: Easing.OutCubic } }
 
@@ -173,8 +162,6 @@ Item {
                     }
                 }
 
-                // Image entries: faint backing plate so floating pieces read as one strip, a dim wash that
-                // lifts as the entry reaches the center, and a barely-there float on the centered one.
                 Item {
                     id: imgBox
                     visible: item.isImage
@@ -201,7 +188,6 @@ Item {
                     }
                 }
 
-                // In-use marker, visible even when the entry is off-center.
                 Rectangle {
                     visible: item.active
                     width: 7

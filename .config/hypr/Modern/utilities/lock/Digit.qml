@@ -1,6 +1,5 @@
 import QtQuick
 
-// One clock digit in a fixed-width cell; a new value slides the old one up and out, then rises into place.
 Item {
     id: d
 

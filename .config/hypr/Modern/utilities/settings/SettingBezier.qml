@@ -3,8 +3,6 @@ import Quickshell
 import "Schema.js" as Schema
 import "../common"
 
-// Animation curve tuning: drag the handles, watch the preview, or roll the dice.
-// The preview plays the real curve at the real duration (never shorter than 0.6 s, so it stays readable).
 Item {
     id: control
 
@@ -26,7 +24,7 @@ Item {
         Store.setMany({ "animation.preset": "custom", "animation.curve": c })
     }
 
-    // x must stay within 0..1; y within the plot's range so the handles remain reachable.
+    // x stays in 0..1
     function commitText(index, raw) {
         const nums = raw.split(/[\s,;()]+/).map(parseFloat).filter(n => !isNaN(n))
         const c = control.curve.slice()
@@ -55,7 +53,7 @@ Item {
         return def.options[Math.floor(Math.random() * def.options.length)].v
     }
 
-    // Roll a whole new feel: curve (sometimes overshooting), speed and both motion styles.
+    // random curve, speed and styles
     function randomize() {
         const r = (lo, hi) => Number(rand(lo, hi, 0.01).toFixed(2))
         edit([r(0.05, 0.8), r(-0.3, 1.2), r(0.2, 0.95), r(0.6, 1.45)])
@@ -81,7 +79,6 @@ Item {
         PropertyAction { target: control; property: "t"; value: 0 }
         PauseAnimation { duration: 320 }
 
-        // Out: 0 -> 1 along the curve, then back: 1 -> 0 along the same curve, like a window opening and closing.
         ParallelAnimation {
             NumberAnimation { target: control; property: "t"; from: 0; to: 1; duration: control.previewMs }
             NumberAnimation {
@@ -137,7 +134,6 @@ Item {
                 width: body.width - plot.width - 14
                 spacing: 10
 
-                // Mock window opening with the chosen window style.
                 Rectangle {
                     id: stage
                     width: parent.width
@@ -175,12 +171,11 @@ Item {
                     }
                 }
 
-                // Race: the eased dot against plain linear motion over the same time.
+                // eased dot vs linear
                 Item {
                     width: parent.width
                     height: 90
 
-                    // linear row
                     Text { x: 6; y: 2; text: "linear"; font.family: Theme.sans; font.pixelSize: 12; color: Theme.dim }
                     Rectangle { x: 6; y: 26; width: parent.width - 12; height: 2; radius: 1; color: Theme.alpha(Theme.fg, 0.14) }
                     Rectangle {
@@ -188,7 +183,6 @@ Item {
                         color: Theme.alpha(Theme.fg, 0.5)
                     }
 
-                    // this curve row
                     Text { x: 6; y: 48; text: "this curve"; font.family: Theme.sans; font.pixelSize: 12; color: Theme.dim }
                     Rectangle { x: 6; y: 72; width: parent.width - 12; height: 2; radius: 1; color: Theme.alpha(Theme.fg, 0.14) }
                     Rectangle {
@@ -199,7 +193,7 @@ Item {
             }
         }
 
-        // Type the curve by hand: four fields, or paste "x1, y1, x2, y2" into any of them.
+        // or paste "x1, y1, x2, y2" into any field
         Row {
             id: fields
             width: parent.width
@@ -242,7 +236,6 @@ Item {
                         font.pixelSize: 12
                         color: Theme.bright
                         selectionColor: Theme.alpha(Theme.accent, 0.6)
-                        // Shows the live value until you start typing.
                         text: Number(control.curve[field.index]).toFixed(2)
                         onActiveFocusChanged: if (activeFocus) selectAll()
                         onEditingFinished: {

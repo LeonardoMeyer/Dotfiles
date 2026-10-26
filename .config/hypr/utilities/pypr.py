@@ -15,7 +15,6 @@ _open_connection = ipc.hyprctl_connection
 
 @asynccontextmanager
 async def hyprctl_connection(logger):
-    """Same as upstream, but a dropped socket surfaces as a retryable reset."""
     try:
         async with _open_connection(logger) as streams:
             yield streams
@@ -23,14 +22,14 @@ async def hyprctl_connection(logger):
         raise
     except ConnectionResetError:
         raise
-    except OSError as e:  # broken pipe, ENOTCONN, refused while Hyprland is busy
+    except OSError as e:  # broken pipe etc while hyprland is busy
         raise ConnectionResetError(str(e)) from e
 
 
 ipc.hyprctl_connection = hyprctl_connection
 hypr_adapter.hyprctl_connection = hyprctl_connection
 
-# Plugin loads can stall the socket for a couple of seconds; upstream gives up after ~1.5s.
+# socket can stall a few seconds on plugin load
 ipc.IPC_MAX_RETRIES = 8
 
 

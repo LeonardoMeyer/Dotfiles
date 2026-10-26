@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Keep the package manifest in one place so installers and maintenance tools
-# agree on which packages belong to the dotfiles setup.
 CORE_PACKAGES=(
     python-pywal16 awww waybar starship myfetch neovim python-pywalfox
     hypridle hyprpicker hyprshot grim hyprmon pacman-contrib pyprland fd

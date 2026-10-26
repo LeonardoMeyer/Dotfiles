@@ -17,15 +17,12 @@ ShellRoot {
     readonly property string home: Quickshell.env("HOME")
     readonly property bool portrait: win.screen ? win.screen.height > win.screen.width : false
     readonly property real u: unitFor(win.screen)
-    // Hyprland's live rounding (override or profile default): the cards take it as is, and smaller pieces
-    // designed against its default 10px scale along with it.
     readonly property real rounding: Theme.rounding
     function rr(v) { return v * rounding / 10 * u }
 
-    // Portrait screens stack the tiles two per row, so their column is wider.
     readonly property real sysW: portrait ? 352 : 330
 
-    // One layout unit per screen; portrait is sized against a 760-wide, two-tile layout instead of the 1600-wide row.
+    // portrait is laid out at 760 wide, landscape at 1600
     function unitFor(s) {
         if (!s) return 1
         const v = s.height > s.width
@@ -34,7 +31,6 @@ ShellRoot {
         return Math.max(0.6, v)
     }
 
-    // The shell stays resident and hidden; shown/t drive every entrance and exit.
     property bool shown: false
     property bool closing: false
     property real t: 0
@@ -48,7 +44,6 @@ ShellRoot {
     readonly property color glass: Qt.rgba(Qt.color(bgHex).r, Qt.color(bgHex).g, Qt.color(bgHex).b, 0.5)
     readonly property color popupBg: Qt.rgba(Qt.color(bgHex).r, Qt.color(bgHex).g, Qt.color(bgHex).b, 0.86)
 
-    // System state
     property real cpu: 0
     property real prevTotal: 0
     property real prevIdle: 0
@@ -70,7 +65,7 @@ ShellRoot {
     property real gpuMemTotal: 1
     property real gpuTemp: 0
 
-    // Notifications: this shell is the notification daemon, so it stays resident from login.
+    // this shell is the notification daemon
     property bool dnd: false
     property var popups: []
     property var arrived: ({})
@@ -92,7 +87,7 @@ ShellRoot {
         return out
     }
 
-    // Media and audio
+    // Media
     readonly property var player: {
         const list = Theme.players
         return list.find(p => p.isPlaying) ?? list[0] ?? null
@@ -114,12 +109,12 @@ ShellRoot {
         tween.start()
     }
 
-    // Waits for the wallpaper so its first blur render doesn't land mid-animation.
+    // wait for the wallpaper so the first blur doesn't stutter
     function tryStart() {
         if (shown && !closing && (wallReady || startWaited)) animateTo(1)
     }
 
-    // Each monitor shows its own wallpaper; "*" is the wal one used when awww reports nothing for it.
+    // "*" is the wal wallpaper, used when awww has nothing for a monitor
     function wallFor(name) {
         return walls[name] ?? walls["*"] ?? ""
     }
@@ -147,7 +142,7 @@ ShellRoot {
         const now = new Date()
         calY = now.getFullYear()
         calM = now.getMonth()
-        // Frozen for this open so moving the cursor to another monitor never drags the window along.
+        // lock to this monitor while open
         targetScreen = screen
         shown = true
         wallReady = false
@@ -175,7 +170,7 @@ ShellRoot {
         else show()
     }
 
-    // Unmapping (rather than exiting) hands focus and the pointer straight back to the desktop.
+    // unmap instead of exiting so focus goes straight back
     function finish() {
         watchdog.stop()
         startTimer.stop()
@@ -188,7 +183,7 @@ ShellRoot {
         if (pendingCmd !== "") launchTimer.restart()
     }
 
-    // Gives the compositor a moment to unmap the surface before the command (e.g. the lock screen) starts.
+    // let the surface unmap before running the command
     Timer {
         id: launchTimer
         interval: 120
@@ -216,7 +211,6 @@ ShellRoot {
             return
         }
         popups = [n].concat(popups.filter(p => p !== n)).slice(0, 5)
-        // Picks up the palette of a wallpaper applied since the last notification.
         walColors.running = true
     }
 
@@ -255,7 +249,7 @@ ShellRoot {
     function setVolume(v) {
         if (!sink || !sink.audio) return
         sink.audio.volume = Math.max(0, Math.min(1, v))
-        // Moving the volume while muted would otherwise change nothing audible.
+        // unmute when the volume changes
         if (v > 0 && sink.audio.muted) sink.audio.muted = false
     }
 
@@ -311,10 +305,9 @@ ShellRoot {
     }
 
     NumberAnimation { id: tween; target: root; property: "t"; onFinished: if (root.closing) root.finish() }
-    // One frame at t=0 is drawn before the entrance starts, so it never skips.
     Timer { id: startTimer; interval: 30; onTriggered: root.tryStart() }
     Timer { id: waitTimer; interval: 450; onTriggered: { root.startWaited = true; root.tryStart() } }
-    // Last resort: a close that stalls must never leave the full-screen surface grabbing input.
+    // failsafe so a stuck close doesn't keep grabbing input
     Timer { id: watchdog; interval: Theme.ms(1200) + 100; onTriggered: if (root.closing) root.finish() }
 
     SystemClock { id: clock; precision: SystemClock.Minutes; enabled: root.shown }
@@ -329,7 +322,7 @@ ShellRoot {
         function toggleDnd(): void { root.dnd = !root.dnd }
     }
 
-    // Same source the lock screen uses, so both always match the last applied wallpaper.
+    // same source as the lock screen
     Process {
         id: walPath
         running: true
@@ -393,8 +386,6 @@ ShellRoot {
         repeat: true
         onTriggered: root.player.positionChanged()
     }
-
-    // ---------- Reusable pieces ----------
 
     component Glass: Item {
         id: g
@@ -537,9 +528,7 @@ ShellRoot {
         MouseArea { id: dma; anchors.fill: parent; hoverEnabled: true; onClicked: root.run(db.cmd) }
     }
 
-    // ---------- Window ----------
-
-    // Other monitors get the same softened desktop plus a quiet clock, so they never sit bright beside the dimmed one.
+    // other monitors get a dimmed wallpaper and a small clock
     Variants {
         model: Quickshell.screens
         delegate: PanelWindow {
@@ -656,10 +645,9 @@ ShellRoot {
                 else if (k === Qt.Key_C) root.clearAll()
             }
 
-            // The desktop itself softens: same wallpaper, same crop, then it crossfades to a fixed blur.
             Item {
                 anchors.fill: parent
-                // Never 0: Qt skips invisible items, which would defer the blur's first render into the animation.
+                // never 0, or Qt skips the first blur render
                 opacity: Math.max(0.001, Math.min(1, root.t * 2.5))
 
                 Image {
@@ -723,7 +711,6 @@ ShellRoot {
                 }
             }
 
-            // Widgets
             Flow {
                 id: widgets
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -883,7 +870,6 @@ ShellRoot {
                             IconButton { size: 52 * root.u; glyph: "\uf051"; onClicked: media.pl.next() }
                         }
 
-                        // The music player's cava visualizer; it only runs while the home screen is up.
                         Music.Visualizer {
                             anchors.bottom: parent.bottom
                             width: parent.width
@@ -1171,7 +1157,6 @@ ShellRoot {
                                         width: Math.max(parent.height, parent.width * (root.muted ? 0 : root.volume))
                                         radius: height / 2
                                         color: "#f2ffffff"
-                                        // Follows the pointer exactly while dragging, eases otherwise.
                                         Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: Theme.ms(120); easing.type: Easing.OutCubic } }
                                     }
                                 }
@@ -1183,7 +1168,6 @@ ShellRoot {
                                     font.pixelSize: 15 * root.u
                                     color: "#101418"
                                 }
-                                // Click or drag anywhere along the bar.
                                 MouseArea {
                                     id: volDrag
                                     anchors.fill: parent
@@ -1199,7 +1183,6 @@ ShellRoot {
                             }
                         }
 
-                        // Wheel over the whole tile changes volume; clicks fall through to the bar.
                         MouseArea {
                             anchors.fill: parent
                             acceptedButtons: Qt.NoButton
@@ -1284,7 +1267,6 @@ ShellRoot {
                             }
                         }
 
-                        // Sits in the tile margin; wheel and drag scroll the list.
                         Rectangle {
                             visible: notifList.contentHeight > notifList.height + 1
                             x: parent.width + 12 * root.u
@@ -1298,7 +1280,7 @@ ShellRoot {
                 }
             }
 
-            // Power dock (everything wlogout had)
+            // Power
             Glass {
                 id: dock
                 anchors.horizontalCenter: parent.horizontalCenter

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Builds the wallpaper picker index: thumbnails, a screen-sized copy and a pywal palette per image, cached."""
 import hashlib
 import json
 import os
@@ -12,7 +11,7 @@ from pathlib import Path
 LIBRARY = Path(os.environ.get("WALLPAPER_LIBRARY", Path.home() / "wallpapers" / "library"))
 CACHE = Path.home() / ".cache" / "wallpaper-picker"
 THUMBS = CACHE / "thumbs"
-# Palettes come from the original image, like color-apply.sh, so the preview shows the colors applying gives.
+# palette from the original image, same as color-apply.sh
 PALETTES = CACHE / "palettes-full.json"
 INDEX = CACHE / "index.json"
 EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"}
@@ -29,10 +28,7 @@ def key_for(path: Path) -> str:
     return hashlib.sha1(f"{path}:{stat.st_mtime_ns}:{stat.st_size}".encode()).hexdigest()
 
 
-# Everything the picker shows of one wallpaper, made in a single ImageMagick run from one decode (large JPEGs are
-# decoded at reduced size straight away):
-#   thumb    640x360, the cards and the panel's blurred backdrop
-#   screen   screen-sized JPEG, the full-screen preview (flipping through decodes it in a few milliseconds)
+# thumb (640x360) and a screen-sized copy, one magick run
 def make_assets(path: Path, key: str) -> tuple[Path, Path]:
     thumb, screen = THUMBS / f"{key}.jpg", THUMBS / f"{key}-s.jpg"
     files = [thumb, screen]
@@ -88,8 +84,7 @@ def main() -> None:
     with ThreadPoolExecutor(max_workers=4) as pool:
         results = [r for r in pool.map(work, files) if r]
 
-    # Cached files no longer used (wallpapers removed or changed, older formats) go, so the cache only ever holds
-    # what is shown.
+    # remove stale cache files
     live = {Path(v[f]).name for _, v in results for f in ("thumb", "screen")}
     for f in THUMBS.iterdir():
         if f.name not in live and ".tmp" not in f.name:

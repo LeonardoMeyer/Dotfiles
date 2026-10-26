@@ -1,7 +1,6 @@
 import QtQuick
 
-// A card like the home screen's: the background at half strength with a faint edge. hyprglass can't reach a
-// lock surface, so the lock keeps this look whether glass is on or not.
+// hyprglass can't reach the lock surface, so no glass here
 Rectangle {
     radius: Lock.rounding
     color: Lock.card

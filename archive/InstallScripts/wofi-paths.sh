@@ -4,7 +4,7 @@ fix_wofi_paths() {
     local dir="${1:-$HOME/.config/wofi}" file replacement
 
     [[ -d "$dir" ]] || return 0
-    # ~/.config/wofi is usually a symlink into the repo; find won't descend into it.
+    # resolve the symlink so find descends into it
     dir="$(readlink -f "$dir")"
 
     replacement="${HOME//\\/\\\\}"

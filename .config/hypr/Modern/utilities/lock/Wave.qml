@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// The quickshell bar's visualizer (bar/Module.qml's Wave): cava's levels as bars along the palette's spectrum.
+// same visualizer as the bar
 Row {
     id: wave
 
@@ -38,7 +38,7 @@ Row {
 
             anchors.verticalCenter: parent.verticalCenter
             width: 2.5 * wave.u
-            // Even pixel heights, so it never flickers between neighbours.
+            // even pixel heights so it doesn't flicker
             height: Math.max(4, Math.round((3 + level * 12) * wave.u / 2) * 2)
             radius: width / 2
             color: Lock.along(Lock.spectrum, index / (wave.bars - 1))

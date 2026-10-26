@@ -9,29 +9,12 @@ import Quickshell.Services.UPower
 import "../common"
 import Quickshell.Io
 
-
-// One module of a pill's row, named in the style's config like a waybar module:
-//   user        $USER (click: home, middle: launcher, right: settings)
-//   workspaces  the workspace dots
-//   media       now playing: art, track and a waveform (folds away when nothing plays)
-//   date        the date, in the media's place while nothing plays
-//   constdate   the date, always shown
-//   timer       a running focus timer
-//   clock       the time
-//   tray        tray apps
-//   updates     pending updates (click to update; folds away when there are none)
-//   network     Wi-Fi or Ethernet, and a connected Bluetooth device
-//   audio       volume
-//   battery     charge, on laptops
-//   power       the session menu
-//   |           a divider
 Item {
     id: mod
 
     property string name
     property var pill
     property var ctx
-    // Its place in the pill's row, and whether it shows anything (folded modules don't).
     property int slot: 0
     readonly property bool present: !!loader.item && loader.item.visible !== false && (loader.item.on ?? true)
 
@@ -42,13 +25,11 @@ Item {
     width: implicitWidth
     height: implicitHeight
 
-    // Modules that are one thing open their page when rested on; the tray and the chips do it per chip.
     HoverHandler {
         enabled: mod.page === "workspaces" || mod.page === "island"
         onHoveredChanged: hovered ? mod.pill.rest(mod.page, null, mod) : mod.pill.unrest(mod)
     }
 
-    // The island's modules: a click opens it, a middle click plays or pauses.
     MouseArea {
         anchors.fill: parent
         enabled: mod.page === "island"
@@ -76,8 +57,6 @@ Item {
         color: Theme.fg
     }
 
-    // ---- Left --------------------------------------------------------------------------------------------------
-
     Component {
         id: userC
         Chip {
@@ -100,8 +79,6 @@ Item {
             }
         }
     }
-
-    // ---- Middle ------------------------------------------------------------------------------------------------
 
     Component {
         id: mediaC
@@ -136,8 +113,7 @@ Item {
 
                     Label {
                         id: title
-                        // Gives way first when the row runs out of room (a portrait monitor): whatever the rest
-                        // of the row leaves, worked out after each layout so it never chases itself.
+                        // shrinks first when space runs out
                         property real fit: 170
                         function refit() { if (mod && mod.pill) fit = Math.max(40, Math.min(170, mod.pill.maxW - (mod.pill.rowW - width))) }
                         Connections {
@@ -235,8 +211,6 @@ Item {
         }
     }
 
-    // ---- Right -------------------------------------------------------------------------------------------------
-
     Component {
         id: trayC
         Fold {
@@ -257,7 +231,6 @@ Item {
                         const item = modelData
                         if (b === Qt.MiddleButton) item.secondaryActivate()
                         else if (b === Qt.RightButton || item.onlyMenu) { if (item.hasMenu) mod.pill.toggle("tray", item) }
-                        // Spotify lives in a pypr scratchpad, like the home screen and music player open it.
                         else if (Theme.isSpotify(item)) { mod.pill.close(); Theme.openSpotify() }
                         else { mod.pill.close(); item.activate() }
                     }
@@ -274,7 +247,6 @@ Item {
             Chip {
                 pill: mod.pill
                 glyph: "󰅢"
-                // Keeps its number while it folds away.
                 text: mod.ctx.updates > 0 ? mod.ctx.updates : ""
                 onClicked: b => { if (b === Qt.LeftButton) mod.ctx.runUpdate() }
             }
@@ -308,7 +280,6 @@ Item {
                 onClicked: b => { if (b === Qt.RightButton) mod.ctx.run("kitty nmtui") }
             }
 
-            // Only while a device is connected: its name, nothing more.
             Fold {
                 on: netRow.paired.length > 0
                 Chip {
@@ -394,24 +365,19 @@ Item {
         }
     }
 
-    // ---- Pieces -----------------------------------------------------------------------------------------------
-
-    // A glyph (or tray icon) with an optional label, in a pill's row. Tinted while the page it opens is showing.
     component Chip: Item {
         id: chip
 
         property var pill
-        // The pill page resting on it opens ("" for none), and for the tray, whose.
         property string page: ""
         property var tray: null
         property string glyph: ""
         property string icon: ""
         property string text: ""
         property real maxText: 120
-        // The widest the text gets ("100%"), so a number gaining a digit doesn't stretch the pill.
+        // widest text, so the pill doesn't change width
         property string widest: ""
         property bool faded: false
-        // A left click opens or closes its page; off where the click does something else.
         property bool clickOpens: true
         readonly property bool lit: page !== "" && pill.open && pill.shownPage === page && (page !== "tray" || pill.shownTray === tray)
         property color glyphColor: lit ? Theme.accent : Theme.bright
@@ -446,7 +412,6 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: chip.glyph !== ""
-                    // A fixed slot, so glyphs of different widths (volume, signal, battery) never shift the pill.
                     width: Math.max(implicitWidth, 15)
                     horizontalAlignment: Text.AlignRight
                     text: chip.glyph
@@ -489,8 +454,7 @@ Item {
         }
     }
 
-    // Something in a pill's row that can come and go (the update count, a Bluetooth device, the media): it fades
-    // while its width folds to nothing, so the pill around it shrinks smoothly instead of jumping.
+    // fades and folds its width so the pill shrinks smoothly
     component Fold: Item {
         id: fold
 
@@ -499,7 +463,6 @@ Item {
 
         property real f: on ? 1 : 0
         Behavior on f { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: fold.on ? Theme.settle : Theme.leave } }
-        // Its contents can empty the moment it starts folding (a player quitting), so it folds from its last width.
         property real full: 0
         readonly property real live: inner.implicitWidth
         onLiveChanged: if (on && live > 0) full = live
@@ -517,7 +480,6 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
         }
     }
-    // This is the visualizer
     component Wave: Row {
         id: wave
         property bool playing: false
@@ -525,7 +487,6 @@ Item {
         readonly property int bars: 10
 
         spacing: 2
-
 
         Process {
             running: wave.playing
@@ -566,7 +527,6 @@ Item {
             }
         }
 
-
         Repeater {
             model: wave.bars
             
@@ -576,7 +536,7 @@ Item {
                 readonly property real level:
                     wave.playing ? (wave.levels[index] || 0) : 0
 
-                // Quantize to even pixel heights to prevent alternating 1px changes.
+                // even pixel heights so bars don't flicker
                 readonly property real targetHeight:
                     Math.max(4, Math.round((3 + level * 12) / 2) * 2)
 

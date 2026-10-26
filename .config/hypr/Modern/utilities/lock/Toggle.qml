@@ -1,6 +1,5 @@
 import QtQuick
 
-// common/Switch's on/off switch, with its label, as a row of the settings menu.
 Item {
     id: row
 

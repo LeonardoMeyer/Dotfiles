@@ -1,29 +1,23 @@
 import QtQuick
 import "../common"
 
-// Vertical wheel in the style of the settings sheet's Waybar and color wheels: the centered entry is full size on
-// an accent plate, neighbours shrink and fade with distance. Built for thousands of entries: only the rows near the
-// center exist, and each row maps to whichever entry sits at its offset, so scrolling never creates anything.
-// Rows carry no animations of their own (everything is a function of distance), which keeps the recycling seamless.
 // entries: [{ n, k, d }]
 Item {
     id: wheel
 
     property var entries: []
     property int cur: 0
-    // The launcher stays built while closed; nothing should keep animating then.
     property bool animate: true
     property real pos: 0
     signal activated(int index)
 
-    // Where the centered entry sits (0 = top, 1 = bottom); above the middle, since the list starts at its first entry.
+    // 0 top, 1 bottom
     property real centerFrac: 0.36
     readonly property int n: entries.length
     readonly property real pitch: Math.min(64, Math.max(46, height / 6.2))
     readonly property real rowH: Math.round(pitch * 0.74)
     readonly property int reach: 5
 
-    // Slow free-running phase for the centered entry's subtle drift, as in the settings wheel.
     property real t: 0
     NumberAnimation on t {
         from: 0
@@ -33,7 +27,6 @@ Item {
         running: wheel.animate && wheel.visible && wheel.n > 0
     }
 
-    // Entries settle in from below when the list is replaced (opening, a new search).
     property real intro: 1
     NumberAnimation { id: introAnim; target: wheel; property: "intro"; from: 0; to: 1; duration: Theme.ms(420); easing.type: Easing.OutCubic }
 
@@ -61,7 +54,7 @@ Item {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
         onWheel: event => {
-            // Trackpads send many small deltas; a notch is one step either way.
+            // one step per notch
             wheel.wheelAcc += event.angleDelta.y
             while (Math.abs(wheel.wheelAcc) >= 120) {
                 wheel.step(wheel.wheelAcc > 0 ? -1 : 1)
@@ -86,7 +79,7 @@ Item {
                 readonly property var e: live ? wheel.entries[idx] : null
                 readonly property real d: idx - wheel.pos
                 readonly property real ad: Math.abs(d)
-                // 1 when exactly centered, 0 once a full step away (smoothstepped).
+                // 1 centered, 0 a step away
                 readonly property real lift: Math.max(0, 1 - ad)
                 readonly property real ease: lift * lift * (3 - 2 * lift)
 
@@ -146,7 +139,6 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    // Off-center rows come to the center; the centered one runs.
                     onClicked: {
                         if (row.idx === wheel.cur) wheel.activated(row.idx)
                         else wheel.step(row.idx - wheel.cur)

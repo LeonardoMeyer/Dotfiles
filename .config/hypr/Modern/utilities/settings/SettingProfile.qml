@@ -1,8 +1,6 @@
 import QtQuick
 import "../common"
 
-// Style (the look: quickshells, animation, layer rules) and variant (laptop, desktop, ...).
-// Both come from folders under ~/.config/hypr, so adding a style needs no code.
 Item {
     id: control
 
@@ -53,7 +51,6 @@ Item {
             verticalAlignment: Text.AlignTop
             wrapMode: Text.WordWrap
             text: "Edit defaults in /home/$USER/.config/hypr/" + (Store.active.style || "the style") + "/ or make a new style in /home/$USER/.config/hypr/"
-            // text: "A style carries its own quickshells, waybar styles and animations. Every variant keeps its own tweaks, so laptop and desktop stay independent."
             font.family: Theme.sans
             font.pixelSize: 11
             color: Theme.dim

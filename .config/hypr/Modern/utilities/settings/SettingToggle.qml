@@ -34,7 +34,6 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         checked: control.on
         hot: control.hot
-        // The whole row takes the click.
         enabled: false
     }
 
@@ -48,13 +47,12 @@ Item {
             const changes = {}
             changes[control.def.key] = !control.on
             const r = control.def.raises
-            // Some options need another one to be visible at all (a gradient border needs a border).
             if (!control.on && r && Store.values[r.key] < r.min) changes[r.key] = r.min
             Store.setMany(changes)
         }
     }
 
-    // Right-click puts the setting back to the profile's own value.
+    // right-click resets to the profile value
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton

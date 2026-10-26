@@ -1,31 +1,8 @@
-/* ============================================================
-   swaync style.css — pywal-aware, GTK4-compatible
-   ============================================================
-   IMPORTANT CONFIG NOTES (config.json):
-   - Set "cssPriority": "user" — without this, GTK4 system
-     themes override your CSS and cause solid/wrong backgrounds.
-   - Set "ignore-gtk-theme": true — prevents GTK_THEME from
-     bleeding its own widget colors into swaync.
-
-   THE STACKED-FRAME BUG (what you saw in the screenshot):
-   The GTK widget tree for a notification is:
-     .notification-row              ← ListBoxRow, needs transparent bg
-       └ .notification-background   ← EventBox/wrapper, needs transparent bg
-           └ .notification          ← THIS is the card you want to style
-               └ .notification-content
-
-   If .notification-row or .notification-background have any
-   background set (even by GTK theme inheritance), they stack
-   visually on top of each other creating the ugly double/triple
-   frame artifact. Every ancestor must be explicitly cleared.
-
-   TOGGLE BUTTONS: GTK4 uses `.active` class. GTK3 used `:checked`.
-   Both selectors are included below for compatibility.
-   ============================================================ */
+/* set "cssPriority": "user" and "ignore-gtk-theme": true in config.json */
 
 @import url('../../.cache/wal/colors-waybar.css');
 
-/* ── Pywal color aliases ─────────────────────────────────── */
+/* pywal color aliases */
 @define-color mpris-album-art-overlay  alpha(@background, 0.55);
 @define-color mpris-button-hover       alpha(@background, 0.45);
 @define-color text                     @color15;
@@ -34,44 +11,38 @@
 @define-color mycolor                  @color9;
 @define-color border-color             alpha(@mycolor, 0.18);
 
-/* ── Slide-in for floating notifications ─────────────────── */
+/* slide-in for floating notifications */
 @keyframes slideIn {
     from { opacity: 0; margin-top: -6px; }
     to   { opacity: 1; margin-top: 0;    }
 }
 
-/* ── Global ──────────────────────────────────────────────── */
+/* global */
 * {
     outline: none;
     box-sizing: border-box;
 }
 
-/* ============================================================
-   THE CRITICAL FIX — STRIP ALL BACKGROUNDS FROM ANCESTORS
-   Every wrapper above .notification must be transparent or
-   the stacked-frame artifact appears (as seen in screenshot).
-   ============================================================ */
+/* clear every wrapper background or the cards stack */
 
-/* Row container (GTK ListBoxRow) */
+/* row container (gtk listboxrow) */
 .notification-row {
     background: transparent;
     padding: 0;
     margin: 0;
 }
 
-/* EventBox wrapper — this is the one most GTK themes paint */
+/* most gtk themes paint this one */
 .notification-background {
     background: transparent;
 }
 
-/* Floating window background layer */
+/* floating window background layer */
 .floating-notifications.background {
     background: transparent;
 }
 
-/* ============================================================
-   FLOATING NOTIFICATIONS — the actual card
-   ============================================================ */
+/* floating notifications */
 
 .floating-notifications .notification-row .notification-background .notification {
     background: alpha(@mycolor, 0.42);
@@ -79,18 +50,9 @@
     margin: 6px;
     animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     box-shadow: 0px 0px 2px rgba(0, 0, 0, .6);
-
-    /* ── OUTERMOST SHADOW (floating popup) ──────────────────
-       Commented out per user request.
-       Uncomment to restore depth on floating toasts.
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.50),
-                0 1px 4px  rgba(0, 0, 0, 0.30);
-    ────────────────────────────────────────────────────── */
 }
 
-/* ============================================================
-   CONTROL CENTER NOTIFICATIONS — the actual card
-   ============================================================ */
+/* control center notifications */
 
 .control-center .notification-row .notification-background .notification {
     background: alpha(@mycolor, 0.22);
@@ -98,51 +60,46 @@
     margin-top: 5px;
     margin-bottom: 2px;
     box-shadow: 0px 0px 2px rgba(0, 0, 0, .6);
-    /* ── OUTERMOST SHADOW (notification card in panel) ───────
-       Commented out per user request.
-       Uncomment to restore lift effect on cards.
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
-    ────────────────────────────────────────────────────── */
 }
 
-/* All inner widgets inherit border-radius so nothing pokes out */
+/* inherit radius so nothing pokes out */
 .notification box,
 .notification widget,
 .notification .notification-content {
     border-radius: 12px;
 }
 
-/* Hover on action widgets */
+/* hover on action widgets */
 .notification widget:hover {
     background: alpha(@mycolor, 0.15);
     border-radius: 8px;
     transition: background 0.2s ease;
 }
 
-/* ── Notification content padding ────────────────────────── */
+/* notification content padding */
 .notification-content {
     padding: 8px 10px;
 }
 
-/* ── Labels — low/normal urgency ─────────────────────────── */
+/* labels, low/normal urgency */
 .notification.low .notification-content label,
 .notification.normal .notification-content label {
     padding: 4px 8px 2px 8px;
 }
 
-/* ── App icons — always transparent bg ───────────────────── */
+/* app icons, always transparent bg */
 .notification .notification-content image {
     background-color: transparent;
     border-radius: 6px;
 }
 
-/* ── Body text color ─────────────────────────────────────── */
+/* body text color */
 .notification.low .notification-content .body,
 .notification.normal .notification-content .body {
     color: @text;
 }
 
-/* ── Critical urgency ────────────────────────────────────── */
+/* critical urgency */
 .notification.critical .notification-content {
     background: rgba(200, 50, 40, 0.20);
     border-radius: 12px;
@@ -156,7 +113,7 @@
     color: #ffb4a9;
 }
 
-/* ── Typography ──────────────────────────────────────────── */
+/* typography */
 .notification-content .summary {
     font-family: 'CodeNewRoman Nerd Font Propo', monospace;
     font-size: 0.94rem;
@@ -179,7 +136,7 @@
     color: alpha(@text, 0.82);
 }
 
-/* ── Close button ────────────────────────────────────────── */
+/* close button */
 .close-button {
     all: unset;
     background: transparent;
@@ -188,8 +145,7 @@
     min-height: 20px;
     min-width: 20px;
     margin: 4px 4px 0 0;
-    /* transition intentionally NOT using `all` — avoids GTK
-       flash when `all: unset` is re-applied on hover state   */
+    /* not `all`, it flashes on hover */
     transition: background 0.2s ease, color 0.2s ease;
 }
 
@@ -199,24 +155,16 @@
     border-radius: 50%;
 }
 
-/* ============================================================
-   CONTROL CENTER PANEL WINDOW
-   ============================================================ */
+/* control center panel window */
 
 .control-center {
     background: @bg;
     color: @text;
     border-radius: 14px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, .4);
-    /* ── OUTERMOST SHADOW (entire panel window) ──────────────
-       Commented out per user request.
-       Uncomment to restore the panel drop-shadow.
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55),
-                1px 1px 5px rgba(0, 0, 0, 0.40);
-    ────────────────────────────────────────────────────── */
 }
 
-/* ── Panel title bar ─────────────────────────────────────── */
+/* panel title bar */
 .widget-title {
     color: alpha(@text, 0.50);
     padding: 14px 20px 6px 20px;
@@ -227,7 +175,7 @@
     text-transform: uppercase;
 }
 
-/* "Clear all" / dismiss button */
+/* "clear all" / dismiss button */
 .widget-title > button {
     font-size: 0.85rem;
     font-weight: 500;
@@ -248,7 +196,7 @@
     border-color: alpha(#ff5555, 0.50);
 }
 
-/* ── Label widget ────────────────────────────────────────── */
+/* label widget */
 .widget-label {
     margin: 4px 10px;
 }
@@ -258,10 +206,8 @@
     color: alpha(@text, 0.70);
 }
 
-/* ============================================================
-   MPRIS WIDGET
-   ============================================================ */
-/* Make the inner player container fully transparent */
+/* mpris widget */
+
 .widget-mpris .widget-mpris-player {
     background: transparent;
     box-shadow: none;
@@ -311,11 +257,7 @@
     color: alpha(@text, 0.60);
     margin-top: 2px;
 }
-/* ============================================================
-   BUTTONS GRID WIDGET
-   Selector path per swaync docs:
-   .widget-buttons-grid > flowbox > flowboxchild > button
-   ============================================================ */
+/* buttons grid widget */
 .widget-buttons-grid {
     font-family: 'CodeNewRoman Nerd Font Propo', monospace;
     padding: 4px 8px 8px 8px;
@@ -377,11 +319,7 @@
     background: alpha(@color9, 0.58);
     box-shadow: inset 0 0 16px alpha(@color9, 0.40), 0 0 10px alpha(@color9, 0.28);
 }
-/* ============================================================
-   SLIDERS — volume & backlight
-   GTK widget hierarchy: scale > trough > highlight
-                                        > slider
-   ============================================================ */
+/* sliders, volume & backlight */
 
 scale trough {
     border-radius: 20px;
@@ -394,7 +332,7 @@ scale trough highlight {
     background: @mycolor;
     border-radius: 20px;
     min-height: 4px;
-    /* Soft glow on the filled portion */
+    /* soft glow on the filled portion */
     box-shadow: 0 0 5px alpha(@mycolor, 0.40);
     transition: box-shadow 0.25s ease;
 }
@@ -403,7 +341,7 @@ scale trough highlight:hover {
     box-shadow: 0 0 10px alpha(@mycolor, 0.65);
 }
 
-/* Knob hidden — renders as clean pill */
+/* hide the knob */
 scale trough slider {
     background: transparent;
     border: none;
@@ -412,7 +350,7 @@ scale trough slider {
     min-height: 0;
 }
 
-/* ── Volume widget ───────────────────────────────────────── */
+/* volume widget */
 .widget-volume {
     background: transparent;
     padding: 6px 12px;
@@ -420,7 +358,7 @@ scale trough slider {
     border-radius: 10px;
 }
 
-/* ── Backlight widget ────────────────────────────────────── */
+/* backlight widget */
 .widget-backlight {
     background: transparent;
     padding: 6px 12px;

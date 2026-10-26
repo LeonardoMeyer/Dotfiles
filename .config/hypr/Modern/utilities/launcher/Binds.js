@@ -1,7 +1,6 @@
 .pragma library
 
-// Reads the active shortcuts.lua into categories of { keys: [chip...], desc }.
-// Only hl.bind / hl.gesture lines are read; a trailing "-- text" comment or a desc option overrides the description.
+// parses shortcuts.lua. a trailing "-- text" or desc option sets the description
 
 const CATEGORIES = [
     { id: "apps", label: "Apps", icon: "" },
@@ -42,14 +41,13 @@ function cap(s) {
     return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-// Lua string concatenation with locals substituted; anything unknown inside a loop is the workspace number.
 function evalExpr(expr, locals, loop) {
     return expr.split("..").map(p => {
         p = p.trim()
         const s = p.match(/^"(.*)"$/)
         if (s) return s[1]
         if (locals[p] !== undefined) return locals[p]
-        return loop ? "1–0" : p
+        return loop ? "1-0" : p
     }).join("")
 }
 
@@ -58,13 +56,13 @@ function table(expr, loop) {
     const re = /(\w+)\s*=\s*("([^"]*)"|[\w.:]+)/g
     let m
     while ((m = re.exec(expr)) !== null)
-        out[m[1]] = m[3] !== undefined ? m[3] : (loop && /^[a-z]$/.test(m[2]) ? "1–0" : m[2])
+        out[m[1]] = m[3] !== undefined ? m[3] : (loop && /^[a-z]$/.test(m[2]) ? "1-0" : m[2])
     return out
 }
 
 function chips(combo) {
     const parts = combo.split("+").map(s => s.trim()).filter(s => s !== "")
-    // "SUPER + SUPER_L" is a tap of the modifier on its own.
+    // "SUPER + SUPER_L" is just tapping super
     if (parts.length === 2 && parts[1].replace(/_[LR]$/, "") === parts[0]) return [KEYS[parts[0]] || cap(parts[0].toLowerCase())]
     return parts.map(p => {
         if (KEYS[p]) return KEYS[p]
@@ -86,7 +84,6 @@ function describeCmd(cmd, expr) {
         return { cat: "shots", desc: desc }
     }
     if ((m = cmd.match(/pypr\s+toggle\s+(\S+)/))) return { cat: "scratch", desc: cap(m[1]) + " scratchpad" }
-    // shells.sh <utility> opens a quickshell utility; other scripts are known by their own name.
     if ((m = cmd.match(/shells\.sh\s+([\w-]+)/) || cmd.match(/([\w-]+)\.sh\b/)) && SCRIPTS[m[1]])
         return { cat: m[1] === "launcher" ? "apps" : "system", desc: SCRIPTS[m[1]] }
     if (/^(pidof hyprlock \|\| )?hyprlock\b/.test(cmd)) return { cat: "system", desc: "Lock screen" }
@@ -153,7 +150,7 @@ function parse(text) {
         if (note) d.desc = note[1]
         else if (opts.desc || opts.description) d.desc = opts.desc || opts.description
 
-        // Four directional binds of the same action read better as one row with all arrows.
+        // merge the 4 arrow binds into one row
         if (d.dir && ARROWS[d.dir]) {
             const prefix = keys.slice(0, -1)
             const id = d.cat + "|" + d.desc + "|" + prefix.join("+")

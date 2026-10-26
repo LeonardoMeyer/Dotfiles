@@ -6,10 +6,6 @@ import Quickshell.Wayland
 import QtQuick.Shapes
 import "../common"
 
-// The quickshell bar, the profile's other bar beside waybar (bar.sh picks one, hypr/.active-bar keeps it).
-// It lays out the style's modules in up to three pills, like waybar's modules-left/center/right (Module.qml
-// lists them). Resting on a module grows its pill into that module's page, and every module on the same pill
-// can be switched to without the card closing (Pill.qml). ALT+a tears the whole bar down and builds it again.
 ShellRoot {
     id: shell
 
@@ -22,8 +18,7 @@ ShellRoot {
         printErrors: false
         onFileChanged: reload()
     }
-    // Installed on its own (InstallScripts/quickshellbarinstall.sh) there is no hypr/ setup around it: the bar is
-    // always the chosen one, and its style is the style.json beside it.
+    // standalone install, see quickshellbarinstall.sh
     FileView {
         id: ownStyle
         path: Quickshell.shellDir + "/style.json"
@@ -39,15 +34,13 @@ ShellRoot {
     IpcHandler {
         target: "bar"
         function refresh(): void { kindFile.reload() }
-        // Stops the bar, or starts it again from scratch (ALT+a).
         function toggle(): void { shell.stopped = !shell.stopped }
-        // Opens (or closes) a page on the focused monitor: network (wifi, bluetooth), audio, power, workspaces.
+        // pages: network, wifi, bluetooth, audio, power, workspaces
         function menu(name: string): void { if (bar.item) bar.item.open(name === "wifi" || name === "bluetooth" ? "network" : name, "") }
         function workspaces(): void { menu("workspaces") }
-        // The island on the focused monitor, at a tab: media, timer or color.
+        // island tabs: media, timer, color
         function island(tab: string): void { if (bar.item) bar.item.open("island", tab) }
         function close(): void { if (bar.item) bar.item.closeAll() }
-        // The full-screen workspace overview, on every monitor.
         function overview(): void { if (bar.item) bar.item.overviewOpen = !bar.item.overviewOpen }
     }
 
@@ -58,16 +51,6 @@ ShellRoot {
         Scope {
             id: root
 
-            // ---- Style --------------------------------------------------------------------------------------
-
-            // Read straight from its folder (hypr/<style>/quickshellbar/<name>/config.json), so editing it changes
-            // the bar at once; hypr/.quickshell-bar names it (bar.sh style <name>). On its own, style.json instead.
-            //   left/center/right  modules in each pill; only "center" gives one big pill
-            //   strip              one full-width strip behind the pills
-            //   background         pills draw their background while closed
-            //   attached           pills hang from the top edge, flaring into it, with no gap above
-            //   height, gap        pill height, and room around the pills
-            //   shape              corners: round (Hyprland's rounding), capsule or square
             FileView { id: profileFile; path: shell.hypr + "/.active-profile"; watchChanges: true; printErrors: false; onFileChanged: reload() }
             FileView { id: nameFile; path: shell.hypr + "/.quickshell-bar"; watchChanges: true; printErrors: false; onFileChanged: reload() }
             FileView {
@@ -88,26 +71,18 @@ ShellRoot {
             readonly property int pillH: look.height
             readonly property int edge: look.gap
             readonly property bool attached: look.attached === true && !look.strip
-            // The radius of the curves a card flares out of whatever it hangs from (the top edge when attached, the
-            // strip's bottom edge with a strip), and of the strip's own corners; 0 when it hangs from nothing.
             readonly property real flare: !(attached || look.strip) || look.shape === "square" ? 0
                 : look.shape === "capsule" ? pillH / 2 : Math.min(Theme.rounding, pillH / 2)
-            // The strip windows keep clear of; open cards overlap windows instead of pushing them.
             readonly property int reserve: pillH + edge * (attached ? 1 : 2)
-
-            // ---- Actions ------------------------------------------------------------------------------------
 
             function run(cmd) {
                 Quickshell.execDetached(["sh", "-c", cmd])
             }
 
-            // waybar's color picker, so both bars share one history (the bar's own copy of it when waybar's isn't
-            // there). A moment first, for the card to fold away.
             function pickColor() {
                 run("sleep 0.3; p=~/.config/waybar/scripts/colorpicker.sh; [ -x \"$p\" ] || p='" + Quickshell.shellDir + "/colorpicker.sh'; \"$p\"")
             }
 
-            // Opens a page on the focused monitor's pill that has it, or closes it if it is open.
             function open(page, tab) {
                 const w = windows[Hyprland.focusedMonitor?.name ?? ""]
                 const p = w ? w.pills.find(p => p.visible && p.has(page)) : null
@@ -119,8 +94,6 @@ ShellRoot {
                 for (const k of Object.keys(windows)) for (const p of windows[k].pills) p.close()
             }
             property var windows: ({})
-
-            // ---- Clock, timer and updates -------------------------------------------------------------------
 
             SystemClock {
                 id: clock
@@ -138,7 +111,7 @@ ShellRoot {
             Island.Forecast { id: forecast }
             readonly property alias weather: forecast
 
-            // Counted every half hour, and again whenever pacman has run (from the bar or anywhere else).
+            // recount every 30 min and after pacman runs
             property int updates: 0
             Process {
                 id: checkProc
@@ -173,10 +146,7 @@ ShellRoot {
                 if (!updateProc.running) updateProc.running = true
             }
 
-            // ---- Media --------------------------------------------------------------------------------------
-
             readonly property var players: Theme.players
-            // Picked with the media tab's player chip; otherwise Spotify, then whatever plays, then anything.
             property string pinned: ""
             readonly property var player: {
                 const ps = players
@@ -187,8 +157,7 @@ ShellRoot {
                     ?? ps[0]
             }
             readonly property bool playing: !!player && player.isPlaying
-            // The strip shows what is playing, and folds away once it stops: a few seconds' grace covers track
-            // changes and quick pauses, then the art, title and waveform give way to the date.
+            // keep media up for a few seconds so track changes don't flicker
             property bool hasMedia: false
             onPlayingChanged: {
                 if (playing) { stopped.stop(); hasMedia = true }
@@ -204,11 +173,6 @@ ShellRoot {
                 pinned = ps[(ps.indexOf(player) + 1) % ps.length].dbusName
             }
 
-            // ---- Music player -------------------------------------------------------------------------------
-
-            // Where the music player's card is (music/shell.qml publishes it). While it is open it carries the
-            // media, unless a pill opens over it: then it folds away until the pill closes, and the pill shows
-            // the media.
             FileView {
                 id: musicFile
                 path: Quickshell.env("XDG_RUNTIME_DIR") + "/music-player.json"
@@ -228,7 +192,6 @@ ShellRoot {
                 return hasMedia && !mediaAway(pill)
             }
 
-            // Whether the card a pill would open for `page` reaches over the music player.
             function musicInTheWay(pill, page) {
                 const m = music
                 if (!m.open || m.tucked || !pill.screen || m.screen !== pill.screen.name || m.x === undefined) return false
@@ -239,17 +202,14 @@ ShellRoot {
                 return m.x < x + w && m.x + side > x && my < p.y + pillH + 460 && my + side > p.y
             }
 
-            // open, close, tuck (fold away while a card covers it) or untuck.
+            // open, close, tuck, untuck
             function musicCall(call) { if (!standalone) run("~/.config/hypr/utilities/shells.sh music " + call) }
-
-            // ---- Workspaces ---------------------------------------------------------------------------------
 
             property bool overviewOpen: false
             function toggleOverview() {
                 overviewOpen = !overviewOpen
             }
 
-            // Hyprland is only read while a workspace view is up.
             Workspaces {
                 id: spaces
                 active: root.overviewOpen || Object.keys(root.windows).some(k => root.windows[k].pills.some(p => p.shownPage === "workspaces"))
@@ -267,8 +227,6 @@ ShellRoot {
                 }
             }
 
-            // ---- Bar ----------------------------------------------------------------------------------------
-
             Variants {
                 model: Quickshell.screens
 
@@ -283,18 +241,14 @@ ShellRoot {
                         left: true
                         right: true
                     }
-                    // One fixed size, tall enough for the tallest card, so opening and closing never resize the
-                    // surface (a resize makes the compositor redraw it and its blur).
+                    // fixed size so the surface never resizes
                     implicitHeight: Math.min(modelData.height, root.reserve + 640)
                     exclusiveZone: root.reserve
                     color: "transparent"
                     WlrLayershell.layer: WlrLayer.Top
-                    // Blurred, or glassed when hyprglass glasses layers, like the other utilities (style.lua, hyprglass.lua).
                     WlrLayershell.namespace: "quickshell-bar"
-                    // The bar never takes the keyboard, except while a Wi-Fi password is being typed.
                     WlrLayershell.keyboardFocus: pills.some(p => p.holdOpen) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-                    // Only the pills and their cards take input; the rest clicks through.
                     mask: Region {
                         item: left.visible ? left.card : null
                         Region { item: center.visible ? center.card : null }
@@ -310,14 +264,10 @@ ShellRoot {
                         root.windows = w
                     }
 
-                    // Each side pill may grow until it nearly meets the centre one; the centre one grows evenly
-                    // both ways, into the room the wider side leaves.
                     readonly property real inset: root.look.strip ? root.edge + 2 * root.flare : root.edge + 4 + root.flare
                     readonly property real gap: 8
                     readonly property real leftEnd: left.visible ? left.x + left.width : 0
                     readonly property real rightStart: right.visible ? right.x : width
-                    // The strip's outline: its sides and top just off screen, its bottom corners rounded, and each
-                    // card that has grown below it hanging from its bottom edge.
                     readonly property string stripPath: {
                         if (!root.look.strip) return ""
                         const S = root.reserve - 0.5, r = root.flare, W = width
@@ -341,9 +291,6 @@ ShellRoot {
                         focus: true
                         Keys.onEscapePressed: { for (const p of win.pills) p.close() }
 
-                        // "strip": one bar across the top, the pills sitting on it. Their open cards are drawn
-                        // with it as one outline, so each grows down out of the strip, flaring from its bottom edge,
-                        // instead of opening over it. Faded as one layer, like the pills, so nothing stacks.
                         Item {
                             visible: root.look.strip === true
                             anchors.fill: parent

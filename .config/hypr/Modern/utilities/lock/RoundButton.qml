@@ -1,7 +1,5 @@
 import QtQuick
 
-// A square button on a card, its corners following Hyprland's rounding like the home screen's dock. `filled` is the
-// accent with a dark glyph; `armed` turns it the warning color.
 Item {
     id: b
 

@@ -42,7 +42,7 @@ function M.setup()
 
     table.insert(M.history, msg)
 
-    -- If notify-send fails, show the message in nvim instead of losing it
+    -- fall back to vim messages if notify-send fails
     local function fallback()
       vim.schedule(function() original(msg, level, opts) end)
     end
@@ -73,7 +73,7 @@ function M.setup()
   end
 end
 
--- Fallback if your daemon doesn't render action buttons
+-- for daemons without action buttons
 vim.api.nvim_create_user_command("NotifyCopy", function()
   local last = M.history[#M.history]
   if last then

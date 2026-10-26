@@ -1,11 +1,10 @@
--- ~/.config/nvim/lua/plugins/alpha.lua
 return {
     "goolord/alpha-nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     config = function()
         local dashboard = require("alpha.themes.dashboard")
 
-        -- Helper function for UTF-8 character lengths
+        -- utf-8 aware length
         local function getCharLen(s, pos)
             local byte = string.byte(s, pos)
             if not byte then return nil end
@@ -16,7 +15,6 @@ return {
                 or 1
         end
 
-        -- Apply color highlights to logo
         local function applyColors(logo, colors, logoColors)
             dashboard.section.header.val = logo
 
@@ -67,7 +65,7 @@ return {
             pcall(vim.cmd, "AlphaRedraw")
         end
 
-        -- Dashboard header
+        -- header
         local opts = applyColors({
             [[███████╗    ██████╗ ]],
             [[██╔════╝    ██╔═══╝ ]],
@@ -92,7 +90,7 @@ return {
             [[d  d  d  e  e  e    ]],
         })
 
-        -- Dashboard buttons
+        -- buttons
         dashboard.section.buttons.val = {
             dashboard.button("e", "  > New file", ":ene <BAR> startinsert <CR>"),
             dashboard.button("f", "󰱼  > Find file", ":lua require('telescope.builtin').find_files({ hidden = true, no_ignore = true })<CR>"),
@@ -104,10 +102,9 @@ return {
             dashboard.button("q", "  > Quit", ":qa<CR>"),
         }
 
-        -- Footer
+        -- footer
         dashboard.section.footer.val = { "", "Welcome!" }
 
-        -- Finally setup Alpha with the generated opts
         require("alpha").setup(opts)
         refresh_alpha_palette()
 

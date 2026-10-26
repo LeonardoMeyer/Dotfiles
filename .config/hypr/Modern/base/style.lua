@@ -1,5 +1,3 @@
--- Colors, layout, decoration, animations, and layer rules.
-
 local function load_wal_colors(path)
     local colors = {}
     local file = io.open(path, "r")
@@ -81,12 +79,11 @@ hl.animation({ leaf = "workspaces", enabled = true, speed = 1.7, bezier = "snapp
 hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 4, bezier = "fluid", style = "slidefadevert -35%" })
 hl.animation({ leaf = "layers", enabled = true, speed = 2, bezier = "snappy", style = "popin 70%" })
 
--- Spotify's pypr scratchpad finds it by class (spotify-launcher hands off to another process), so pypr can't
--- float it at launch the way it does the others; this does.
+-- spotify-launcher forks, so pypr can't float it itself
 hl.window_rule({ match = { class = "(?i)^spotify$" }, float = true })
 
 hl.layer_rule({ name = "waybar-blur", match = { namespace = "waybar" }, blur = true, ignore_alpha = 0.5 })
--- The cutoff sits at half the pills' opacity, so the blur stops on their antialiased edge instead of haloing past it.
+-- half the pill opacity so the blur doesn't halo
 hl.layer_rule({ name = "quickshell-bar-blur", match = { namespace = "quickshell-bar" }, blur = true, ignore_alpha = 0.3, no_anim = true })
 hl.layer_rule({ name = "quickshell-overview-blur", match = { namespace = "quickshell-overview" }, blur = true, ignore_alpha = 0.05, no_anim = true })
 hl.layer_rule({ name = "notification-popup-glass", match = { namespace = "notification-popup" }, blur = true, ignore_alpha = 0.5, no_anim = true })
@@ -94,7 +91,7 @@ hl.layer_rule({ name = "selection-no-anim", match = { namespace = "selection" },
 hl.layer_rule({ name = "osd-glass", match = { namespace = "osd" }, blur = true, ignore_alpha = 0.05, no_anim = true })
 hl.layer_rule({ name = "launcher-blur", match = { namespace = "launcher" }, blur = true, ignore_alpha = 0.3 })
 hl.layer_rule({ name = "wallpaper-picker-noanim", match = { namespace = "wallpaper-picker" }, no_anim = true })
--- The lock's unlock handoff fades itself out; Hyprland animating it too would show as a flicker.
+-- lock fades itself out
 hl.layer_rule({ name = "lock-handoff-noanim", match = { namespace = "lock-handoff" }, no_anim = true })
 hl.layer_rule({ name = "wallpaper-picker-tab-noanim", match = { namespace = "wallpaper-picker-tab" }, no_anim = true })
 hl.layer_rule({ name = "wallpaper-picker-preview-noanim", match = { namespace = "wallpaper-picker-preview" }, no_anim = true })

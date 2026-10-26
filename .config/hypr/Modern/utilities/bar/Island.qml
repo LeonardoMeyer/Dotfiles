@@ -6,9 +6,6 @@ import Quickshell.Widgets
 import Quickshell.Services.Mpris
 import "../common"
 
-// The island: the page the media and clock modules open. Its tabs (what is playing, the focus timer, the color
-// picker and the weather) are icons down the left; resting on one shows it. Each tab is laid out in the same
-// compact stage, centred in the card however wide the pill is, and they cross-fade into each other.
 Item {
     id: page
 
@@ -19,7 +16,6 @@ Item {
         { id: "media", glyph: "󰝚" },
         { id: "timer", glyph: "󰔛" },
         { id: "color", glyph: "󰈊" },
-        // Its icon is the sky right now.
         { id: "weather", glyph: ctx.weather.ready ? ctx.weather.glyph(ctx.weather.code, ctx.weather.night) : "󰖕" }
     ]
     readonly property string current: pill.tab !== "" ? pill.tab : "media"
@@ -31,7 +27,6 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         height: parent.height
         spacing: 18
-        // The tab icons (declared last) sit on the left.
         layoutDirection: Qt.RightToLeft
 
         Item {
@@ -39,7 +34,6 @@ Item {
             width: Math.min(440, page.width - 50)
             height: parent.height
 
-            // Each tab fades in over the last and settles the last few pixels into place.
             component Fade: Item {
                 property bool on: false
                 anchors.fill: parent
@@ -58,7 +52,7 @@ Item {
                     playerCount: page.ctx.players.length
                     playing: page.ctx.playing
                     musicOut: page.ctx.mediaAway(page.pill)
-                    // On its own the bar has no music player to pop out into.
+                    // standalone bar has no music player
                     canPopOut: !page.ctx.standalone
                     onCyclePlayer: page.ctx.cyclePlayer()
                     onPopOut: { page.pill.close(); if (!page.ctx.musicOut) page.ctx.musicCall("open") }
@@ -119,7 +113,6 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        // Resting on a tab shows it, like the pill's own modules.
                         onContainsMouseChanged: if (containsMouse) page.pill.tab = tab.modelData.id
                         onClicked: page.pill.tab = tab.modelData.id
                     }
@@ -135,8 +128,6 @@ Item {
         }
     }
 
-    // The island's player: art (click to open Spotify's scratchpad), track, seek bar and the full transport.
-    // The chip above the title shows which player this is and switches between them when there are several.
     component MediaTab: Item {
         id: page
 
@@ -147,7 +138,6 @@ Item {
         signal cyclePlayer()
         signal popOut()
         signal bringBack()
-        // The music player has the media; this page offers to bring it back.
         property bool musicOut: false
         property bool canPopOut: true
 
@@ -157,13 +147,11 @@ Item {
             return m + ":" + (r < 10 ? "0" : "") + r
         }
 
-        // Opens the app behind the player: Spotify through its scratchpad, anything else raised directly.
         function openApp() {
             if (!player || Theme.isSpotify(player)) Theme.openSpotify()
             else if (player.canRaise) player.raise()
         }
 
-        // Position only updates when asked; once a second is plenty here.
         Timer {
             running: page.active && page.playing
             interval: 1000
@@ -188,8 +176,6 @@ Item {
             onPressed: Theme.openSpotify()
         }
 
-        // ---- Player -----------------------------------------------------------------------------------------------
-
         Item {
             anchors.fill: parent
             visible: !!page.player && !page.musicOut
@@ -212,7 +198,6 @@ Item {
                     asynchronous: true
                 }
 
-                // A hint that the art opens the app.
                 Rectangle {
                     anchors.fill: parent
                     color: Theme.alpha(Theme.bg, 0.45)
@@ -237,7 +222,6 @@ Item {
                 anchors.right: parent.right
                 height: parent.height
 
-                // Which player; click to switch when there are several.
                 Rectangle {
                     id: chip
                     height: 20
@@ -307,7 +291,6 @@ Item {
                     }
                 }
 
-                // Seek bar with times.
                 Item {
                     id: progress
                     anchors.bottom: parent.bottom
@@ -347,8 +330,6 @@ Item {
                 }
             }
 
-            // Pop out into the music player, which can then be dragged around like a window. Top right, level with
-            // the player chip and clear of the title below it.
             Rectangle {
                 visible: page.canPopOut
                 anchors.right: parent.right
@@ -368,7 +349,6 @@ Item {
                 MouseArea { id: popArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.popOut() }
             }
 
-            // Transport, centered under the track.
             Row {
                 id: transport
                 anchors.bottom: parent.bottom
@@ -428,7 +408,6 @@ Item {
         }
     }
 
-    // A large faint glyph, a line of text and a button, for the media tab's empty states.
     component Notice: Column {
         id: n
         property string glyph
@@ -480,8 +459,6 @@ Item {
         }
     }
 
-    // The focus timer: a ring counting down, presets to start one, and start/pause, reset and +5 minutes.
-    // It keeps running with the island closed, where the strip shows what is left.
     component TimerTab: Item {
         id: page
 
@@ -612,8 +589,7 @@ Item {
         }
     }
 
-    // The color picker, sharing waybar's history (~/.cache/colorpicker/colors, newest first): the last color large,
-    // the ones before it as swatches. Pick closes the card and starts hyprpicker; click any color to copy it.
+    // shares waybar's history in ~/.cache/colorpicker/colors
     component ColorTab: Item {
         id: page
 
@@ -647,7 +623,6 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 18
 
-            // The last color.
             Rectangle {
                 width: 118
                 height: 118
@@ -701,7 +676,6 @@ Item {
 
                 Item { width: 1; height: 4 }
 
-                // The ones before it.
                 Row {
                     spacing: 7
 
@@ -727,10 +701,6 @@ Item {
 
     }
 
-    // ---- Weather ----------------------------------------------------------------------------------------------
-
-    // The weather: what it is like now, and a curve of the temperature over the next day, each point with its
-    // sky. Tap anywhere to refresh.
     component WeatherTab: Item {
         id: wt
 
@@ -762,7 +732,7 @@ Item {
             }
             Text {
                 width: parent.width
-                text: wt.weather.ready ? wt.weather.desc : wt.weather.failed ? "Weather unavailable" : "Looking outside…"
+                text: wt.weather.ready ? wt.weather.desc : wt.weather.failed ? "Weather unavailable" : "Loading weather..."
                 elide: Text.ElideRight
                 font.family: Theme.sans
                 font.pixelSize: 13
@@ -792,7 +762,6 @@ Item {
             }
         }
 
-        // The next hours: sky on top, the temperature curve, the time underneath.
         Item {
             id: graph
             anchors.left: now.right
@@ -827,7 +796,6 @@ Item {
                             c.bezierCurveTo(mx, p[i - 1][1], mx, p[i][1], p[i][0], p[i][1])
                         }
                     }
-                    // A soft fill under the curve, then the line itself.
                     trace()
                     c.lineTo(p[p.length - 1][0], 118)
                     c.lineTo(p[0][0], 118)
@@ -897,8 +865,7 @@ Item {
         }
     }
 
-    // The weather where you are, from wttr.in (no key, located by IP): now, and the next hours. Kept by the shell
-    // so every monitor shares one fetch, refreshed every half hour and when the tab opens on stale data.
+    // wttr.in, located by IP. shared by every monitor, refreshed every 30 min
     component Forecast: Item {
         id: fc
 
@@ -922,7 +889,7 @@ Item {
             if (!proc.running) proc.running = true
         }
 
-        // wttr.in's weather codes, folded into a handful of skies.
+        // fold wttr.in codes into a few icons
         function glyph(c, dark) {
             if (c === 113) return dark ? "󰖔" : "󰖙"
             if (c === 116) return "󰖕"
@@ -955,7 +922,7 @@ Item {
                         fc.high = +today.maxtempF
                         fc.low = +today.mintempF
                         fc.night = hour < 6 || hour >= 20
-                        // Three-hourly slots from now on, through tomorrow.
+                        // 3-hour slots through tomorrow
                         const now = Date.now(), list = []
                         for (let day = 0; day < 2; day++) {
                             const date = d.weather[day].date
@@ -980,8 +947,7 @@ Item {
         }
     }
 
-    // The island's countdown. Kept by the shell, not the island, so it runs on with the island closed and every
-    // monitor shows the same one. Times against the wall clock, so a busy moment never makes it drift.
+    // kept in the shell so it keeps running when the island is closed
     component Countdown: Item {
         id: ft
 
@@ -989,7 +955,6 @@ Item {
         property int remaining: total
         property bool running: false
         property real endsAt: 0
-        // Started and not yet reset: the closed island shows it.
         readonly property bool active: running || remaining < total
         readonly property real frac: total > 0 ? remaining / total : 0
         signal finished()

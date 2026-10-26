@@ -3,14 +3,12 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
 
-// One monitor's lock screen. The monitor the lock came up on gets the controls; the others get the clock.
-// Portrait monitors stack everything down the middle.
 Item {
     id: face
 
     property string screenName
     readonly property bool portrait: height > width
-    // One layout unit per monitor, as the home screen sizes it: against a 1600x900 landscape or 760x1350 portrait.
+    // same sizing as the home screen
     readonly property real u: portrait
         ? Math.max(0.6, Math.min(width / 760, height / 1350))
         : Math.max(0.6, Math.min(width / 1600, height / 900))
@@ -19,15 +17,13 @@ Item {
     readonly property bool awake: !Lock.idle
     readonly property real margin: 32 * u
 
-    // Preview windows have no handoff layers to fade into, so they fade themselves.
+    // preview has no handoff, so fade itself
     opacity: Lock.preview ? Lock.fade : 1
 
-    // ---- Backdrop: the desktop as it was blurs away into the wallpaper ---------------------------------------
+    // Backdrop
 
     Rectangle { anchors.fill: parent; color: "black" }
 
-    // The frame is drawn sharp, then a blurred copy and the wallpaper crossfade over it while it all pushes in
-    // a little. Only opacity and scale animate, so it stays smooth on every monitor.
     Item {
         anchors.fill: parent
         scale: 1 + 0.035 * Lock.t
@@ -38,10 +34,10 @@ Item {
             source: face.screenName ? "file://" + Lock.shots + "/" + face.screenName + ".ppm" : ""
             fillMode: Image.PreserveAspectCrop
             cache: false
-            // Loaded before the first frame, so the lock never flashes black over the desktop.
+            // load first so it never flashes black
             asynchronous: false
         }
-        // Never quite 0: Qt skips invisible items, which would push the blur's first render into the animation.
+        // never 0, or Qt skips the first blur render
         MultiEffect {
             anchors.fill: parent
             source: shot
@@ -59,9 +55,8 @@ Item {
         opacity: Math.max(0.001, shot.status === Image.Ready ? Math.min(1, (Lock.t - 0.2) * 1.8) : 1)
     }
 
-    // ---- Input --------------------------------------------------------------------------------------------
+    // Input
 
-    // Movement wakes it; a click on empty space closes the menu and gives the keyboard back to the password.
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
@@ -69,7 +64,7 @@ Item {
         onClicked: { Lock.menuOpen = false; input.forceActiveFocus() }
     }
 
-    // Every monitor has one, so typing works wherever the keyboard focus is; only the main one is drawn.
+    // one per monitor so typing works wherever focus is
     TextInput {
         id: input
         width: 0
@@ -99,7 +94,7 @@ Item {
 
     SystemClock { id: clock; precision: SystemClock.Seconds }
 
-    // ---- Top left: hello -----------------------------------------------------------------------------------
+    // Top left
 
     Reveal {
         x: face.margin
@@ -116,12 +111,11 @@ Item {
         }
     }
 
-    // ---- Center: clock, date, password -------------------------------------------------------------------
+    // Center
 
     Column {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
-        // A little high, and further up on portrait where the music card stacks below.
         anchors.verticalCenterOffset: (face.main && face.portrait ? -140 : -30) * face.u
 
         Reveal {
@@ -135,7 +129,6 @@ Item {
                     id: clockRow
                     anchors.horizontalCenter: parent.horizontalCenter
                     readonly property real size: 150 * face.u
-                    // 12-hour like the bar and the old hyprlock.
                     readonly property string hh: String(clock.hours % 12 || 12).padStart(2, "0")
                     readonly property string mm: String(clock.minutes).padStart(2, "0")
 
@@ -152,7 +145,6 @@ Item {
                     }
                     Digit { value: clockRow.mm[0]; size: clockRow.size }
                     Digit { value: clockRow.mm[1]; size: clockRow.size }
-                    // Seconds, small in the accent, sitting on the minutes' baseline.
                     Row {
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: clockRow.size * 0.2
@@ -174,7 +166,6 @@ Item {
 
         Item { width: 1; height: (face.main ? 56 : 0) * face.u }
 
-        // Just a lock until you type; then it widens, one dot at a time.
         Reveal {
             anchors.horizontalCenter: parent.horizontalCenter
             delay: 0.16
@@ -246,7 +237,6 @@ Item {
                             scale: 0
                             Component.onCompleted: pop.start()
                             NumberAnimation on scale { id: pop; running: false; to: 1; duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
-                            // While the password is checked the dots ripple.
                             SequentialAnimation on opacity {
                                 running: Lock.checking
                                 loops: Animation.Infinite
@@ -282,7 +272,7 @@ Item {
         }
     }
 
-    // ---- Music: bottom right, or bottom center on portrait ------------------------------------------------
+    // Music
 
     Reveal {
         x: face.portrait ? (face.width - width) / 2 : face.width - width - face.margin
@@ -297,7 +287,6 @@ Item {
             width: 400 * face.u
             height: 156 * face.u
 
-            // Track changes fade the text through.
             property string title: p ? p.trackTitle || "Unknown" : ""
             property string artist: p ? p.trackArtist || "" : ""
             property string shownTitle: title
@@ -351,7 +340,7 @@ Item {
                 anchors.rightMargin: 18 * face.u
                 spacing: 3 * face.u
 
-                // As tall as the visualizer's tallest bar, so the text below never moves with the music.
+                // fixed height so the text doesn't move
                 Row {
                     height: 16 * face.u
                     spacing: 8 * face.u
@@ -365,7 +354,6 @@ Item {
                     Wave {
                         anchors.verticalCenter: parent.verticalCenter
                         u: face.u
-                        // One cava, on the monitor that shows the card.
                         playing: face.main && Lock.cfg.music && !!card.p && card.p.isPlaying && Lock.t > 0 && !Lock.leaving
                     }
                 }
@@ -427,7 +415,7 @@ Item {
         }
     }
 
-    // ---- Top right: battery and power ---------------------------------------------------------------------
+    // Top right
 
     Reveal {
         x: face.width - width - face.margin
@@ -462,7 +450,6 @@ Item {
                     { glyph: "\u{f0709}", cmd: "systemctl reboot", confirm: true },
                     { glyph: "\u{f0425}", cmd: "systemctl poweroff", confirm: true }
                 ] : []
-                // Reboot and power off ask for a second press.
                 RoundButton {
                     id: pb
                     required property var modelData
@@ -482,7 +469,7 @@ Item {
         }
     }
 
-    // ---- Bottom left: the settings gear and its menu ------------------------------------------------------
+    // Settings
 
     Reveal {
         id: gearReveal
@@ -518,7 +505,7 @@ Item {
         transform: Translate { y: (1 - menu.p) * 10 * face.u }
 
         Card { anchors.fill: parent }
-        // Swallows clicks so they don't reach the background (which closes the menu).
+        // eat clicks so the menu stays open
         MouseArea { anchors.fill: parent; hoverEnabled: true }
 
         Column {
@@ -549,7 +536,6 @@ Item {
         }
     }
 
-    // Preview only: there is no lock to leave, so say how to.
     Text {
         visible: Lock.preview
         anchors.horizontalCenter: parent.horizontalCenter
