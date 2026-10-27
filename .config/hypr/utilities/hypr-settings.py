@@ -19,7 +19,10 @@ PROFILE_FILE = HYPR / ".active-profile"
 BAR_FILE = HYPR / ".active-bar"
 QUICKSHELL_FILE = HYPR / ".quickshell-bar"
 SCHEMES = HOME / ".config/wal/colorschemes"
-# pywal16 internals, not real themes
+# Default only keeps wallpaper, colors and bar
+DEFAULT_LOOK_FILE = TWEAKS / "default-look.json"
+LOOK_KEYS = ("wallpaper.", "colors.", "bar.", "waybar.", "quickshell.")
+# pywal16 internals, not themes
 INTERNAL_SCHEMES = {"pywal16", "ywal16"}
 UI_FILE = HOME / ".local/state/hypr-settings/ui.json"
 CURSOR_DIRS = [HOME / ".icons", HOME / ".local/share/icons", Path("/usr/share/icons")]
@@ -86,7 +89,7 @@ def entry_file(entry):
 def live_entry():
     mark = load(ACTIVE_SAVED_FILE, {}).get(active_profile(), "")
     if mark and ":" not in mark and mark != "default":
-        mark = "saved:" + mark  # old format
+        mark = "saved:" + mark  # old format, fuck backwards compat but here we are
     if mark == "default" or (mark and entry_file(mark) and entry_file(mark).is_file()):
         return mark
     return own_variant() if tweaks_file().is_file() else "default"
@@ -98,9 +101,19 @@ def set_live_entry(entry):
     write_atomic(ACTIVE_SAVED_FILE, json.dumps(marks, indent=2, sort_keys=True) + "\n")
 
 
-def live_settings():
-    path = entry_file(live_entry())
+def entry_settings(entry):
+    if entry == "default":
+        return load(DEFAULT_LOOK_FILE, {}).get(active_profile(), {})
+    path = entry_file(entry)
     return load(path, {}) if path else {}
+
+
+def live_settings():
+    return entry_settings(live_entry())
+
+
+def settings_wallpaper(s):
+    return real_wallpaper(os.path.expandvars(dig(s, "wallpaper.path") or "")) or real_wallpaper(current_wallpaper())
 
 
 def write_lua(settings):
@@ -109,7 +122,6 @@ def write_lua(settings):
 
 
 def portable(settings):
-    # store as /home/$USER/... so it works on any account
     path = dig(settings, "wallpaper.path")
     if isinstance(path, str):
         settings["wallpaper"]["path"] = re.sub(r"^/home/[^/]+/", "/home/$USER/", path)
@@ -266,15 +278,14 @@ def monitor_count():
     return len(json.loads(run("hyprctl", "monitors", "-j") or "[]"))
 
 
-def wallpaper_palette(path):
-    for entry in load(HOME / ".cache/wallpaper-picker/index.json", []):
+def wallpaper_palette(path, index=None):
+    for entry in load(HOME / ".cache/wallpaper-picker/index.json", []) if index is None else index:
         if entry.get("path") == path:
             return entry.get("colors", [])
     colors = load(HOME / ".cache/wal/colors.json", {}).get("colors", {})
     return [colors.get(f"color{i}") for i in range(16) if colors.get(f"color{i}")]
 
 
-# fallback values before anything is saved
 FALLBACKS = {
     "animation.preset": "theme",
     "utilities.animations": False,
@@ -336,12 +347,11 @@ def cmd_state(keys):
     }))
 
 
-# turning these off needs a reload to go back to the profile
+# turning these off needs a reload, idk why
 RELOAD_ON_CHANGE = {"border.gradient"}
 
 
-def cmd_set(pairs):
-    settings = live_settings() if live_entry() != "default" else load(tweaks_file(), {})
+def put(settings, pairs):
     reload = False
     for pair in pairs:
         key, _, raw = pair.partition("=")
@@ -357,12 +367,24 @@ def cmd_set(pairs):
             node[leaf] = value
         if key in RELOAD_ON_CHANGE and not value:
             reload = True
-        # presets/namespaces only apply on reload
         if key.startswith(("glass.", "hyprglass.")):
             reload = True
         if key == "config.input.sensitivity":
             settings["mice"] = mice()
     prune(settings)
+    return reload
+
+
+def cmd_set(pairs):
+    default = live_entry() == "default"
+    if default and all(p.partition("=")[0].startswith(LOOK_KEYS) for p in pairs):
+        looks = load(DEFAULT_LOOK_FILE, {})
+        put(looks.setdefault(active_profile(), {}), pairs)
+        portable(looks[active_profile()])
+        write_atomic(DEFAULT_LOOK_FILE, json.dumps(looks, indent=2, sort_keys=True) + "\n")
+        return
+    settings = load(tweaks_file(), {}) if default else live_settings()
+    reload = put(settings, pairs)
     save(settings)
     reapply(reload)
     if any(p.startswith("cursor.") for p in pairs):
@@ -408,6 +430,36 @@ def saved_state():
     return {"entries": entries, "active": live_entry()}
 
 
+def saved_preview():
+    # unset values match style.lua
+    state = saved_state()
+    index = load(HOME / ".cache/wallpaper-picker/index.json", [])
+    thumbs = {w.get("path"): w.get("thumb") for w in index}
+    out = []
+    for e in (e for e in state["entries"] if e["exists"]):
+        s = entry_settings(e["id"])
+        theme = dig(s, "colors.theme") or DEFAULT_THEME
+        wallpaper = settings_wallpaper(s)
+        thumb = thumbs.get(wallpaper) or wallpaper
+        if theme == "pywal":
+            colors = wallpaper_palette(wallpaper, index)
+        else:
+            scheme = load(SCHEMES / f"{theme}.json", {}).get("colors", {})
+            colors = [scheme.get(f"color{i}") for i in range(16)]
+        kind = dig(s, "bar.kind") or DEFAULT_BAR
+        look = dig(s, "quickshell.style") or DEFAULT_QUICKSHELL if kind == "quickshell" else dig(s, "waybar.style") or DEFAULT_WAYBAR
+        out.append({**e, "colors": [c for c in colors if c], "thumb": thumb, "bar": f"{kind} / {look}",
+                    "rounding": 10 if (r := dig(s, "config.decoration.rounding")) is None else r,
+                    "opacity": dig(s, "config.decoration.active_opacity") or 0.78,
+                    "border": dig(s, "config.general.border_size") or 0,
+                    "blur": dig(s, "config.decoration.blur.enabled") is not False,
+                    "glass": bool(dig(s, "config.plugin.hyprglass.enabled")),
+                    "curve": dig(s, "animation.curve") or [0.15, 0.85, 0.25, 1],
+                    "ms": 400 / max(0.1, dig(s, "animation.speed") or 1) if dig(s, "animation") else 300,
+                    "style": dig(s, "animation.window") or "popin 5%"})
+    return {"entries": out, "active": state["active"]}
+
+
 DEFAULT_THEME = "pywal"
 DEFAULT_WAYBAR = "default"
 DEFAULT_BAR = "waybar"
@@ -451,14 +503,12 @@ def load_text(path):
 def cmd_appearance():
     settings = live_settings()
     theme = dig(settings, "colors.theme") or DEFAULT_THEME
-    wallpaper = real_wallpaper(os.path.expandvars(dig(settings, "wallpaper.path") or "")) or real_wallpaper(current_wallpaper())
+    wallpaper = settings_wallpaper(settings)
     if wallpaper:
-        # set the theme first, wallpaper-apply.sh uses it
         write_atomic(THEME_FILE, theme + "\n")
         detached(str(HYPR / "utilities/wallpaper-apply.sh"), wallpaper, env={"HYPR_SETTINGS_NO_RECORD": "1"})
     elif theme != current_theme():
         detached(str(HYPR / "utilities/color-apply.sh"), theme)
-    # switch the bar first so waybar style sees it
     kind = dig(settings, "bar.kind") or DEFAULT_BAR
     if kind != current_bar():
         subprocess.run([str(HYPR / "utilities/bar.sh"), "apply", kind], env={**os.environ, "HYPR_SETTINGS_NO_RECORD": "1"},
@@ -510,6 +560,8 @@ def cmd_saved(args):
         path.unlink(missing_ok=True)
         if was_live:
             go_live("default")
+    elif action == "preview":
+        print(json.dumps(saved_preview()))
     elif action == "wipe":
         for path in list(SAVED.glob("*/*.json")) + list(TWEAKS.glob("*.json")):
             path.unlink()

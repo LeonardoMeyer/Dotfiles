@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# renames files in each folder to <prefix>-NN.<ext>, usage: fix_names.py [--dry-run]
+# renames files to <prefix>-NN.<ext>, [--dry-run]
 import re
 import sys
 from pathlib import Path
@@ -30,7 +30,6 @@ def fix_folder(folder, dry_run):
     if dry_run or not plan:
         return
 
-    # two passes so nothing gets overwritten
     temps = []
     for old, new in plan:
         tmp = old.with_name(f".tmp_{old.name}")
@@ -42,7 +41,7 @@ def fix_folder(folder, dry_run):
 
 def main():
     dry_run = "--dry-run" in sys.argv
-    for folder in sorted(p for p in ROOT.iterdir() if p.is_dir() and not p.name.startswith(".")):
+    for folder in sorted(p for p in ROOT.iterdir() if p.is_dir() and not p.name.startswith(".") and p.name != "favorites"):
         fix_folder(folder, dry_run)
     print("Done." if not dry_run else "Dry run only; no changes made.")
 

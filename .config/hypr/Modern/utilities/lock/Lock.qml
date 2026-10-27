@@ -8,7 +8,7 @@ import Quickshell.Services.Pam
 import Quickshell.Services.Mpris
 import Quickshell.Services.UPower
 
-// shared state for every monitor's lock. can't import ../common, so the theme is copied
+// shared lock state. can't import ../common, so enjoy the copy-paste, you absolute bastard
 Singleton {
     id: root
 
@@ -18,7 +18,6 @@ Singleton {
     readonly property bool preview: Quickshell.env("LOCK_PREVIEW") === "1"
     readonly property string shots: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/quickshell-lock"
 
-    // Palette
 
     FileView {
         id: walFile
@@ -58,7 +57,6 @@ Singleton {
     }
     function corner(h, u) { return Math.min(h / 2, rounding * u) }
 
-    // Motion
 
     property real rounding: 10
     readonly property var settle: [0.2, 0.9, 0.3, 1, 1, 1]
@@ -70,7 +68,6 @@ Singleton {
         }
     }
 
-    // t: 0 -> 1 as it locks
     property real t: 0
     function seg(delay) { return Math.max(0, Math.min(1, (t - delay) / (1 - delay))) }
     NumberAnimation { id: tween; target: root; property: "t"; to: 1; duration: 750; easing.type: Easing.OutCubic }
@@ -92,7 +89,6 @@ Singleton {
         id: outro
         NumberAnimation { target: root; property: "out"; to: 1; duration: 200; easing.type: Easing.InQuad }
         ScriptAction { script: root.handoff = true }
-        // two frames for the handoff layers to draw
         PauseAnimation { duration: 34 }
         ScriptAction { script: root.unlock() }
         PauseAnimation { duration: 16 }
@@ -100,7 +96,6 @@ Singleton {
         ScriptAction { script: root.finish() }
     }
 
-    // Settings, saved in ~/.local/state
 
     readonly property var defaults: ({ clock: true, greeter: true, music: true, battery: true, power: true, idleHide: true })
     readonly property var labels: [
@@ -123,7 +118,6 @@ Singleton {
     }
     property bool menuOpen: false
 
-    // Password
 
     property string password: ""
     property bool failed: false
@@ -169,7 +163,6 @@ Singleton {
     }
     function checkCaps() { if (!capsProc.running) capsProc.running = true }
 
-    // Idle: only the clock stays after a while
 
     property bool idle: false
     function poke() {
@@ -183,7 +176,6 @@ Singleton {
         onTriggered: root.idle = root.cfg.idleHide && root.password === "" && !root.menuOpen
     }
 
-    // Media and battery
 
     // spotify first, then whatever's playing
     readonly property var player: {
@@ -205,7 +197,6 @@ Singleton {
     readonly property bool charging: hasBattery
         && (battery.state === UPowerDeviceState.Charging || battery.state === UPowerDeviceState.FullyCharged)
 
-    // controls go on the monitor that was focused
     readonly property string mainScreen: Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : ""
     property string lockedOn: ""
     onMainScreenChanged: if (lockedOn === "") lockedOn = mainScreen

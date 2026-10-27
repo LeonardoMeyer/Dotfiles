@@ -18,7 +18,6 @@ ShellRoot {
         printErrors: false
         onFileChanged: reload()
     }
-    // standalone install, see quickshellbarinstall.sh
     FileView {
         id: ownStyle
         path: Quickshell.shellDir + "/style.json"
@@ -35,13 +34,10 @@ ShellRoot {
         target: "bar"
         function refresh(): void { kindFile.reload() }
         function toggle(): void { shell.stopped = !shell.stopped }
-        // pages: network, wifi, bluetooth, audio, power, workspaces
         function menu(name: string): void { if (bar.item) bar.item.open(name === "wifi" || name === "bluetooth" ? "network" : name, "") }
         function workspaces(): void { menu("workspaces") }
-        // island tabs: media, timer, color
         function island(tab: string): void { if (bar.item) bar.item.open("island", tab) }
         function close(): void { if (bar.item) bar.item.closeAll() }
-        function overview(): void { if (bar.item) bar.item.overviewOpen = !bar.item.overviewOpen }
     }
 
     LazyLoader {
@@ -111,7 +107,6 @@ ShellRoot {
             Island.Forecast { id: forecast }
             readonly property alias weather: forecast
 
-            // recount every 30 min and after pacman runs
             property int updates: 0
             Process {
                 id: checkProc
@@ -157,7 +152,7 @@ ShellRoot {
                     ?? ps[0]
             }
             readonly property bool playing: !!player && player.isPlaying
-            // keep media up for a few seconds so track changes don't flicker
+            // hold media a few seconds or track changes flicker
             property bool hasMedia: false
             onPlayingChanged: {
                 if (playing) { stopped.stop(); hasMedia = true }
@@ -202,30 +197,17 @@ ShellRoot {
                 return m.x < x + w && m.x + side > x && my < p.y + pillH + 460 && my + side > p.y
             }
 
-            // open, close, tuck, untuck
             function musicCall(call) { if (!standalone) run("~/.config/hypr/utilities/shells.sh music " + call) }
 
-            property bool overviewOpen: false
             function toggleOverview() {
-                overviewOpen = !overviewOpen
+                Quickshell.execDetached(["qs", "-p", Quickshell.shellDir, "ipc", "call", "overview", "toggle"])
             }
 
             Workspaces {
                 id: spaces
-                active: root.overviewOpen || Object.keys(root.windows).some(k => root.windows[k].pills.some(p => p.shownPage === "workspaces"))
+                active: Object.keys(root.windows).some(k => root.windows[k].pills.some(p => p.shownPage === "workspaces"))
             }
             readonly property alias expose: spaces
-
-            Variants {
-                model: Quickshell.screens
-                Workspaces.Overview {
-                    required property var modelData
-                    screen: modelData
-                    expose: root.expose
-                    open: root.overviewOpen
-                    onDismissed: root.overviewOpen = false
-                }
-            }
 
             Variants {
                 model: Quickshell.screens
@@ -241,8 +223,8 @@ ShellRoot {
                         left: true
                         right: true
                     }
-                    // fixed size so the surface never resizes
-                    implicitHeight: Math.min(modelData.height, root.reserve + 640)
+                    // fixed size, resizing this surface caused glitches, fuck it
+                    implicitHeight: Math.min(modelData.height, root.reserve + 960)
                     exclusiveZone: root.reserve
                     color: "transparent"
                     WlrLayershell.layer: WlrLayer.Top

@@ -16,23 +16,23 @@ Item {
         { id: "media", glyph: "󰝚" },
         { id: "timer", glyph: "󰔛" },
         { id: "color", glyph: "󰈊" },
+        { id: "capture", glyph: "󰄀" },
         { id: "weather", glyph: ctx.weather.ready ? ctx.weather.glyph(ctx.weather.code, ctx.weather.night) : "󰖕" }
     ]
     readonly property string current: pill.tab !== "" ? pill.tab : "media"
     onCurrentChanged: if (current === "weather") ctx.weather.refresh(false)
 
-    implicitHeight: 150
+    implicitHeight: 196
 
-    Row {
-        anchors.horizontalCenter: parent.horizontalCenter
-        height: parent.height
-        spacing: 18
-        layoutDirection: Qt.RightToLeft
+    Item {
+        anchors.fill: parent
 
         Item {
             id: stage
-            width: Math.min(440, page.width - 50)
+            readonly property real rest: parent.width - 50
+            width: Math.min(440, rest)
             height: parent.height
+            x: 50 + (rest - width) / 2
 
             component Fade: Item {
                 property bool on: false
@@ -52,7 +52,6 @@ Item {
                     playerCount: page.ctx.players.length
                     playing: page.ctx.playing
                     musicOut: page.ctx.mediaAway(page.pill)
-                    // standalone bar has no music player
                     canPopOut: !page.ctx.standalone
                     onCyclePlayer: page.ctx.cyclePlayer()
                     onPopOut: { page.pill.close(); if (!page.ctx.musicOut) page.ctx.musicCall("open") }
@@ -75,6 +74,18 @@ Item {
                 }
             }
             Fade {
+                on: page.current === "capture"
+                CaptureTab {
+                    anchors.fill: parent
+                    active: page.pill.open && parent.visible
+                    onCapture: (kind, mode) => {
+                        page.pill.close()
+                        page.ctx.run("sleep 0.35; '" + Quickshell.shellDir + "/bar/capture.sh' " + kind + " " + mode)
+                    }
+                    onStop: page.ctx.run("'" + Quickshell.shellDir + "/bar/capture.sh' stop")
+                }
+            }
+            Fade {
                 on: page.current === "weather"
                 WeatherTab {
                     anchors.fill: parent
@@ -84,6 +95,7 @@ Item {
         }
 
         Column {
+            anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             spacing: 6
 
@@ -701,6 +713,146 @@ Item {
 
     }
 
+    component CaptureTab: Item {
+        id: page
+
+        property bool active: false
+        property string kind: "shot"
+        property int elapsed: 0
+        signal capture(string kind, string mode)
+        signal stop()
+
+        FileView {
+            id: state
+            path: Quickshell.env("XDG_RUNTIME_DIR") + "/capture-rec"
+            watchChanges: true
+            printErrors: false
+            onFileChanged: reload()
+        }
+        readonly property int started: parseInt(state.text()) || 0
+        readonly property bool recording: started > 0
+
+        function tick() { elapsed = Math.max(0, Math.floor(Date.now() / 1000) - started) }
+        onStartedChanged: tick()
+        Timer { running: page.recording && page.active; interval: 1000; repeat: true; triggeredOnStart: true; onTriggered: page.tick() }
+
+        function clock(s) {
+            const p = n => String(n).padStart(2, "0")
+            return p(Math.floor(s / 60)) + ":" + p(s % 60)
+        }
+
+        Column {
+            width: parent.width
+            anchors.centerIn: parent
+            spacing: 14
+            visible: !page.recording
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 6
+
+                Repeater {
+                    model: [{ id: "shot", label: "󰄀  Photo" }, { id: "rec", label: "󰻃  Video" }]
+
+                    Button {
+                        required property var modelData
+                        primary: page.kind === modelData.id
+                        label: modelData.label
+                        onPressed: page.kind = modelData.id
+                    }
+                }
+            }
+
+            Row {
+                id: tiles
+                width: parent.width
+                spacing: 8
+
+                Repeater {
+                    model: [{ id: "region", glyph: "󰆞", label: "Region" }, { id: "window", glyph: "󱂬", label: "Window" }, { id: "screen", glyph: "󰍹", label: "Screen" }]
+
+                    Rectangle {
+                        id: tile
+                        required property var modelData
+                        width: (tiles.width - tiles.spacing * 2) / 3
+                        height: 72
+                        radius: 12
+                        color: Theme.alpha(Theme.fg, tileArea.containsMouse ? 0.12 : 0.055)
+                        scale: tileArea.pressed ? 0.95 : 1
+                        Behavior on color { ColorAnimation { duration: Theme.fast } }
+                        Behavior on scale { NumberAnimation { duration: Theme.ms(120) } }
+
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 5
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: tile.modelData.glyph
+                                font.family: Theme.sans
+                                font.pixelSize: 20
+                                color: tileArea.containsMouse ? Theme.accent : Theme.fg
+                            }
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: tile.modelData.label
+                                font.family: Theme.sans
+                                font.pixelSize: 10
+                                color: Theme.dim
+                            }
+                        }
+
+                        MouseArea {
+                            id: tileArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: page.capture(page.kind, tile.modelData.id)
+                        }
+                    }
+                }
+            }
+        }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 10
+            visible: page.recording
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 10
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 10
+                    height: 10
+                    radius: 5
+                    color: Theme.warn
+                    SequentialAnimation on opacity {
+                        running: page.recording && page.active
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 0.25; duration: 700 }
+                        NumberAnimation { to: 1; duration: 700 }
+                    }
+                }
+                Text {
+                    text: page.clock(page.elapsed)
+                    font.family: Theme.sans
+                    font.pixelSize: 28
+                    font.bold: true
+                    color: Theme.bright
+                }
+            }
+
+            Button {
+                anchors.horizontalCenter: parent.horizontalCenter
+                primary: true
+                label: "󰓛  Stop"
+                onPressed: page.stop()
+            }
+        }
+    }
+
     component WeatherTab: Item {
         id: wt
 
@@ -865,7 +1017,7 @@ Item {
         }
     }
 
-    // wttr.in, located by IP. shared by every monitor, refreshed every 30 min
+    // wttr.in by IP, shared by all monitors, refreshed every 30 min
     component Forecast: Item {
         id: fc
 
@@ -889,7 +1041,7 @@ Item {
             if (!proc.running) proc.running = true
         }
 
-        // fold wttr.in codes into a few icons
+        // fold wttr.in codes into a few icons. probably missed some
         function glyph(c, dark) {
             if (c === 113) return dark ? "󰖔" : "󰖙"
             if (c === 116) return "󰖕"
@@ -922,7 +1074,7 @@ Item {
                         fc.high = +today.maxtempF
                         fc.low = +today.mintempF
                         fc.night = hour < 6 || hour >= 20
-                        // 3-hour slots through tomorrow
+                        // 3-hour slots through tomorrow, idk what else to show
                         const now = Date.now(), list = []
                         for (let day = 0; day < 2; day++) {
                             const date = d.weather[day].date
@@ -947,7 +1099,7 @@ Item {
         }
     }
 
-    // kept in the shell so it keeps running when the island is closed
+    // lives in the shell so it keeps running with the island closed, i think that's why
     component Countdown: Item {
         id: ft
 

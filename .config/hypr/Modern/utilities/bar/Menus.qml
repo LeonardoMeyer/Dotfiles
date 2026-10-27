@@ -431,7 +431,6 @@ QtObject {
         readonly property var all: adapter ? adapter.devices.values : []
         readonly property var paired: all.filter(d => d.paired || d.connected)
             .sort((a, b) => (b.connected - a.connected) || label(a).localeCompare(label(b)))
-        // skip devices with no name
         readonly property var nearby: all.filter(d => !d.paired && !d.connected && d.name && d.name !== d.address.replace(/:/g, "-"))
             .sort((a, b) => label(a).localeCompare(label(b)))
         property var pending: ({})
@@ -727,7 +726,7 @@ QtObject {
         }
     }
 
-    // lock/suspend right away, the rest need a second press
+    // lock and suspend are instant, the rest need a second press
     component Power: Column {
         id: menu
 
@@ -737,9 +736,37 @@ QtObject {
 
         spacing: 12
 
+        property bool standalone: false
         property string armed: ""
         property string uptime: ""
-        onOpenChanged: { armed = ""; if (open) up.running = true }
+        property real light: 1
+        property bool hasLight: false
+        onOpenChanged: { armed = ""; if (open) { up.running = true; probe.running = true } }
+
+        Process {
+            id: probe
+            command: ["sh", "-c", "brightnessctl -m 2>/dev/null | head -n1 | cut -d, -f4 | tr -d %"]
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    const v = parseInt(text)
+                    menu.hasLight = !isNaN(v)
+                    if (menu.hasLight) menu.light = v / 100
+                }
+            }
+        }
+        Timer {
+            id: apply
+            interval: 50
+            onTriggered: Quickshell.execDetached(["brightnessctl", "-q", "set", Math.max(1, Math.round(menu.light * 100)) + "%"])
+        }
+        FileView {
+            id: dndFile
+            path: Quickshell.env("XDG_RUNTIME_DIR") + "/home-dnd"
+            watchChanges: true
+            printErrors: false
+            onFileChanged: reload()
+        }
+        readonly property bool dnd: dndFile.text().trim() === "1"
 
         Process {
             id: up
@@ -818,6 +845,72 @@ QtObject {
                 }
             }
         }
+
+        Rectangle {
+            visible: menu.hasLight
+            width: parent.width
+            height: 44
+            radius: 12
+            color: Theme.alpha(Theme.fg, 0.055)
+
+            Text {
+                id: sun
+                anchors.left: parent.left
+                anchors.leftMargin: 14
+                anchors.verticalCenter: parent.verticalCenter
+                width: 18
+                text: "󰃠"
+                font.family: Theme.sans
+                font.pixelSize: 16
+                color: Theme.bright
+            }
+            Slider {
+                anchors.left: sun.right
+                anchors.leftMargin: 12
+                anchors.right: sunPct.left
+                anchors.rightMargin: 12
+                anchors.verticalCenter: parent.verticalCenter
+                value: menu.light
+                onMoved: v => { menu.light = Math.max(0.01, v); apply.restart() }
+            }
+            Text {
+                id: sunPct
+                anchors.right: parent.right
+                anchors.rightMargin: 14
+                anchors.verticalCenter: parent.verticalCenter
+                width: 32
+                horizontalAlignment: Text.AlignRight
+                text: Math.round(menu.light * 100) + "%"
+                font.family: Theme.sans
+                font.pixelSize: 12
+                color: Theme.fg
+            }
+        }
+
+        Rectangle {
+            visible: !menu.standalone
+            width: parent.width
+            height: 44
+            radius: 12
+            color: Theme.alpha(Theme.fg, 0.055)
+
+            Text {
+                anchors.left: parent.left
+                anchors.leftMargin: 14
+                anchors.verticalCenter: parent.verticalCenter
+                text: (menu.dnd ? "󰂛" : "󰂚") + "  Do not disturb"
+                font.family: Theme.sans
+                font.pixelSize: 12
+                color: menu.dnd ? Theme.accent : Theme.fg
+            }
+            Switch {
+                anchors.right: parent.right
+                anchors.rightMargin: 14
+                anchors.verticalCenter: parent.verticalCenter
+                checked: menu.dnd
+                onToggled: menu.run("~/.config/hypr/utilities/shells.sh home toggleDnd")
+            }
+        }
     }
 
     component Tray: Column {
@@ -878,7 +971,7 @@ QtObject {
                         visible: !entry.modelData.isSeparator
                         readonly property bool check: entry.modelData.buttonType !== QsMenuButtonType.None
                         readonly property bool checked: entry.modelData.checkState === Qt.Checked
-                        // some apps use underscores for accelerators
+                        // some apps put underscores in labels for accelerators, strip them
                         label: (entry.modelData.text || "").replace(/_(?=[^_])/g, "")
                         iconSource: entry.modelData.icon || ""
                         glyph: check ? (checked ? (entry.modelData.buttonType === QsMenuButtonType.RadioButton ? "" : "") : (entry.modelData.buttonType === QsMenuButtonType.RadioButton ? "" : "")) : ""

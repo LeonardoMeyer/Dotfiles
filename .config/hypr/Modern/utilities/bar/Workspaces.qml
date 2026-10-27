@@ -11,6 +11,9 @@ Item {
 
     property bool active: false
     property int rev: 0
+    // stop the capture before closing, it errors out otherwise. don't ask me why
+    property var closing: []
+    function isClosing(t) { return closing.includes(addr(t)) }
 
     readonly property string wallpaper: wallFile.text().trim()
 
@@ -22,6 +25,32 @@ Item {
         onFileChanged: reload()
     }
 
+    // pypr scratchpads by class, kept off the tiles
+    FileView {
+        id: pyprFile
+        path: Quickshell.env("HOME") + "/.config/pypr/config.toml"
+        printErrors: false
+    }
+    readonly property var scratch: {
+        const out = []
+        let name = ""
+        for (const line of pyprFile.text().split("\n")) {
+            let m = line.match(/^\[scratchpads\.(.+)\]/)
+            if (m) { name = m[1]; continue }
+            m = line.match(/^class\s*=\s*"(.*)"/)
+            if (m && name) out.push({ name: name, cls: m[1], re: m[1].startsWith("re:") ? new RegExp(m[1].slice(3).replace("(?i)", ""), "i") : null })
+        }
+        return out
+    }
+    function scratchOf(t) {
+        const c = t.lastIpcObject ? t.lastIpcObject.class || "" : ""
+        return scratch.find(s => s.re ? s.re.test(c) : s.cls === c)
+    }
+    function scratchpads() {
+        rev
+        return Hyprland.toplevels.values.filter(t => t.lastIpcObject && scratchOf(t))
+    }
+
     function refresh() {
         Hyprland.refreshToplevels()
         Hyprland.refreshWorkspaces()
@@ -30,7 +59,7 @@ Item {
     }
     Timer { id: settle; interval: 60; onTriggered: ex.rev++ }
 
-    onActiveChanged: if (active) refresh()
+    onActiveChanged: { if (active) refresh(); else closing = [] }
 
     readonly property var events: ["openwindow", "closewindow", "movewindow", "movewindowv2", "changefloatingmode",
         "windowtitle", "windowtitlev2", "activewindow", "activewindowv2", "fullscreen", "workspace", "workspacev2",
@@ -43,7 +72,7 @@ Item {
     Timer { id: debounce; interval: 80; onTriggered: ex.refresh() }
     Timer { running: ex.active; interval: 1500; repeat: true; onTriggered: ex.refresh() }
 
-    // layout coords: rotation swaps sides, scale shrinks both
+    // layout coords: rotation swaps sides, scale shrinks both. took a while
     function geometry(mon) {
         rev
         if (!mon) return { x: 0, y: 0, w: 1920, h: 1080 }
@@ -55,12 +84,11 @@ Item {
         return { x: o.x ?? mon.x, y: o.y ?? mon.y, w: w, h: h }
     }
 
-    // oldest first so the newest draws on top
     function windowsOn(id) {
         rev
         return Hyprland.toplevels.values
             .filter(t => t.workspace && t.workspace.id === id && t.lastIpcObject && t.lastIpcObject.at
-                && t.lastIpcObject.mapped !== false && !t.lastIpcObject.hidden)
+                && t.lastIpcObject.mapped !== false && !t.lastIpcObject.hidden && !scratchOf(t))
             .sort((a, b) => (b.lastIpcObject.focusHistoryID ?? 0) - (a.lastIpcObject.focusHistoryID ?? 0))
     }
 
@@ -85,13 +113,174 @@ Item {
         return e && e.name ? e.name : (cls || "Window")
     }
 
+    function addr(t) {
+        return t.lastIpcObject && t.lastIpcObject.address ? t.lastIpcObject.address : "0x" + t.address
+    }
+
     function focusWindow(t) {
-        const addr = t.lastIpcObject && t.lastIpcObject.address ? t.lastIpcObject.address : "0x" + t.address
-        Theme.dispatch("hl.dsp.focus({ window = \"address:" + addr + "\" })", "focuswindow address:" + addr)
+        Theme.dispatch("hl.dsp.focus({ window = \"address:" + addr(t) + "\" })", "focuswindow address:" + addr(t))
+    }
+
+    // ws is a number or a name like "special:magic"; mon sends a new workspace where it was dropped
+    function moveTo(t, ws, mon) {
+        const w = typeof ws === "string" ? "\"" + ws + "\"" : ws
+        Theme.dispatch("hl.dsp.window.move({ workspace = " + w + ", window = \"address:" + addr(t) + "\", follow = false })",
+                       "movetoworkspacesilent " + ws + ",address:" + addr(t))
+        if (mon && typeof ws === "number")
+            Theme.dispatch("hl.dsp.workspace.move({ workspace = " + ws + ", monitor = \"" + mon + "\" })",
+                           "moveworkspacetomonitor " + ws + " " + mon)
+        debounce.restart()
+    }
+
+    // Hyprland warps the cursor on every goddamn move, so put it back
+    function keepCursor(lua, classic) {
+        const back = Theme.lua ? "hl.dsp.cursor.move({ x = $x, y = $y })" : "movecursor $x $y"
+        Quickshell.execDetached(["sh", "-c", 'p=$(hyprctl cursorpos); x=${p%%,*}; y=${p##* }; hyprctl dispatch "$1" >/dev/null; hyprctl dispatch "' + back + '" >/dev/null',
+                                 "sh", Theme.lua ? lua : classic])
+        debounce.restart()
+    }
+
+    function swap(a, b) {
+        keepCursor("hl.dsp.window.swap({ window = \"address:" + addr(a) + "\", target = \"address:" + addr(b) + "\" })",
+                   "swapwindow address:" + addr(b))
+    }
+
+    function place(t, x, y) {
+        keepCursor("hl.dsp.window.move({ x = " + Math.round(x) + ", y = " + Math.round(y) + ", window = \"address:" + addr(t) + "\" })",
+                   "movewindowpixel exact " + Math.round(x) + " " + Math.round(y) + ",address:" + addr(t))
+    }
+
+    // terminals get killed so they don't stop to ask
+    function closeWindow(t) {
+        const kill = /kitty/i.test(t.lastIpcObject ? t.lastIpcObject.class : "")
+        closing = closing.concat(addr(t))
+        Theme.dispatch("hl.dsp.window." + (kill ? "kill" : "close") + "({ window = \"address:" + addr(t) + "\" })",
+                       (kill ? "killwindow" : "closewindow") + " address:" + addr(t))
+    }
+
+    // can't close the visible workspace so switch off it first. found out when it didn't work
+    function clear(id, ids, activeId) {
+        windowsOn(id).forEach(w => closeWindow(w))
+        const other = ids.find(i => i !== id)
+        if (id === activeId && other !== undefined) goTo(other)
     }
 
     function goTo(id) {
         Theme.dispatch("hl.dsp.focus({ workspace = " + id + " })", "workspace " + id)
+    }
+
+    // saved workspaces: launch command, plus geometry when floating
+    readonly property var saved: { try { return JSON.parse(savedFile.text()) } catch (e) { return [] } }
+    FileView {
+        id: savedFile
+        path: Quickshell.env("HOME") + "/.local/state/overview/workspaces.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+    }
+    function write(list) { savedFile.setText(JSON.stringify(list)) }
+    function forget(e) { write(saved.filter(s => s !== e)) }
+    function rename(e, name) {
+        name = name.trim()
+        if (name && name !== e.name) write(saved.map(s => s === e ? Object.assign({}, s, { name: name, renamed: true }) : s))
+    }
+    Component.onCompleted: Quickshell.execDetached(["mkdir", "-p", Quickshell.env("HOME") + "/.local/state/overview"])
+
+    function save(id, geom) {
+        const wins = windowsOn(id)
+        if (!wins.length) return
+        cmdlines.wins = wins
+        cmdlines.geom = geom
+        cmdlines.command = [Quickshell.shellDir + "/bar/procs.sh"].concat(wins.map(w => String(w.lastIpcObject.pid)))
+        tabs.urls = []
+        if (!wins.some(isBrowser)) return cmdlines.running = true
+        tabs.command = [Quickshell.shellDir + "/bar/tabs.py"].concat(wins.map(w => isBrowser(w) ? w.lastIpcObject.title || " " : ""))
+        tabs.running = true
+    }
+
+    function isBrowser(t) { return /firefox|librewolf/i.test(t.lastIpcObject.class || "") }
+
+    // browser tabs come from the session store, it's the only way i found
+    Process {
+        id: tabs
+        property var urls: []
+        stdout: StdioCollector {
+            onStreamFinished: {
+                tabs.urls = text.split("\n").map(l => l.split("\x1f").filter(u => u))
+                cmdlines.running = true
+            }
+        }
+    }
+
+    // opens on the visible workspace if it's empty, otherwise a new one
+    function savedTarget(activeId, next) {
+        return activeId > 0 && windowsOn(activeId).length === 0 ? activeId : next
+    }
+    Process {
+        id: cmdlines
+        property var wins: []
+        property var geom: null
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.split("\n")
+                const q = a => "'" + a.replace(/'/g, "'\\''") + "'"
+                const g = cmdlines.geom
+                const base = a => (a || "").split("/").pop()
+                const windows = cmdlines.wins.map((w, i) => {
+                    const o = w.lastIpcObject
+                    const [c, dir, run] = (lines[i] || "").split("\x1e").map(f => (f || "").split("\x1f").filter(a => a))
+                    let cmd = c.map(q).join(" "), app = ex.appName(o.class)
+                    const urls = tabs.urls[i] || []
+                    if (c.length && urls.length)
+                        cmd = q(c[0]) + " --new-window " + q(urls[0]) + urls.slice(1).map(u => " --new-tab " + q(u)).join("")
+                    // terminals reopen in the same folder running the same thing. works for me
+                    else if (dir.length) {
+                        const inner = "cd " + q(dir[0]) + (run.length ? " && " + run.map(q).join(" ") : "") + "; exec \"$SHELL\""
+                        cmd += (base(c[0]) === "kitty" ? "" : " -e") + " sh -c " + q(inner)
+                        if (run.length) app = base(run[/^(perl|python3?|node|bash|sh)$/.test(base(run[0])) && run.length > 1 ? 1 : 0])
+                    }
+                    return { cmd: cmd, app: app, floating: o.floating, x: o.at[0] - g.x, y: o.at[1] - g.y, w: o.size[0], h: o.size[1] }
+                }).filter(w => w.cmd)
+                const key = windows.map(w => w.cmd).sort().join("\n")
+                const old = ex.saved.find(e => e.windows.map(w => w.cmd).sort().join("\n") === key)
+                const name = old && old.renamed ? old.name : [...new Set(windows.map(w => w.app))].join(" · ")
+                if (windows.length) ex.write(ex.saved.filter(e => e !== old)
+                    .concat([{ name: name, renamed: !!(old && old.renamed), w: g.w, h: g.h, windows: windows }]))
+            }
+        }
+    }
+
+    // reopens a workspace. tiled ones open in reading order so the splits come out the same. i hope
+    // layouts from other monitors get shrunk and centred, hopefully nothing gets cut off
+    function fit(e, gw, gh) {
+        const sw = Math.max(e.w || 0, ...e.windows.map(w => w.x + w.w)), sh = Math.max(e.h || 0, ...e.windows.map(w => w.y + w.h))
+        const s = Math.min(1, gw / sw, gh / sh)
+        return { s: s, ox: (gw - sw * s) / 2, oy: (gh - sh * s) / 2 }
+    }
+
+    function restore(e, ws, geom) {
+        const f = fit(e, geom.w, geom.h)
+        launches.ws = ws
+        launches.queue = e.windows.slice().sort((a, b) => a.floating - b.floating || a.x - b.x || a.y - b.y)
+            .map(w => Object.assign({}, w, { x: Math.round(f.ox + w.x * f.s), y: Math.round(f.oy + w.y * f.s),
+                w: Math.round(w.w * f.s), h: Math.round(w.h * f.s) }))
+        launches.restart()
+        if (typeof ws === "number") goTo(ws)
+    }
+    Timer {
+        id: launches
+        property var ws: 0
+        property var queue: []
+        interval: 350
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            const w = queue.shift()
+            if (!w) return stop()
+            const f = w.floating ? ", float = true, move = \"" + w.x + " " + w.y + "\", size = \"" + w.w + " " + w.h + "\"" : ""
+            Theme.dispatch("hl.dsp.exec_cmd([==[" + w.cmd + "]==], { workspace = \"" + ws + " silent\"" + f + " })",
+                           "exec [workspace " + ws + " silent" + (w.floating ? "; float; move " + w.x + " " + w.y + "; size " + w.w + " " + w.h : "") + "] " + w.cmd)
+        }
     }
 
     component Dots: Row {
@@ -164,7 +353,12 @@ Item {
         property bool current: false
         property bool isNew: false
         property bool big: false
+        property string hint: "New workspace"
+        property var target: wsId
+        property Item ghost: null
+        property bool takesSaved: false
         signal windowPicked(var toplevel)
+        signal savedDropped(var entry)
         signal workspacePicked(int id)
 
         readonly property var geom: expose.geometry(monitor)
@@ -179,14 +373,14 @@ Item {
             anchors.fill: parent
             radius: tile.r
             color: Theme.alpha(Theme.fg, 0.06)
-            scale: area.containsMouse && !tile.big ? 1.03 : 1
+            scale: drop.containsDrag ? 1.03 : area.containsMouse && !tile.big ? 1.03 : 1
             Behavior on scale { NumberAnimation { duration: Theme.fast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
 
             Image {
                 anchors.fill: parent
                 visible: !tile.isNew && tile.expose.wallpaper !== ""
                 source: tile.expose.wallpaper !== "" ? "file://" + tile.expose.wallpaper : ""
-                sourceSize.width: 480
+                sourceSize: Qt.size(Math.ceil(tile.width * 2) || 1, Math.ceil(tile.height * 2) || 1)
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 opacity: area.containsMouse ? 0.9 : 0.7
@@ -215,7 +409,7 @@ Item {
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
                     visible: tile.big
-                    text: "New workspace"
+                    text: tile.hint
                     font.family: Theme.sans
                     font.pixelSize: 12
                     color: Theme.dim
@@ -223,13 +417,21 @@ Item {
             }
 
             Repeater {
-                model: tile.windows
+                model: ScriptModel { values: tile.windows }
 
                 Item {
                     id: win
                     required property var modelData
                     readonly property var o: modelData.lastIpcObject
-                    readonly property bool hot: winArea.containsMouse
+                    readonly property bool hot: hover.hovered
+                    opacity: tile.ghost && tile.ghost.dragging && tile.ghost.toplevel === modelData ? 0.25 : 1
+                    scale: hot && tile.big && !(tile.ghost && tile.ghost.dragging) ? 1.02 : 1
+                    Behavior on opacity { NumberAnimation { duration: Theme.fast } }
+                    Behavior on scale { NumberAnimation { duration: Theme.fast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                    Behavior on x { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                    Behavior on y { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                    Behavior on width { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                    Behavior on height { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
                     x: (o.at[0] - tile.geom.x) * tile.k
                     y: (o.at[1] - tile.geom.y) * tile.k
                     width: Math.max(8, o.size[0] * tile.k)
@@ -243,9 +445,10 @@ Item {
                         ScreencopyView {
                             id: shot
                             anchors.fill: parent
-                            captureSource: win.modelData.wayland
-                            live: true
-                            constraintSize: Qt.size(Math.ceil(win.width * 2), Math.ceil(win.height * 2))
+                            captureSource: tile.expose.active && !tile.expose.isClosing(win.modelData) ? win.modelData.wayland : null
+                            live: tile.expose.active
+                            // use the settled size, the animated one gave me tiny captures
+                            constraintSize: Qt.size(Math.ceil(win.o.size[0] * tile.k * 2), Math.ceil(win.o.size[1] * tile.k * 2))
                         }
 
                         IconImage {
@@ -288,14 +491,54 @@ Item {
                         }
                     }
 
+                    HoverHandler { id: hover }
+
                     MouseArea {
-                        id: winArea
                         anchors.fill: parent
-                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
+                        drag.target: tile.ghost
+                        drag.threshold: 6
+                        onPressed: mouse => { if (tile.ghost) tile.ghost.start(win, win.modelData, null, mouse.x, mouse.y) }
+                        drag.onActiveChanged: if (tile.ghost) drag.active ? tile.ghost.dragging = true : tile.ghost.end()
                         onClicked: tile.windowPicked(win.modelData)
                     }
+
+                    Text {
+                        visible: win.hot && win.width >= 24
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: tile.big ? 6 : 3
+                        text: "\uf00d"
+                        font.family: Theme.sans
+                        font.pixelSize: tile.big ? 13 : 9
+                        color: closeArea.containsMouse ? Theme.warn : Theme.bright
+                        MouseArea {
+                            id: closeArea
+                            anchors.fill: parent
+                            anchors.margins: -5
+                            hoverEnabled: true
+                            onClicked: tile.expose.closeWindow(win.modelData)
+                        }
+                    }
                 }
+            }
+        }
+
+        DropArea {
+            id: drop
+            anchors.fill: parent
+            keys: tile.takesSaved ? ["window", "saved"] : ["window"]
+            onDropped: d => {
+                if (d.source.entry) return tile.savedDropped(d.source.entry)
+                const t = d.source.toplevel, o = t.lastIpcObject
+                if (tile.isNew || !t.workspace || t.workspace.id !== tile.wsId)
+                    return tile.expose.moveTo(t, tile.target, tile.isNew && tile.monitor ? tile.monitor.name : "")
+                // floating lands where dropped, tiled swaps with the one under it
+                const px = tile.geom.x + d.x / tile.k, py = tile.geom.y + d.y / tile.k
+                if (o.floating) return tile.expose.place(t, px - o.size[0] / 2, py - o.size[1] / 2)
+                const under = tile.windows.find(w => w !== t && px >= w.lastIpcObject.at[0] && px < w.lastIpcObject.at[0] + w.lastIpcObject.size[0]
+                    && py >= w.lastIpcObject.at[1] && py < w.lastIpcObject.at[1] + w.lastIpcObject.size[1])
+                if (under) tile.expose.swap(t, under)
             }
         }
 
@@ -304,9 +547,170 @@ Item {
             scale: screen.scale
             radius: tile.r
             color: "transparent"
-            border.width: tile.current ? 2 : 1
-            border.color: tile.current ? Theme.accent : Theme.alpha(Theme.fg, area.containsMouse ? 0.25 : 0.1)
+            border.width: tile.current || drop.containsDrag ? 2 : 1
+            border.color: tile.current || drop.containsDrag ? Theme.accent : Theme.alpha(Theme.fg, area.containsMouse ? 0.25 : 0.1)
             Behavior on border.color { ColorAnimation { duration: Theme.fast } }
+        }
+    }
+
+    component Actions: Row {
+        id: acts
+        property var expose
+        property int wsId
+        property var geom
+        property var ids: []
+        property int activeId
+        property int size: 13
+        spacing: size + 1
+
+        Text {
+            text: "\uf0c7"
+            font.family: Theme.sans
+            font.pixelSize: acts.size
+            color: saveArea.containsMouse ? Theme.accent : Theme.dim
+            MouseArea {
+                id: saveArea
+                anchors.fill: parent
+                anchors.margins: -5
+                hoverEnabled: true
+                onClicked: acts.expose.save(acts.wsId, acts.geom)
+            }
+        }
+        Text {
+            text: "\uf1f8"
+            font.family: Theme.sans
+            font.pixelSize: acts.size
+            color: trash.containsMouse ? Theme.warn : Theme.dim
+            MouseArea {
+                id: trash
+                anchors.fill: parent
+                anchors.margins: -5
+                hoverEnabled: true
+                onClicked: acts.expose.clear(acts.wsId, acts.ids, acts.activeId)
+            }
+        }
+    }
+
+    component Ghost: Item {
+        id: proxy
+        property var toplevel: null
+        property var entry: null
+        property real previewW: 150
+        property var previewGeom: ({ w: 1920, h: 1080 })
+        property var shown: previewGeom
+        property var expose: null
+        property bool dragging: false
+        property real fromX: 0
+        property real fromY: 0
+        property real fromW: width
+        property real fromH: height
+        property real grow: dragging ? 1 : 0
+        Behavior on grow { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+        readonly property real g: entry ? grow : 1
+        visible: opacity > 0
+        opacity: dragging ? 0.9 : 0
+        scale: dragging ? 1.04 : 0.96
+        Behavior on opacity { NumberAnimation { duration: Theme.fast; easing.type: Easing.BezierSpline; easing.bezierCurve: proxy.dragging ? Theme.settle : Theme.leave } }
+        Behavior on scale { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+        z: 10
+        Drag.active: dragging
+        // so drops land under the pointer, not the card centre
+        Drag.hotSpot.x: 0
+        Drag.hotSpot.y: 0
+        Drag.keys: entry ? ["saved"] : ["window"]
+
+        function start(item, t, e, mx, my) {
+            toplevel = t
+            entry = e ?? null
+            if (e) {
+                shown = previewGeom
+                width = previewW
+                height = previewW * shown.h / shown.w
+                Drag.hotSpot.x = width / 2
+                Drag.hotSpot.y = height / 2
+                const q = item.mapToItem(proxy.parent, mx ?? item.width / 2, my ?? item.height / 2)
+                x = q.x - width / 2
+                y = q.y - height / 2
+                const o = item.mapToItem(proxy.parent, 0, 0)
+                fromX = o.x - x
+                fromY = o.y - y
+                fromW = item.width
+                fromH = item.height
+                return
+            }
+            const p = item.mapToItem(proxy.parent, 0, 0)
+            Drag.hotSpot.x = mx ?? item.width / 2
+            Drag.hotSpot.y = my ?? item.height / 2
+            x = p.x
+            y = p.y
+            width = item.width
+            height = item.height
+            fromX = 0
+            fromY = 0
+            fromW = width
+            fromH = height
+        }
+        function end() {
+            if (dragging) Drag.drop()
+            dragging = false
+        }
+
+        Item {
+            id: body
+            x: proxy.fromX * (1 - proxy.g)
+            y: proxy.fromY * (1 - proxy.g)
+            width: proxy.fromW + (proxy.width - proxy.fromW) * proxy.g
+            height: proxy.fromH + (proxy.height - proxy.fromH) * proxy.g
+            ClippingRectangle {
+                anchors.fill: parent
+                radius: Math.min(Theme.rounding, 6)
+                color: Theme.alpha(Theme.bg, 0.85)
+                ScreencopyView {
+                    anchors.fill: parent
+                    visible: !proxy.entry
+                    captureSource: proxy.expose && proxy.expose.active && proxy.toplevel && !proxy.expose.isClosing(proxy.toplevel) ? proxy.toplevel.wayland : null
+                    live: proxy.dragging
+                }
+                Item {
+                    id: layout
+                    anchors.fill: parent
+                    visible: !!proxy.entry
+                    opacity: proxy.g
+                    readonly property var f: proxy.entry && proxy.expose ? proxy.expose.fit(proxy.entry, proxy.shown.w, proxy.shown.h) : ({ s: 1, ox: 0, oy: 0 })
+                    readonly property real k: body.width / proxy.shown.w
+                    Repeater {
+                        model: proxy.entry ? proxy.entry.windows : []
+                        Rectangle {
+                            required property var modelData
+                            x: (layout.f.ox + modelData.x * layout.f.s) * layout.k
+                            y: (layout.f.oy + modelData.y * layout.f.s) * layout.k
+                            width: modelData.w * layout.f.s * layout.k
+                            height: modelData.h * layout.f.s * layout.k
+                            radius: 3
+                            color: Theme.alpha(Theme.fg, 0.1)
+                            border.width: 1
+                            border.color: Theme.alpha(Theme.fg, 0.25)
+                            Text {
+                                anchors.centerIn: parent
+                                width: parent.width - 6
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                                text: modelData.app
+                                font.family: Theme.sans
+                                font.pixelSize: 8
+                                color: Theme.dim
+                            }
+                        }
+                    }
+                }
+            }
+            Rectangle {
+                anchors.fill: parent
+                radius: Math.min(Theme.rounding, 6)
+                color: "transparent"
+                border.width: 1
+                border.color: Theme.alpha(Theme.fg, 0.25)
+            }
         }
     }
 
@@ -317,6 +721,8 @@ Item {
         property var screen
         signal picked()
         signal overview()
+        property var renaming: null
+        readonly property bool holdOpen: renaming !== null
 
         readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
         readonly property int activeId: monitor && monitor.activeWorkspace ? monitor.activeWorkspace.id : -1
@@ -330,38 +736,150 @@ Item {
 
         spacing: 12
 
-        Grid {
+        Item {
             anchors.horizontalCenter: parent.horizontalCenter
-            columns: page.cols
-            spacing: page.gap
+            width: grid.width
+            height: grid.height
+            z: 1
 
-            Repeater {
-                model: page.cells
+            Grid {
+                id: grid
+                columns: page.cols
+                spacing: page.gap
 
-                Column {
-                    id: cell
-                    required property int modelData
-                    readonly property bool isNew: modelData === -1
-                    readonly property int wsId: isNew ? page.spaces.next : modelData
-                    readonly property int count: page.expose.windowsOn(wsId).length
-                    spacing: 5
+                Repeater {
+                    model: page.cells
 
-                    Tile {
-                        width: page.tileW
-                        expose: page.expose
-                        monitor: page.monitor
-                        wsId: cell.wsId
-                        isNew: cell.isNew
-                        current: cell.wsId === page.activeId
-                        onWindowPicked: t => { page.picked(); page.expose.focusWindow(t) }
-                        onWorkspacePicked: id => { page.picked(); page.expose.goTo(id) }
+                    Column {
+                        id: cell
+                        required property int modelData
+                        readonly property bool isNew: modelData === -1
+                        readonly property int wsId: isNew ? page.spaces.next : modelData
+                        readonly property int count: page.expose.windowsOn(wsId).length
+                        spacing: 5
+
+                        Tile {
+                            width: page.tileW
+                            expose: page.expose
+                            monitor: page.monitor
+                            wsId: cell.wsId
+                            isNew: cell.isNew
+                            ghost: proxy
+                            takesSaved: cell.isNew || cell.count === 0
+                            current: cell.wsId === page.activeId
+                            onWindowPicked: t => { page.picked(); page.expose.focusWindow(t) }
+                            onWorkspacePicked: id => { page.picked(); page.expose.goTo(id) }
+                            onSavedDropped: e => { page.picked(); page.expose.restore(e, cell.wsId, page.geom) }
+                        }
+                        Item {
+                            width: page.tileW
+                            height: 14
+                            Text {
+                                x: 2
+                                text: cell.isNew ? "New" : cell.wsId + "  ·  " + (cell.count === 0 ? "empty" : cell.count + (cell.count > 1 ? " windows" : " window"))
+                                font.family: Theme.sans
+                                font.pixelSize: 10
+                                color: cell.wsId === page.activeId ? Theme.accent : Theme.dim
+                            }
+                            Actions {
+                                visible: !cell.isNew && cell.count > 0
+                                anchors.right: parent.right
+                                anchors.rightMargin: 2
+                                size: 10
+                                expose: page.expose
+                                wsId: cell.wsId
+                                geom: page.geom
+                                ids: page.spaces.ids
+                                activeId: page.activeId
+                            }
+                        }
                     }
-                    Text {
-                        x: 2
-                        text: cell.isNew ? "New" : cell.wsId + "  ·  " + (cell.count === 0 ? "empty" : cell.count + (cell.count > 1 ? " windows" : " window"))
-                        font.family: Theme.sans
-                        font.pixelSize: 10
-                        color: cell.wsId === page.activeId ? Theme.accent : Theme.dim
+                }
+            }
+
+            Ghost { id: proxy; previewW: page.tileW; previewGeom: page.geom; expose: page.expose }
+        }
+
+        // click opens it, pencil renames, trash deletes
+        Menus.Group {
+            title: "Saved"
+            visible: page.expose.saved.length > 0
+            Repeater {
+                model: page.expose.saved
+                Menus.Entry {
+                    id: savedRow
+                    required property var modelData
+                    glyph: "\uf0c7"
+                    label: modelData.name
+                    sub: modelData.windows.length + (modelData.windows.length > 1 ? " windows" : " window")
+                    // no hover here, i think the row stops lighting up otherwise
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        preventStealing: true
+                        drag.target: proxy
+                        drag.threshold: 6
+                        onPressed: mouse => proxy.start(savedRow, null, savedRow.modelData, mouse.x, mouse.y)
+                        drag.onActiveChanged: drag.active ? proxy.dragging = true : proxy.end()
+                        onClicked: { page.picked(); page.expose.restore(savedRow.modelData, page.expose.savedTarget(page.activeId, page.spaces.next), page.geom) }
+                    }
+                    Row {
+                        anchors.right: parent.right
+                        anchors.rightMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 14
+                        visible: savedRow.hot || pencil.hovered || bin.hovered
+                        Text {
+                            text: "\uf040"
+                            font.family: Theme.sans
+                            font.pixelSize: 11
+                            color: pencil.hovered ? Theme.accent : Theme.dim
+                            HoverHandler { id: pencil }
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.margins: -6
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: page.renaming = savedRow.modelData
+                            }
+                        }
+                        Text {
+                            text: "\uf1f8"
+                            font.family: Theme.sans
+                            font.pixelSize: 11
+                            color: bin.hovered ? Theme.warn : Theme.dim
+                            HoverHandler { id: bin }
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.margins: -6
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: page.expose.forget(savedRow.modelData)
+                            }
+                        }
+                    }
+                    Rectangle {
+                        anchors.fill: parent
+                        visible: page.renaming === savedRow.modelData
+                        radius: 8
+                        color: Theme.alpha(Theme.bg, 0.95)
+                        border.width: 1
+                        border.color: Theme.alpha(Theme.accent, 0.6)
+                        onVisibleChanged: if (visible) { field.text = savedRow.modelData.name; field.selectAll(); field.forceActiveFocus() }
+                        MouseArea { anchors.fill: parent }
+                        TextInput {
+                            id: field
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.margins: 12
+                            anchors.verticalCenter: parent.verticalCenter
+                            font.family: Theme.sans
+                            font.pixelSize: 13
+                            color: Theme.bright
+                            selectionColor: Theme.alpha(Theme.accent, 0.5)
+                            clip: true
+                            onAccepted: { const e = savedRow.modelData, t = text; page.renaming = null; page.expose.rename(e, t) }
+                            Keys.onEscapePressed: page.renaming = null
+                            onActiveFocusChanged: if (!activeFocus && page.renaming === savedRow.modelData) page.renaming = null
+                        }
                     }
                 }
             }
@@ -373,170 +891,6 @@ Item {
                 label: "Overview"
                 trailing: "Super + Tab"
                 onClicked: { page.picked(); page.overview() }
-            }
-        }
-    }
-
-    component Overview: PanelWindow {
-        id: ov
-
-        property var expose
-        property bool open: false
-        signal dismissed()
-
-        anchors {
-            top: true
-            bottom: true
-            left: true
-            right: true
-        }
-        exclusionMode: ExclusionMode.Ignore
-        color: "transparent"
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "quickshell-overview"
-        WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-        mask: Region { item: ov.open ? backdrop : null }
-
-        property real t: 0
-        readonly property bool shown: open || t > 0
-        onOpenChanged: {
-            tween.stop()
-            tween.to = open ? 1 : 0
-            tween.duration = Theme.ms(open ? 400 : 280)
-            tween.easing.bezierCurve = open ? Theme.settle : Theme.leave
-            tween.start()
-            if (open) keys.forceActiveFocus()
-        }
-        NumberAnimation { id: tween; target: ov; property: "t"; easing.type: Easing.BezierSpline }
-
-        readonly property var monitor: Hyprland.monitorFor(screen)
-        readonly property int activeId: monitor && monitor.activeWorkspace ? monitor.activeWorkspace.id : -1
-        readonly property var spaces: expose ? expose.workspacesOn(screen ? screen.name : "") : ({ ids: [], next: 1 })
-        readonly property var tiles: spaces.ids.concat([-1])
-        readonly property int cols: tiles.length <= 3 ? tiles.length : tiles.length <= 6 ? 3 : 4
-        readonly property real gap: 28
-        readonly property int rows: Math.ceil(tiles.length / cols)
-        readonly property var geom: expose ? expose.geometry(monitor) : ({ x: 0, y: 0, w: 1920, h: 1080 })
-        readonly property real tileW: Math.min(620, (width - 160 - (cols - 1) * gap) / cols,
-            (height - 200 - (rows - 1) * (gap + 30)) / rows * geom.w / geom.h)
-
-        function pickWindow(t) {
-            expose.focusWindow(t)
-            dismissed()
-        }
-
-        function pickWorkspace(id) {
-            expose.goTo(id)
-            dismissed()
-        }
-
-        Rectangle {
-            id: backdrop
-            anchors.fill: parent
-            color: Theme.alpha(Theme.bg, 0.55)
-            opacity: ov.t
-            visible: ov.t > 0
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: ov.dismissed()
-        }
-
-        Item {
-            id: keys
-            anchors.fill: parent
-            focus: true
-            Keys.onPressed: e => {
-                if (e.key === Qt.Key_Escape) ov.dismissed()
-                else if (e.key >= Qt.Key_1 && e.key <= Qt.Key_9) ov.pickWorkspace(e.key - Qt.Key_0)
-                else { e.accepted = false; return }
-                e.accepted = true
-            }
-        }
-
-        Column {
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: (1 - ov.t) * 24
-            spacing: 26
-            visible: ov.t > 0
-            opacity: ov.t
-            scale: 0.96 + 0.04 * ov.t
-
-            Column {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 4
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Workspaces"
-                    font.family: Theme.sans
-                    font.pixelSize: 22
-                    color: Theme.bright
-                }
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: (ov.screen ? ov.screen.name + "  ·  " : "") + "click to focus  ·  1-9 to jump  ·  Esc to close"
-                    font.family: Theme.sans
-                    font.pixelSize: 11
-                    color: Theme.dim
-                }
-            }
-
-            Grid {
-                anchors.horizontalCenter: parent.horizontalCenter
-                columns: ov.cols
-                columnSpacing: ov.gap
-                rowSpacing: ov.gap
-
-                Repeater {
-                    model: ov.shown ? ov.tiles : []
-
-                    Column {
-                        id: cell
-                        required property int modelData
-                        required property int index
-                        readonly property bool isNew: modelData === -1
-                        readonly property int wsId: isNew ? ov.spaces.next : modelData
-                        readonly property var windows: ov.expose.windowsOn(wsId)
-                        spacing: 10
-                        opacity: Math.max(0, Math.min(1, ov.t * 1.6 - index * 0.06))
-
-                        Row {
-                            spacing: 8
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: cell.isNew ? "New" : cell.wsId
-                                font.family: Theme.sans
-                                font.pixelSize: 15
-                                font.bold: true
-                                color: cell.wsId === ov.activeId ? Theme.accent : Theme.bright
-                            }
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: Math.min(implicitWidth, ov.tileW - 40)
-                                elide: Text.ElideRight
-                                text: cell.isNew ? "Start a fresh workspace"
-                                    : cell.windows.length === 0 ? "Empty"
-                                    : [...new Set(cell.windows.map(w => ov.expose.appName(w.lastIpcObject.class)))].join("  ·  ")
-                                font.family: Theme.sans
-                                font.pixelSize: 11
-                                color: Theme.dim
-                            }
-                        }
-
-                        Tile {
-                            width: ov.tileW
-                            big: true
-                            expose: ov.expose
-                            monitor: ov.monitor
-                            wsId: cell.wsId
-                            isNew: cell.isNew
-                            current: cell.wsId === ov.activeId
-                            onWindowPicked: t => ov.pickWindow(t)
-                            onWorkspacePicked: id => ov.pickWorkspace(id)
-                        }
-                    }
-                }
             }
         }
     }

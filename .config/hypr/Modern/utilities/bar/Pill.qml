@@ -8,7 +8,6 @@ Item {
     property var ctx
     property var screen
     property var modules: []
-    // "left", "right" or "center"
     property string align: "center"
     property real maxW: 10000
     property bool hurry: false
@@ -26,7 +25,6 @@ Item {
         return modules.some(m => opens[m] === page)
     }
 
-    // hide dividers with nothing on one side
     function dividerOn(i) {
         const showing = j => { const m = moduleList.count > j ? moduleList.itemAt(j) : null; return !!m && m.name !== "|" && m.present }
         let before = false, after = false
@@ -34,8 +32,8 @@ Item {
         for (let j = i + 1; j < modules.length && modules[j] !== "|"; j++) after = after || showing(j)
         return before && after
     }
-    readonly property var widths: ({ workspaces: 600, island: 540, network: 350, audio: 340, power: 330, tray: 290 })
-    readonly property var widest: ({ workspaces: 900, island: 620, network: 720, audio: 720, power: 420, tray: 360 })
+    readonly property var widths: ({ workspaces: 600, island: 600, network: 350, audio: 340, power: 330, tray: 290 })
+    readonly property var widest: ({ workspaces: 900, island: 900, network: 720, audio: 720, power: 420, tray: 360 })
     readonly property int pad: 16
 
     property string page: ""
@@ -50,7 +48,6 @@ Item {
         openDelay.stop()
         if (p === "") { close(); return }
         if (!open && self.t === 0 && ctx.musicInTheWay(self, p)) {
-            // fold the music player away while the card is open
             pending = p
             pendingTray = t ?? null
             tucked = true
@@ -129,7 +126,7 @@ Item {
     }
     Timer { id: tuckWait; interval: Theme.ms(340); onTriggered: self.place(self.pending, self.pendingTray) }
 
-    // whole pixels so the border stays crisp
+    // whole pixels, border looked blurry without it. idk
     readonly property real rowW: Math.ceil(row.implicitWidth) + 8
     readonly property real targetW: Math.max(rowW, Math.min(maxW, widths[shownPage] ?? 340))
     property real bodyW: targetW
@@ -162,14 +159,13 @@ Item {
 
     readonly property alias card: card
 
-    // two slots so the old page can fade out
     property bool frontIsA: true
     readonly property Item front: frontIsA ? a : b
     readonly property Item back: frontIsA ? b : a
 
     Item {
         id: card
-        // grow both edges together so it doesn't shimmy
+        // grow both edges together or it shimmies, took me a while to find that
         readonly property real grow: (self.bodyW - self.rowW) * self.t
         readonly property real w: self.rowW + (self.align === "center" ? 2 * Math.round(grow / 2) : Math.round(grow))
         x: self.align === "left" ? 0 : self.align === "right" ? self.rowW - w : (self.rowW - w) / 2
@@ -179,7 +175,7 @@ Item {
         HoverHandler { id: hover }
         MouseArea { anchors.fill: parent; hoverEnabled: true }
 
-        // drawn at 2x and mipmapped so the curve is smooth
+        // 2x + mipmaps, i think that's what makes the curve smooth
         Item {
             x: -self.ctx.flare
             width: parent.width + 2 * self.ctx.flare
@@ -279,9 +275,10 @@ Item {
         property real f: front ? 1 : 0
         Behavior on f { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
 
-        readonly property real room: self.targetW - self.pad * 2
-        x: Math.round(self.align === "left" ? 0 : self.align === "right" ? card.width - self.bodyW : (card.width - self.bodyW) / 2)
-            + self.pad + Math.round((room - width) / 2)
+        property real room: 0
+        Binding on room { when: slot.front; value: self.targetW - self.pad * 2 }
+        // settled width, i think this is why the card doesn't wobble
+        x: Math.round(self.align === "left" ? self.pad : self.align === "right" ? card.width - width - self.pad : (card.width - width) / 2)
         y: 6
         width: Math.min(room, self.widest[page] ?? room)
         opacity: Math.max(0, self.t * 2 - 1) * f
@@ -296,6 +293,6 @@ Item {
     Component { id: islandC; Island { ctx: self.ctx; pill: self } }
     Component { id: networkC; Menus.Network { open: self.open; onRun: c => self.ctx.run(c) } }
     Component { id: audioC; Menus.Audio { open: self.open; onRun: c => self.ctx.run(c); onDone: self.close() } }
-    Component { id: powerC; Menus.Power { open: self.open; onRun: c => self.ctx.run(c); onDone: self.close() } }
+    Component { id: powerC; Menus.Power { open: self.open; standalone: self.ctx.standalone; onRun: c => self.ctx.run(c); onDone: self.close() } }
     Component { id: trayC; Menus.Tray { open: self.open; item: parent ? parent.tray : null; onRun: c => self.ctx.run(c); onDone: self.close() } }
 }

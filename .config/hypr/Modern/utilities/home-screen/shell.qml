@@ -22,7 +22,6 @@ ShellRoot {
 
     readonly property real sysW: portrait ? 352 : 330
 
-    // portrait is laid out at 760 wide, landscape at 1600
     function unitFor(s) {
         if (!s) return 1
         const v = s.height > s.width
@@ -65,14 +64,13 @@ ShellRoot {
     property real gpuMemTotal: 1
     property real gpuTemp: 0
 
-    // this shell is the notification daemon
     property bool dnd: false
+    onDndChanged: Quickshell.execDetached(["sh", "-c", "echo " + (dnd ? 1 : 0) + " > \"${XDG_RUNTIME_DIR:-/tmp}/home-dnd\""])
     property var popups: []
     property var arrived: ({})
     readonly property var notifs: server.trackedNotifications.values.slice().reverse()
     readonly property int notifCount: notifs.length
 
-    // Calendar
     property int calY: new Date().getFullYear()
     property int calM: new Date().getMonth()
     readonly property var cells: {
@@ -87,7 +85,6 @@ ShellRoot {
         return out
     }
 
-    // Media
     readonly property var player: {
         const list = Theme.players
         return list.find(p => p.isPlaying) ?? list[0] ?? null
@@ -109,12 +106,12 @@ ShellRoot {
         tween.start()
     }
 
-    // wait for the wallpaper so the first blur doesn't stutter
+    // wait for the wallpaper or the first blur stutters. pretty sure anyway
     function tryStart() {
         if (shown && !closing && (wallReady || startWaited)) animateTo(1)
     }
 
-    // "*" is the wal wallpaper, used when awww has nothing for a monitor
+    // "*" is the fallback when awww has nothing, i think
     function wallFor(name) {
         return walls[name] ?? walls["*"] ?? ""
     }
@@ -142,7 +139,6 @@ ShellRoot {
         const now = new Date()
         calY = now.getFullYear()
         calM = now.getMonth()
-        // lock to this monitor while open
         targetScreen = screen
         shown = true
         wallReady = false
@@ -170,7 +166,6 @@ ShellRoot {
         else show()
     }
 
-    // unmap instead of exiting so focus goes straight back
     function finish() {
         watchdog.stop()
         startTimer.stop()
@@ -183,7 +178,6 @@ ShellRoot {
         if (pendingCmd !== "") launchTimer.restart()
     }
 
-    // let the surface unmap before running the command
     Timer {
         id: launchTimer
         interval: 120
@@ -249,7 +243,6 @@ ShellRoot {
     function setVolume(v) {
         if (!sink || !sink.audio) return
         sink.audio.volume = Math.max(0, Math.min(1, v))
-        // unmute when the volume changes
         if (v > 0 && sink.audio.muted) sink.audio.muted = false
     }
 
@@ -307,7 +300,7 @@ ShellRoot {
     NumberAnimation { id: tween; target: root; property: "t"; onFinished: if (root.closing) root.finish() }
     Timer { id: startTimer; interval: 30; onTriggered: root.tryStart() }
     Timer { id: waitTimer; interval: 450; onTriggered: { root.startWaited = true; root.tryStart() } }
-    // failsafe so a stuck close doesn't keep grabbing input
+    // failsafe in case the close gets stuck, no idea why it does sometimes
     Timer { id: watchdog; interval: Theme.ms(1200) + 100; onTriggered: if (root.closing) root.finish() }
 
     SystemClock { id: clock; precision: SystemClock.Minutes; enabled: root.shown }
@@ -322,7 +315,6 @@ ShellRoot {
         function toggleDnd(): void { root.dnd = !root.dnd }
     }
 
-    // same source as the lock screen
     Process {
         id: walPath
         running: true
@@ -528,7 +520,6 @@ ShellRoot {
         MouseArea { id: dma; anchors.fill: parent; hoverEnabled: true; onClicked: root.run(db.cmd) }
     }
 
-    // other monitors get a dimmed wallpaper and a small clock
     Variants {
         model: Quickshell.screens
         delegate: PanelWindow {
@@ -647,7 +638,7 @@ ShellRoot {
 
             Item {
                 anchors.fill: parent
-                // never 0, or Qt skips the first blur render
+                // never 0, Qt skips the first blur and that's some bullshit
                 opacity: Math.max(0.001, Math.min(1, root.t * 2.5))
 
                 Image {
@@ -684,7 +675,6 @@ ShellRoot {
                 onClicked: root.close()
             }
 
-            // Clock
             Column {
                 id: clockBlock
                 readonly property real p: root.seg(0.02)
@@ -718,7 +708,6 @@ ShellRoot {
                 width: (root.portrait ? 728 : 1424) * root.u
                 spacing: 20 * root.u
 
-                // Media
                 Glass {
                     id: media
                     width: 360 * root.u
@@ -880,7 +869,6 @@ ShellRoot {
                     }
                 }
 
-                // Calendar
                 Glass {
                     width: 340 * root.u
                     height: 350 * root.u
@@ -952,7 +940,6 @@ ShellRoot {
                     }
                 }
 
-                // System
                 Glass {
                     width: root.sysW * root.u
                     height: 350 * root.u
@@ -1119,7 +1106,6 @@ ShellRoot {
                     }
                 }
 
-                // Volume and notifications
                 Column {
                     spacing: 20 * root.u
 
@@ -1280,7 +1266,6 @@ ShellRoot {
                 }
             }
 
-            // Power
             Glass {
                 id: dock
                 anchors.horizontalCenter: parent.horizontalCenter

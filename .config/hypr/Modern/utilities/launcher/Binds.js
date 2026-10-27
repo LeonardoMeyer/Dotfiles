@@ -1,6 +1,6 @@
 .pragma library
 
-// parses shortcuts.lua. a trailing "-- text" or desc option sets the description
+// parses shortcuts.lua. a trailing "-- text" or desc is the description, i think that covers all of them
 
 const CATEGORIES = [
     { id: "apps", label: "Apps", icon: "" },
@@ -32,7 +32,7 @@ const OSD = {
 
 const SCRIPTS = {
     "home": "Home screen", "wallpaper": "Wallpaper picker", "settings": "Settings panel", "music": "Music player",
-    "refresh": "Reload Waybar", "launcher": "App launcher", "lock": "Lock screen"
+    "refresh": "Reload Waybar", "launcher": "App launcher", "lock": "Lock screen", "profiles": "Profile switcher", "overview": "Workspace overview"
 }
 
 const NAMED = { terminal: "Terminal", fileManager: "File manager", menu: "App menu", browser: "Browser" }
@@ -62,7 +62,7 @@ function table(expr, loop) {
 
 function chips(combo) {
     const parts = combo.split("+").map(s => s.trim()).filter(s => s !== "")
-    // "SUPER + SUPER_L" is just tapping super
+    // "SUPER + SUPER_L" is just tapping super, i guess
     if (parts.length === 2 && parts[1].replace(/_[LR]$/, "") === parts[0]) return [KEYS[parts[0]] || cap(parts[0].toLowerCase())]
     return parts.map(p => {
         if (KEYS[p]) return KEYS[p]
@@ -150,7 +150,7 @@ function parse(text) {
         if (note) d.desc = note[1]
         else if (opts.desc || opts.description) d.desc = opts.desc || opts.description
 
-        // merge the 4 arrow binds into one row
+        // merge the 4 arrow binds into one row, looked ugly otherwise
         if (d.dir && ARROWS[d.dir]) {
             const prefix = keys.slice(0, -1)
             const id = d.cat + "|" + d.desc + "|" + prefix.join("+")

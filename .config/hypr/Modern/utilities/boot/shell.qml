@@ -65,7 +65,6 @@ ShellRoot {
         }).slice(0, 18)
     }
 
-    // BOOT_BLACK_MS comes from startup.lua
     readonly property int blackMs: {
         var v = parseInt(Quickshell.env("BOOT_BLACK_MS"))
         return isNaN(v) || v < 0 ? 2500 : v

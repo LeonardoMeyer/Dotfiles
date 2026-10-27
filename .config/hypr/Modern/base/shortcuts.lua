@@ -5,7 +5,6 @@ local mainMod = "SUPER"
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + B", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
--- float at a sane size, or re-tile if it's already floating
 local function pop_out()
     local w = hl.get_active_window()
     if not w then return end
@@ -17,7 +16,6 @@ local function pop_out()
     hl.dispatch(hl.dsp.window.float({ action = "enable", window = target }))
     local m = w.monitor
     if not m then return end
-    -- monitor size is before rotation/scale
     local sw, sh = m.width / m.scale, m.height / m.scale
     if m.transform % 2 == 1 then sw, sh = sh, sw end
     local width, height
@@ -33,7 +31,7 @@ local function pop_out()
 end
 hl.bind(mainMod .. " + V", pop_out)
 hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh launcher"), { release = true })
-hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
+hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh profiles"))
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- Toggle split direction
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 
@@ -74,7 +72,7 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 hl.bind("ALT + TAB", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh home"))
 hl.bind("ALT + w", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh wallpaper"))
 hl.bind("ALT + a", hl.dsp.exec_cmd("~/.config/hypr/utilities/bar.sh toggle"))
-hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd("~/.config/hypr/utilities/bar.sh overview"))
+hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh overview"))
 hl.bind("ALT + S", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh settings"))
 hl.bind("ALT + RETURN", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh music"))
 hl.bind(mainMod .. " + M", hl.dsp.exit())

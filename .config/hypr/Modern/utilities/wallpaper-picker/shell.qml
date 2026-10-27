@@ -24,18 +24,17 @@ ShellRoot {
     property var targetScreen: null
     property bool locating: false
     property string pendingPath: ""
-    // keep the preview up until awww draws the same image
+    // keep the preview until awww draws it, i think there's a race
     property bool holding: false
-    // preview uses the screen-sized copy from wallpaper-index.py
     property var previewed: null
-    readonly property string previewSrc: previewed ? "file://" + (previewed.screen || previewed.path) : ""
-    // blur and preview wait for each other so they change together
+    readonly property string previewSrc: previewed ? "file://" + previewed.path : ""
+    // blur and preview change together
     property bool previewReady: true
 
     readonly property real panelH: 540
     readonly property real fadeH: 320
 
-    // laid out at 1600x900 (1100 wide on portrait) and scaled
+    // laid out at 1600x900 (1100 portrait) then scaled
     readonly property real u: unitFor(win.screen)
 
     function unitFor(s) {
@@ -45,7 +44,7 @@ ShellRoot {
             : Math.min(s.width / 1600, s.height / 900)
         return Math.max(0.5, v)
     }
-    // wait for scrolling to stop before recoloring the bars
+    // recolor after scrolling stops, otherwise it lags. i think
     onCurrentChanged: { previewed = current; previewTimer.restart() }
     Timer {
         id: previewTimer
@@ -53,12 +52,12 @@ ShellRoot {
         onTriggered: if (root.shown && !root.leaving && root.current) root.tint(root.current.colors)
     }
 
-    // preview colors on both bars. waybar only watches style.css, so rewrite it in place
+    // waybar only watches style.css so i just rewrite it. there's probably a better way
     FileView { id: colorTheme; path: root.home + "/.config/hypr/.color-theme"; blockLoading: true; printErrors: false }
     FileView { id: activeBar; path: root.home + "/.config/hypr/.active-bar"; blockLoading: true; printErrors: false }
     property bool tinted: false
 
-    // null restores the saved palette
+    // null puts the saved palette back
     function tint(p) {
         if (!["", "pywal"].includes(colorTheme.text().trim()) || (!p && !tinted)) return
         Theme.preview = p
@@ -94,7 +93,7 @@ ShellRoot {
 
     Behavior on pos { id: posBehavior; NumberAnimation { duration: Theme.ms(380); easing.type: Easing.OutCubic } }
 
-    // read synchronously so opening doesn't jump
+    // sync read, async made opening jump. i think
     FileView {
         id: curFile
         path: root.home + "/.cache/wallpaper-picker/current"
@@ -120,9 +119,10 @@ ShellRoot {
         posBehavior.enabled = true
     }
 
-    // reuse the list if nothing changed
     function rebuild(path) {
-        const list = theme === "all" ? all : all.filter(w => w.theme === theme)
+        const list = theme === "all" ? all
+            : theme === "favorites" ? all.filter(w => w.fav)
+            : all.filter(w => w.theme === theme)
         if (items !== list) items = list
         const i = path ? list.findIndex(w => w.path === path) : -1
         jump(Math.max(0, i))
@@ -133,6 +133,36 @@ ShellRoot {
         cur = Math.max(0, Math.min(items.length - 1, i))
         pos = cur
     }
+
+    // favorites get their own tab and still show in their folder
+    function setAll(list) {
+        all = list
+        const seen = {}
+        list.forEach(w => { if (w.theme !== "favorites") seen[w.theme] = true })
+        themes = ["all"].concat(list.some(w => w.fav) ? ["favorites"] : [], Object.keys(seen).sort())
+        if (!themes.includes(theme)) theme = "all"
+    }
+    // favorites slot animates so it doesn't pop in
+    // kept cards can hold old entries so look the heart up by path
+    readonly property var favs: {
+        const s = {}
+        all.forEach(w => { if (w.fav) s[w.path] = true })
+        return s
+    }
+    readonly property var chipThemes: themes.includes("favorites") ? themes : [themes[0], "favorites"].concat(themes.slice(1))
+
+    // flip it now, the reindex fixes the rest later (i hope)
+    function favorite() {
+        if (!current || favProc.running) return
+        const path = current.path
+        favProc.command = [home + "/.config/hypr/utilities/wallpaper-fav.sh", path]
+        favProc.running = true
+        const i = cur
+        setAll(all.map(w => w.path === path ? Object.assign({}, w, { fav: !w.fav }) : w))
+        rebuild(path)
+        if (current && current.path !== path) jump(Math.min(i, items.length - 1))
+    }
+    Process { id: favProc; onExited: reindex.restart() }
 
     function nextTheme(step) {
         const i = themes.indexOf(theme)
@@ -153,7 +183,6 @@ ShellRoot {
         Theme.refresh()
         watchdog.stop()
         if ((shown && !leaving) || locating) return
-        // re-read every open, renames don't trigger the watcher
         activeBar.reload()
         colorTheme.reload()
         locating = true
@@ -166,7 +195,6 @@ ShellRoot {
         leaving = false
         t = 0
         if (!current || current.path !== landing) rebuild(landing)
-        // lock to this monitor while open
         targetScreen = screen
         previewed = current
         shown = true
@@ -179,7 +207,6 @@ ShellRoot {
         else show()
     }
 
-    // unmap instead of exiting so focus goes straight back
     function finish() {
         watchdog.stop()
         startTimer.stop()
@@ -193,7 +220,7 @@ ShellRoot {
 
     Timer { id: holdTimer; interval: 8000; onTriggered: { root.holding = false; root.tint(null) } }
 
-    // failsafe so a stuck close doesn't keep grabbing input
+    // failsafe in case the close gets stuck, no idea why it does sometimes
     Timer { id: watchdog; interval: Theme.ms(1200) + 100; onTriggered: root.finish() }
 
     function animateTo(target) {
@@ -226,7 +253,7 @@ ShellRoot {
         property: "t"
         onFinished: {
             if (root.leaving) root.finish()
-            // index after the animation so it doesn't stutter
+            // index after the animation, it stuttered before
             else if (root.t >= 1) indexer.running = true
         }
     }
@@ -239,7 +266,6 @@ ShellRoot {
         function close(): void { root.close() }
     }
 
-    // serialized so runs don't overlap
     Process {
         id: indexer
         running: true
@@ -248,7 +274,6 @@ ShellRoot {
         onExited: { idx.running = true; if (reindex.again) { reindex.again = false; running = true } }
     }
 
-    // reindex when wallpapers are added
     readonly property string library: home + "/wallpapers/library"
     Variants {
         model: [""].concat(root.themes.slice(1))
@@ -280,20 +305,16 @@ ShellRoot {
                     parsed = []
                 }
                 root.indexText = text
-                root.all = parsed
+                root.setAll(parsed)
                 if (parsed.length === 0) {
                     root.close()
                     return
                 }
-                const seen = {}
-                root.all.forEach(w => seen[w.theme] = true)
-                root.themes = ["all"].concat(Object.keys(seen).sort())
                 root.rebuild(root.shown && root.current ? root.current.path : root.landing)
             }
         }
     }
 
-    // only fade in once decoded
     component CrossImage: Item {
         id: ci
         property string src: ""
@@ -302,6 +323,8 @@ ShellRoot {
         property bool hold: false
         readonly property bool ready: src === "" || [front, back].some(i => i.status === Image.Ready && i.source.toString() === src)
         property int zTop: 0
+        // with crop qt decodes only what it needs, so i guess originals are cheap
+        readonly property size decode: Qt.size(Math.ceil(width), Math.ceil(height))
 
         function promote(img) {
             img.z = ++zTop
@@ -311,7 +334,6 @@ ShellRoot {
             front = img
         }
 
-        // wait for the current fade to finish
         onSrcChanged: {
             if (src === "") { fade.stop(); imgA.source = ""; imgB.source = "" }
             else if (!fade.running) load()
@@ -326,7 +348,6 @@ ShellRoot {
             if (!hold && !fade.running && b.status === Image.Ready && b.source.toString() === src) promote(b)
         }
 
-        // only keep one decoded wallpaper per screen
         NumberAnimation {
             id: fade
             property: "opacity"
@@ -341,6 +362,7 @@ ShellRoot {
             id: imgA
             anchors.fill: parent
             fillMode: Image.PreserveAspectCrop
+            sourceSize: ci.decode
             asynchronous: true
             cache: false
             onStatusChanged: if (ci.back === imgA) ci.tryPromote()
@@ -349,6 +371,7 @@ ShellRoot {
             id: imgB
             anchors.fill: parent
             fillMode: Image.PreserveAspectCrop
+            sourceSize: ci.decode
             asynchronous: true
             cache: false
             opacity: 0
@@ -375,7 +398,7 @@ ShellRoot {
         fragmentShader: Qt.resolvedUrl("blur.frag.qsb")
     }
 
-    // drawn at 2x and mipmapped so the curve is smooth
+    // 2x + mipmaps, i think that's what makes the curve smooth
     component Pill: Item {
         property color fill
         property color edge
@@ -414,43 +437,61 @@ ShellRoot {
         readonly property int lead: Theme.ms(260)
         readonly property int trail: Theme.ms(420)
 
+        readonly property int gap: Math.round(8 * root.u)
+        readonly property int grow: Theme.ms(380)
+
         x: Math.round((parent.width - width) / 2)
         y: Math.round(110 * root.u)
-        width: chips.width
+        width: Math.max(0, chips.width - gap)
         height: chips.height
         opacity: Math.max(0.001, root.seg(0))
         transform: Translate { y: (1 - root.seg(0)) * 40 * root.u }
 
         Row {
             id: chips
-            spacing: Math.round(8 * root.u)
             Repeater {
-                model: root.themes
+                id: chipRep
+                model: root.chipThemes
                 onItemAdded: { row.settled = false; settleChips.restart() }
                 delegate: Item {
                     id: chip
                     required property string modelData
                     readonly property bool active: root.theme === modelData
+                    readonly property bool present: modelData !== "favorites" || root.themes.includes(modelData)
+                    readonly property real full: Math.round(label.implicitWidth) + row.pad
+                    // highlight follows the grow directly, idk a cleaner way
+                    property real shown: present ? 1 : 0
+                    Behavior on shown { NumberAnimation { duration: row.grow; easing.type: Easing.OutCubic } }
+                    onPresentChanged: { row.settled = false; settleChips.restart() }
                     onActiveChanged: if (active) row.sel = chip
                     Component.onCompleted: if (active) row.sel = chip
-                    width: Math.round(label.implicitWidth) + row.pad
+                    width: (full + row.gap) * shown
                     height: row.h
-                    Pill { visible: row.drawn; radius: row.radius; fill: Theme.alpha(Theme.bg, 0.6); edge: Theme.alpha(Theme.fg, 0.07) }
-                    Label { id: label; visible: row.drawn; text: chip.modelData; color: "#ffffff" }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: { root.theme = chip.modelData; root.rebuild() }
+                    visible: shown > 0
+
+                    Item {
+                        width: chip.full
+                        height: row.h
+                        opacity: chip.shown
+                        scale: 0.6 + 0.4 * chip.shown
+                        Pill { visible: row.drawn; radius: row.radius; fill: Theme.alpha(Theme.bg, 0.6); edge: Theme.alpha(Theme.fg, 0.07) }
+                        Label { id: label; visible: row.drawn; text: chip.modelData; color: "#ffffff" }
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: chip.present
+                            onClicked: { root.theme = chip.modelData; root.rebuild() }
+                        }
                     }
                 }
             }
         }
-        Timer { id: settleChips; interval: 50; onTriggered: row.settled = true }
+        Timer { id: settleChips; interval: row.grow + 20; onTriggered: row.settled = true }
 
         Item {
             id: highlight
             visible: row.drawn && !!row.sel
             property real l: row.sel ? row.sel.x : 0
-            property real r: row.sel ? row.sel.x + row.sel.width : 0
+            property real r: row.sel ? row.sel.x + row.sel.full : 0
             Behavior on l { id: lb; enabled: row.settled; NumberAnimation { duration: lb.targetValue > highlight.l ? row.trail : row.lead; easing.type: Easing.OutCubic } }
             Behavior on r { id: rb; enabled: row.settled; NumberAnimation { duration: rb.targetValue > highlight.r ? row.lead : row.trail; easing.type: Easing.OutCubic } }
             x: l
@@ -459,19 +500,22 @@ ShellRoot {
 
             Pill { radius: row.radius; fill: Theme.accent; edge: "transparent" }
 
-            // names again in the dark color, clipped to the highlight
+            // names again in dark, clipped to the highlight. it works, don't touch it
             Item {
                 anchors.fill: parent
                 clip: true
-                Row {
+                Item {
                     x: -highlight.x
-                    spacing: chips.spacing
                     Repeater {
-                        model: root.themes
+                        model: root.chipThemes
                         Item {
                             required property string modelData
-                            width: Math.round(dark.implicitWidth) + row.pad
+                            required property int index
+                            readonly property Item chip: chipRep.count, chipRep.itemAt(index)
+                            x: chip ? chip.x : 0
+                            width: chip ? chip.full : 0
                             height: row.h
+                            opacity: chip ? chip.shown : 0
                             Label {
                                 id: dark
                                 text: parent.modelData
@@ -485,7 +529,6 @@ ShellRoot {
         }
     }
 
-    // full screen preview under everything
     Variants {
         model: Quickshell.screens
         delegate: PanelWindow {
@@ -507,12 +550,11 @@ ShellRoot {
                 opacity: root.holding ? 1 : root.t
             }
             Binding { target: root; property: "previewReady"; value: shot.ready; when: modelData === win.screen }
-            // clicking above the panel closes it
             MouseArea { anchors.fill: parent; onClicked: root.close() }
         }
     }
 
-    // separate layer so hyprglass can glass the chips; clicks go to the copy underneath
+    // separate layer so hyprglass can blur the chips, this is what i think works
     PanelWindow {
         id: tabGlass
         visible: root.shown && Theme.glass && root.t > 0
@@ -541,7 +583,7 @@ ShellRoot {
         WlrLayershell.namespace: "wallpaper-picker"
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-        // progressive blur at 1/3 res, never 0 opacity or Qt skips the first render
+        // 1/3 res blur. never 0 opacity, Qt skips the first render. idk
         Item {
             id: area
             width: parent.width
@@ -608,6 +650,7 @@ ShellRoot {
                 else if (k === Qt.Key_Tab || k === Qt.Key_Down || k === Qt.Key_J) root.nextTheme(1)
                 else if (k === Qt.Key_Backtab || k === Qt.Key_Up || k === Qt.Key_K) root.nextTheme(-1)
                 else if (k === Qt.Key_R) root.go(Math.floor(Math.random() * root.items.length))
+                else if (k === Qt.Key_F) root.favorite()
                 else if (k === Qt.Key_Return || k === Qt.Key_Enter) root.apply()
             }
 
@@ -630,11 +673,11 @@ ShellRoot {
                 readonly property real cardW: 400
                 readonly property real cardH: 225
                 readonly property real step: cardW + 28
-                // skip offscreen cards but keep a few loaded
                 readonly property real reach: width / 2 / step + 1
 
                 Repeater {
-                    model: root.items
+                    // keyed by path so a reindex keeps the cards, i believe
+                    model: ScriptModel { values: root.items; objectProp: "path" }
                     delegate: Item {
                         id: card
                         required property var modelData
@@ -665,10 +708,9 @@ ShellRoot {
 
                         Component {
                             id: frame
-                            // 2x texture + mipmaps so the border stays clean when the cards turn
+                            // 2x texture + mipmaps, same trick as the picker, border stays clean
                             Item {
                                 readonly property real k: 2 * root.u * (win.devicePixelRatio || 1)
-                                // undo the stage scale
                                 readonly property real radius: Theme.rounding / root.u
                                 anchors.fill: parent
                                 anchors.margins: -2
@@ -711,6 +753,19 @@ ShellRoot {
                                     border.width: 1.5 / root.u
                                     border.color: card.ad < 0.5 ? "#80ffffff" : "#40ffffff"
                                     Behavior on border.color { ColorAnimation { duration: Theme.ms(250) } }
+                                }
+
+                                Text {
+                                    visible: !!root.favs[card.modelData.path]
+                                    anchors.top: parent.top
+                                    anchors.right: parent.right
+                                    anchors.margins: 14
+                                    text: ""
+                                    font.family: Theme.sans
+                                    font.pixelSize: 18
+                                    color: Theme.accent
+                                    style: Text.Raised
+                                    styleColor: "#60000000"
                                 }
                             }
                         }
@@ -758,38 +813,8 @@ ShellRoot {
                                 width: strip.width / 16
                                 height: strip.height
                                 color: root.ramp[index] ?? "transparent"
-                                Behavior on color {
-                                    SequentialAnimation {
-                                        PauseAnimation { duration: Theme.ms(index * 16) }
-                                        ColorAnimation { duration: Theme.ms(260); easing.type: Easing.OutCubic }
-                                    }
-                                }
+                                Behavior on color { ColorAnimation { duration: Theme.ms(420); easing.type: Easing.InOutSine } }
                             }
-                        }
-                    }
-
-                    Rectangle {
-                        id: glint
-                        width: 90
-                        height: strip.height
-                        x: -width
-                        gradient: Gradient {
-                            orientation: Gradient.Horizontal
-                            GradientStop { position: 0; color: "#00ffffff" }
-                            GradientStop { position: 0.5; color: "#73ffffff" }
-                            GradientStop { position: 1; color: "#00ffffff" }
-                        }
-                        NumberAnimation on x {
-                            id: sweep
-                            running: false
-                            from: -glint.width
-                            to: strip.width
-                            duration: Theme.ms(16 * 16 + 260)
-                            easing.type: Easing.InOutSine
-                        }
-                        Connections {
-                            target: root
-                            function onCurrentChanged() { if (root.t > 0) sweep.restart() }
                         }
                     }
                 }

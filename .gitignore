@@ -23,6 +23,8 @@ __pycache__/
 .config/hypr/utilities/launcher
 .config/hypr/utilities/music
 .config/hypr/utilities/lock
+.config/hypr/utilities/profiles
+.config/hypr/utilities/overview
 .config/cava/shaders/
 .config/cava/themes/
 .config/cava/config

@@ -2,7 +2,7 @@ local ok, S = pcall(require, "settings")
 if not ok or type(S) ~= "table" then S = {} end
 
 if S.config then
-    -- hl.config rejects plugin keys
+    -- hl.config rejects plugin keys, thanks for nothing
     local core = {}
     for k, v in pairs(S.config) do
         if k ~= "plugin" then core[k] = v end
@@ -18,17 +18,15 @@ if S.config then
             end
             return false
         end
-        -- plugin might not be loaded yet
         if not apply_glass() then
             hl.on("hyprland.start", apply_glass)
         end
     end
 end
 
--- glass on quickshell layers / other layers
 local QUICKSHELL_LAYERS = table.concat({
-    "quickshell-bar", "quickshell-overview", "settings-panel", "settings-panel-outside", "app-drawer",
-    "music-player", "notification-popup", "osd", "home-screen", "boot-sequence",
+    "quickshell-bar", "settings-panel", "settings-panel-outside", "app-drawer",
+    "music-player", "notification-popup", "osd", "home-screen", "boot-sequence", "profile-switcher",
     "wallpaper-picker", "wallpaper-picker-preview", "wallpaper-picker-tab",
 }, ",")
 local targets = S.hyprglass
@@ -49,7 +47,7 @@ if targets and (targets.layers ~= nil or targets.quickshell ~= nil) then
     end
 end
 
--- glass look, also copied into dark/light so they don't win
+-- also copied into dark/light so they don't win. i think
 local look = S.glass
 local base = package.loaded.hyprglass
 if look and type(base) == "table" and hl.plugin and hl.plugin.hyprglass then
@@ -62,7 +60,6 @@ if look and type(base) == "table" and hl.plugin and hl.plugin.hyprglass then
     hl.plugin.hyprglass.preset(base.preset, values)
 end
 
--- one curve for every animation, speeds divided by the multiplier
 local A = S.animation
 if A and A.curve then
     local mult = math.max(0.1, tonumber(A.speed) or 1)
@@ -84,7 +81,6 @@ if A and A.curve then
     end
 end
 
--- border gradient from pywal
 local B = S.border
 if B and B.gradient then
     local colors = {}
@@ -114,7 +110,6 @@ if B and B.gradient then
     end
 end
 
--- per-device sensitivity beats the global one
 if S.mice and S.config and S.config.input and S.config.input.sensitivity ~= nil then
     for _, name in ipairs(S.mice) do
         hl.device({ name = name, sensitivity = S.config.input.sensitivity })

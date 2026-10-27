@@ -3,7 +3,7 @@ set -euo pipefail
 
 selected_wallpaper="${1:?usage: wallpaper-apply.sh <image>}"
 
-awww img "$selected_wallpaper" --transition-type any --transition-fps 60 --transition-duration .5
+awww img "$selected_wallpaper" --transition-type none
 "$(dirname "$(readlink -f "$0")")/color-apply.sh" "" "$selected_wallpaper"
 
 mkdir -p ~/.cache/wallpaper-picker && printf "%s\n" "$selected_wallpaper" > ~/.cache/wallpaper-picker/current

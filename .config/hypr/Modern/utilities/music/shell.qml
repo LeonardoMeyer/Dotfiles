@@ -14,15 +14,12 @@ ShellRoot {
     readonly property string home: Quickshell.env("HOME")
     readonly property string uiPath: home + "/.local/state/music-player/ui.json"
 
-    // stays mapped so opening is instant
     property bool active: false
     property bool leaving: false
-    // tucked = hidden for a moment while a bar card is over it
     property bool tucked: false
     property real t: 0
     property var targetScreen: null
 
-    // Size
 
     readonly property real u: {
         const s = win.screen
@@ -56,7 +53,6 @@ ShellRoot {
         printErrors: false
     }
 
-    // Position
 
     property real offX: 0
     property real offY: 0
@@ -74,7 +70,6 @@ ShellRoot {
         moving = false
     }
 
-    // published so the launcher and bar know where it is
     readonly property string placement: JSON.stringify({
         open: active && !leaving, tucked: tucked, screen: targetScreen?.name ?? "", side: Math.round(shown), top: topGap,
         x: Math.round(baseX), y: Math.round(baseY)
@@ -107,10 +102,8 @@ ShellRoot {
         }
     }
 
-    // Players
 
     readonly property var players: Theme.players
-    // picked from the chip, else spotify, else whatever's playing
     property string pinned: ""
     readonly property var player: {
         const ps = players
@@ -149,7 +142,6 @@ ShellRoot {
         close()
     }
 
-    // Volume
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property real volume: sink && sink.audio ? sink.audio.volume : 0
@@ -159,7 +151,6 @@ ShellRoot {
     function setVolume(v) {
         if (!sink || !sink.audio) return
         sink.audio.volume = Math.max(0, Math.min(1, v))
-        // unmute when the volume changes
         if (v > 0 && sink.audio.muted) sink.audio.muted = false
     }
     function toggleMute() { if (sink && sink.audio) sink.audio.muted = !muted }
@@ -172,7 +163,6 @@ ShellRoot {
                        : m + ":" + String(r).padStart(2, "0")
     }
 
-    // Open/close
 
     property real vizIntro: 0
 
@@ -199,7 +189,6 @@ ShellRoot {
         gapsProc.running = true
         const scr = focusedScreen()
         if (!active && scr !== targetScreen) {
-            // new monitor needs a new surface, wait a bit
             targetScreen = scr
             resetPosition()
             moveDelay.restart()
@@ -214,6 +203,19 @@ ShellRoot {
         active = true
         animateTo(1)
         vizAnim.restart()
+        warp.restart()
+    }
+
+    Timer {
+        id: warp
+        interval: 30
+        onTriggered: {
+            const s = win.screen
+            if (!s) return
+            const x = Math.round(s.x + root.baseX + root.shown / 2)
+            const y = Math.round(s.y + s.height - win.height + root.baseY + root.shown / 2)
+            Theme.dispatch("hl.dsp.cursor.move({ x = " + x + ", y = " + y + " })", "movecursor " + x + " " + y)
+        }
     }
 
     function close() {
@@ -287,7 +289,14 @@ ShellRoot {
         function untuck(): void { root.untuck() }
     }
 
-    // Window
+
+    // i think this frees the textures once it closes, saves some memory
+    property bool warm: false
+    onActiveChanged: {
+        if (active) { warm = true; cool.stop() }
+        else cool.restart()
+    }
+    Timer { id: cool; interval: 120000; onTriggered: root.warm = false }
 
     PanelWindow {
         id: win
@@ -300,387 +309,392 @@ ShellRoot {
         }
         exclusionMode: ExclusionMode.Normal
         color: "transparent"
-        mask: Region { item: root.active && !root.leaving && !root.tucked ? card : null }
-        WlrLayershell.layer: WlrLayer.Overlay
+        mask: Region { item: root.active && !root.leaving && !root.tucked ? ld.item : null }
+        WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "music-player"
-        // never grabs the keyboard, clicking the card focuses it
-        WlrLayershell.keyboardFocus: root.active && !root.leaving && !root.tucked ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: root.active && !root.leaving && !root.tucked
+            ? (ld.item && ld.item.hovered ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand) : WlrKeyboardFocus.None
 
-        Item {
-            id: card
-            width: root.shown
-            height: root.shown * Math.max(0, Math.min(1, root.t))
-            x: root.baseX + (root.shown - width) / 2
-            y: root.baseY
-            opacity: root.active ? Math.min(1, root.t * 8) : 0
-            focus: true
-
-            Keys.onPressed: event => {
-                const k = event.key
-                if (k === Qt.Key_Escape || k === Qt.Key_Q) root.close()
-                else if (k === Qt.Key_Space || k === Qt.Key_K) { playButton.bump(); root.toggle() }
-                else if (k === Qt.Key_Left || k === Qt.Key_H) root.seekBy(-5)
-                else if (k === Qt.Key_Right || k === Qt.Key_L) root.seekBy(5)
-                else if (k === Qt.Key_Up) root.setVolume(root.volume + 0.05)
-                else if (k === Qt.Key_Down) root.setVolume(root.volume - 0.05)
-                else if (k === Qt.Key_M) root.toggleMute()
-                else if (k === Qt.Key_N || k === Qt.Key_Period) { nextButton.bump(); root.next() }
-                else if (k === Qt.Key_P || k === Qt.Key_Comma) { prevButton.bump(); root.previous() }
-                else { event.accepted = false; return }
-                event.accepted = true
-            }
-
-            // click focuses, drag moves, double-click resets
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: pressed && root.moving ? Qt.ClosedHandCursor : Qt.ArrowCursor
-                property point start
-                property real sx: 0
-                property real sy: 0
-
-                function at(mouse) {
-                    return mapToItem(win.contentItem, mouse.x, mouse.y)
-                }
-
-                onPressed: mouse => {
-                    card.forceActiveFocus()
-                    start = at(mouse)
-                    sx = root.baseX - root.homeX
-                    sy = root.baseY - root.topGap
-                }
-                onPositionChanged: mouse => {
-                    if (!pressed || !root.active || root.leaving) return
-                    const p = at(mouse)
-                    if (!root.moving && Math.hypot(p.x - start.x, p.y - start.y) < 4) return
-                    root.moving = true
-                    root.offX = sx + p.x - start.x
-                    root.offY = sy + p.y - start.y
-                }
-                onReleased: {
-                    if (!root.moving) return
-                    root.offX = root.baseX - root.homeX
-                    root.offY = root.baseY - root.topGap
-                    root.moving = false
-                }
-                onDoubleClicked: { root.offX = 0; root.offY = 0 }
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                radius: Math.min(card.height / 2, root.radius)
-                color: Theme.alpha(Theme.bg, 0.6)
-                border.width: 1
-                border.color: Theme.alpha(Theme.fg, 0.07)
-            }
-
-            Item {
-                anchors.fill: parent
-                clip: true
-
+        // no fill, a sized Loader stretches the card across the window. no clue why
+        Loader {
+            id: ld
+            active: root.active || root.warm
+            sourceComponent: Component {
                 Item {
-                    id: content
-                    width: root.shown - root.pad * 2
-                    height: root.shown - root.pad * 2
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    y: root.pad
+                    id: card
+                property alias hovered: hover.hovered
+                    width: root.shown
+                    height: root.shown * Math.max(0, Math.min(1, root.t))
+                    x: root.baseX + (root.shown - width) / 2
+                    y: root.baseY
+                    opacity: root.active ? Math.min(1, root.t * 8) : 0
+                    focus: true
 
-                    // top row
+                    HoverHandler { id: hover }
 
-                    Item {
-                        id: topRow
-                        width: parent.width
-                        height: root.px(26)
-                        opacity: root.stage(0.55)
-                        transform: Translate { y: -8 * (1 - root.stage(0.5)) }
-
-                        Rectangle {
-                            id: chip
-                            visible: !!root.player
-                            height: parent.height
-                            width: chipRow.implicitWidth + root.px(20)
-                            radius: height / 2
-                            color: Theme.alpha(Theme.fg, chipArea.containsMouse && root.players.length > 1 ? 0.12 : 0.06)
-                            Behavior on color { ColorAnimation { duration: Theme.fast } }
-                            Behavior on width { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-
-                            Row {
-                                id: chipRow
-                                anchors.centerIn: parent
-                                spacing: root.px(7)
-
-                                Rectangle {
-                                    id: liveDot
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: root.px(6)
-                                    height: width
-                                    radius: width / 2
-                                    color: root.playing ? Theme.accent : Theme.dim
-                                    Behavior on color { ColorAnimation { duration: Theme.move } }
-                                    SequentialAnimation on opacity {
-                                        running: root.active && root.playing
-                                        loops: Animation.Infinite
-                                        onRunningChanged: if (!running) liveDot.opacity = 1
-                                        NumberAnimation { to: 0.35; duration: 900; easing.type: Easing.InOutSine }
-                                        NumberAnimation { to: 1; duration: 900; easing.type: Easing.InOutSine }
-                                    }
-                                }
-                                Text {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: root.player ? (root.player.identity || "Player") : ""
-                                    font.family: Theme.sans
-                                    font.pixelSize: root.px(11)
-                                    color: Theme.fg
-                                }
-                                Text {
-                                    visible: root.players.length > 1
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: ""
-                                    font.family: Theme.sans
-                                    font.pixelSize: root.px(9)
-                                    color: Theme.dim
-                                }
-                            }
-
-                            MouseArea {
-                                id: chipArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: root.players.length > 1 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                onClicked: root.cyclePlayer()
-                            }
-                        }
-
-                        Glyph {
-                            id: spotifyButton
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            size: root.px(30)
-                            glyph: ""
-                            glyphSize: root.px(19)
-                            tint: root.spotify ? Theme.accent : Theme.fg
-                            onClicked: root.openSpotify()
-                        }
-
-                        Volume {
-                            anchors.right: spotifyButton.left
-                            anchors.rightMargin: root.px(8)
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: root.px(116)
-                        }
+                    Keys.onPressed: event => {
+                        const k = event.key
+                        if (k === Qt.Key_Escape || k === Qt.Key_Q) root.close()
+                        else if (k === Qt.Key_Space || k === Qt.Key_K) { playButton.bump(); root.toggle() }
+                        else if (k === Qt.Key_Left || k === Qt.Key_H) root.seekBy(-5)
+                        else if (k === Qt.Key_Right || k === Qt.Key_L) root.seekBy(5)
+                        else if (k === Qt.Key_Up) root.setVolume(root.volume + 0.05)
+                        else if (k === Qt.Key_Down) root.setVolume(root.volume - 0.05)
+                        else if (k === Qt.Key_M) root.toggleMute()
+                        else if (k === Qt.Key_N || k === Qt.Key_Period) { nextButton.bump(); root.next() }
+                        else if (k === Qt.Key_P || k === Qt.Key_Comma) { prevButton.bump(); root.previous() }
+                        else { event.accepted = false; return }
+                        event.accepted = true
                     }
 
-                    // now playing
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: pressed && root.moving ? Qt.ClosedHandCursor : Qt.ArrowCursor
+                        property point start
+                        property real sx: 0
+                        property real sy: 0
+
+                        function at(mouse) {
+                            return mapToItem(win.contentItem, mouse.x, mouse.y)
+                        }
+
+                        onPressed: mouse => {
+                            card.forceActiveFocus()
+                            start = at(mouse)
+                            sx = root.baseX - root.homeX
+                            sy = root.baseY - root.topGap
+                        }
+                        onPositionChanged: mouse => {
+                            if (!pressed || !root.active || root.leaving) return
+                            const p = at(mouse)
+                            if (!root.moving && Math.hypot(p.x - start.x, p.y - start.y) < 4) return
+                            root.moving = true
+                            root.offX = sx + p.x - start.x
+                            root.offY = sy + p.y - start.y
+                        }
+                        onReleased: {
+                            if (!root.moving) return
+                            root.offX = root.baseX - root.homeX
+                            root.offY = root.baseY - root.topGap
+                            root.moving = false
+                        }
+                        onDoubleClicked: { root.offX = 0; root.offY = 0 }
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Math.min(card.height / 2, root.radius)
+                        color: Theme.alpha(Theme.bg, 0.6)
+                        border.width: 1
+                        border.color: Theme.alpha(Theme.fg, 0.07)
+                    }
 
                     Item {
-                        id: nowPlaying
-                        anchors.top: topRow.bottom
-                        anchors.topMargin: root.px(22)
-                        width: parent.width
-                        height: root.px(100)
-                        opacity: root.stage(0.6)
-                        transform: Translate { y: 10 * (1 - root.stage(0.55)) }
-
-                        Art {
-                            id: art
-                            width: parent.height
-                            height: parent.height
-                            url: root.player ? (root.player.trackArtUrl || "") : ""
-                        }
+                        anchors.fill: parent
+                        clip: true
 
                         Item {
-                            id: info
-                            anchors.left: art.right
-                            anchors.leftMargin: root.px(18)
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            height: infoCol.implicitHeight
+                            id: content
+                            width: root.shown - root.pad * 2
+                            height: root.shown - root.pad * 2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: root.pad
 
-                            readonly property string key: root.player ? root.player.trackTitle + "\u0001" + root.player.trackArtist : ""
-                            property string title: ""
-                            property string artist: ""
-                            property string album: ""
-                            property real shift: 0
 
-                            function take() {
-                                title = root.player ? (root.player.trackTitle || "Unknown track") : ""
-                                artist = root.player ? (root.player.trackArtist || "") : ""
-                                album = root.player ? (root.player.trackAlbum || "") : ""
-                            }
-                            Component.onCompleted: take()
-                            onKeyChanged: {
-                                if (!root.active || title === "") { take(); return }
-                                swap.restart()
-                            }
-
-                            SequentialAnimation {
-                                id: swap
-                                ParallelAnimation {
-                                    NumberAnimation { target: infoCol; property: "opacity"; to: 0; duration: Theme.ms(130); easing.type: Easing.InQuad }
-                                    NumberAnimation { target: info; property: "shift"; to: -root.dir * 18; duration: Theme.ms(130); easing.type: Easing.InQuad }
-                                }
-                                ScriptAction { script: { info.take(); info.shift = root.dir * 18; root.dir = 1 } }
-                                ParallelAnimation {
-                                    NumberAnimation { target: infoCol; property: "opacity"; to: 1; duration: Theme.ms(300); easing.type: Easing.OutCubic }
-                                    NumberAnimation { target: info; property: "shift"; to: 0; duration: Theme.ms(340); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
-                                }
-                            }
-
-                            Column {
-                                id: infoCol
+                            Item {
+                                id: topRow
                                 width: parent.width
-                                spacing: root.px(4)
-                                transform: Translate { x: info.shift }
+                                height: root.px(26)
+                                opacity: root.stage(0.55)
+                                transform: Translate { y: -8 * (1 - root.stage(0.5)) }
 
-                                Text {
-                                    width: parent.width
-                                    text: root.player ? info.title : "Nothing playing"
-                                    elide: Text.ElideRight
-                                    font.family: Theme.sans
-                                    font.pixelSize: root.px(17)
-                                    color: Theme.bright
+                                Rectangle {
+                                    id: chip
+                                    visible: !!root.player
+                                    height: parent.height
+                                    width: chipRow.implicitWidth + root.px(20)
+                                    radius: height / 2
+                                    color: Theme.alpha(Theme.fg, chipArea.containsMouse && root.players.length > 1 ? 0.12 : 0.06)
+                                    Behavior on color { ColorAnimation { duration: Theme.fast } }
+                                    Behavior on width { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+
+                                    Row {
+                                        id: chipRow
+                                        anchors.centerIn: parent
+                                        spacing: root.px(7)
+
+                                        Rectangle {
+                                            id: liveDot
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: root.px(6)
+                                            height: width
+                                            radius: width / 2
+                                            color: root.playing ? Theme.accent : Theme.dim
+                                            Behavior on color { ColorAnimation { duration: Theme.move } }
+                                            SequentialAnimation on opacity {
+                                                running: root.active && root.playing
+                                                loops: Animation.Infinite
+                                                onRunningChanged: if (!running) liveDot.opacity = 1
+                                                NumberAnimation { to: 0.35; duration: 900; easing.type: Easing.InOutSine }
+                                                NumberAnimation { to: 1; duration: 900; easing.type: Easing.InOutSine }
+                                            }
+                                        }
+                                        Text {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: root.player ? (root.player.identity || "Player") : ""
+                                            font.family: Theme.sans
+                                            font.pixelSize: root.px(11)
+                                            color: Theme.fg
+                                        }
+                                        Text {
+                                            visible: root.players.length > 1
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: ""
+                                            font.family: Theme.sans
+                                            font.pixelSize: root.px(9)
+                                            color: Theme.dim
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: chipArea
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: root.players.length > 1 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                        onClicked: root.cyclePlayer()
+                                    }
                                 }
-                                Text {
-                                    width: parent.width
-                                    visible: text !== ""
-                                    text: root.player ? info.artist : "Open Spotify to start"
-                                    elide: Text.ElideRight
-                                    font.family: Theme.sans
-                                    font.pixelSize: root.px(13)
-                                    color: Theme.fg
+
+                                Glyph {
+                                    id: spotifyButton
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    size: root.px(30)
+                                    glyph: ""
+                                    glyphSize: root.px(19)
+                                    tint: root.spotify ? Theme.accent : Theme.fg
+                                    onClicked: root.openSpotify()
                                 }
-                                Text {
-                                    width: parent.width
-                                    visible: text !== ""
-                                    text: root.player ? info.album : ""
-                                    elide: Text.ElideRight
-                                    font.family: Theme.sans
-                                    font.pixelSize: root.px(11)
-                                    color: Theme.dim
+
+                                Volume {
+                                    anchors.right: spotifyButton.left
+                                    anchors.rightMargin: root.px(8)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: root.px(116)
                                 }
+                            }
+
+
+                            Item {
+                                id: nowPlaying
+                                anchors.top: topRow.bottom
+                                anchors.topMargin: root.px(22)
+                                width: parent.width
+                                height: root.px(100)
+                                opacity: root.stage(0.6)
+                                transform: Translate { y: 10 * (1 - root.stage(0.55)) }
+
+                                Art {
+                                    id: art
+                                    width: parent.height
+                                    height: parent.height
+                                    url: root.player ? (root.player.trackArtUrl || "") : ""
+                                }
+
+                                Item {
+                                    id: info
+                                    anchors.left: art.right
+                                    anchors.leftMargin: root.px(18)
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    height: infoCol.implicitHeight
+
+                                    readonly property string key: root.player ? root.player.trackTitle + "\u0001" + root.player.trackArtist : ""
+                                    property string title: ""
+                                    property string artist: ""
+                                    property string album: ""
+                                    property real shift: 0
+
+                                    function take() {
+                                        title = root.player ? (root.player.trackTitle || "Unknown track") : ""
+                                        artist = root.player ? (root.player.trackArtist || "") : ""
+                                        album = root.player ? (root.player.trackAlbum || "") : ""
+                                    }
+                                    Component.onCompleted: take()
+                                    onKeyChanged: {
+                                        if (!root.active || title === "") { take(); return }
+                                        swap.restart()
+                                    }
+
+                                    SequentialAnimation {
+                                        id: swap
+                                        ParallelAnimation {
+                                            NumberAnimation { target: infoCol; property: "opacity"; to: 0; duration: Theme.ms(130); easing.type: Easing.InQuad }
+                                            NumberAnimation { target: info; property: "shift"; to: -root.dir * 18; duration: Theme.ms(130); easing.type: Easing.InQuad }
+                                        }
+                                        ScriptAction { script: { info.take(); info.shift = root.dir * 18; root.dir = 1 } }
+                                        ParallelAnimation {
+                                            NumberAnimation { target: infoCol; property: "opacity"; to: 1; duration: Theme.ms(300); easing.type: Easing.OutCubic }
+                                            NumberAnimation { target: info; property: "shift"; to: 0; duration: Theme.ms(340); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
+                                        }
+                                    }
+
+                                    Column {
+                                        id: infoCol
+                                        width: parent.width
+                                        spacing: root.px(4)
+                                        transform: Translate { x: info.shift }
+
+                                        Text {
+                                            width: parent.width
+                                            text: root.player ? info.title : "Nothing playing"
+                                            elide: Text.ElideRight
+                                            font.family: Theme.sans
+                                            font.pixelSize: root.px(17)
+                                            color: Theme.bright
+                                        }
+                                        Text {
+                                            width: parent.width
+                                            visible: text !== ""
+                                            text: root.player ? info.artist : "Open Spotify to start"
+                                            elide: Text.ElideRight
+                                            font.family: Theme.sans
+                                            font.pixelSize: root.px(13)
+                                            color: Theme.fg
+                                        }
+                                        Text {
+                                            width: parent.width
+                                            visible: text !== ""
+                                            text: root.player ? info.album : ""
+                                            elide: Text.ElideRight
+                                            font.family: Theme.sans
+                                            font.pixelSize: root.px(11)
+                                            color: Theme.dim
+                                        }
+                                    }
+                                }
+                            }
+
+
+                            Visualizer {
+                                id: viz
+                                anchors.bottom: parent.bottom
+                                width: parent.width
+                                height: root.px(34)
+                                running: root.active || moveDelay.running
+                                intro: root.vizIntro
+                                opacity: root.stage(0.7)
+                            }
+
+                            Item {
+                                id: controls
+                                anchors.bottom: viz.top
+                                anchors.bottomMargin: root.px(18)
+                                width: parent.width
+                                height: root.px(56)
+                                opacity: root.stage(0.66)
+                                transform: Translate { y: 8 * (1 - root.stage(0.62)) }
+                                enabled: !!root.player
+
+                                Glyph {
+                                    id: prevButton
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.right: playButton.left
+                                    anchors.rightMargin: root.px(26)
+                                    size: root.px(44)
+                                    glyph: ""
+                                    glyphSize: root.px(16)
+                                    nudge: -1
+                                    dimmed: !root.player || !root.player.canGoPrevious
+                                    onClicked: root.previous()
+                                }
+
+                                PlayButton {
+                                    id: playButton
+                                    anchors.centerIn: parent
+                                    size: root.px(56)
+                                }
+
+                                Glyph {
+                                    id: nextButton
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.left: playButton.right
+                                    anchors.leftMargin: root.px(26)
+                                    size: root.px(44)
+                                    glyph: ""
+                                    glyphSize: root.px(16)
+                                    nudge: 1
+                                    dimmed: !root.player || !root.player.canGoNext
+                                    onClicked: root.next()
+                                }
+                            }
+
+                            Seek {
+                                id: seek
+                                anchors.bottom: controls.top
+                                anchors.bottomMargin: root.px(10)
+                                width: parent.width
+                                opacity: root.stage(0.63)
+                                transform: Translate { y: 8 * (1 - root.stage(0.6)) }
                             }
                         }
-                    }
-
-                    // bottom
-
-                    Visualizer {
-                        id: viz
-                        anchors.bottom: parent.bottom
-                        width: parent.width
-                        height: root.px(34)
-                        running: root.active || moveDelay.running
-                        intro: root.vizIntro
-                        opacity: root.stage(0.7)
                     }
 
                     Item {
-                        id: controls
-                        anchors.bottom: viz.top
-                        anchors.bottomMargin: root.px(18)
-                        width: parent.width
-                        height: root.px(56)
-                        opacity: root.stage(0.66)
-                        transform: Translate { y: 8 * (1 - root.stage(0.62)) }
-                        enabled: !!root.player
+                        id: grab
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: root.px(90)
+                        height: root.px(16)
+                        opacity: root.stage(0.75)
 
-                        Glyph {
-                            id: prevButton
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.right: playButton.left
-                            anchors.rightMargin: root.px(26)
-                            size: root.px(44)
-                            glyph: ""
-                            glyphSize: root.px(16)
-                            nudge: -1
-                            dimmed: !root.player || !root.player.canGoPrevious
-                            onClicked: root.previous()
+                        Rectangle {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: root.px(7)
+                            height: 4
+                            width: grabArea.containsMouse || grabArea.pressed ? root.px(64) : root.px(36)
+                            radius: 2
+                            color: Theme.alpha(grabArea.containsMouse || grabArea.pressed ? Theme.accent : Theme.fg, grabArea.containsMouse || grabArea.pressed ? 0.85 : 0.18)
+                            Behavior on width { NumberAnimation { duration: Theme.ms(200); easing.type: Easing.OutCubic } }
+                            Behavior on color { ColorAnimation { duration: Theme.fast } }
                         }
 
-                        PlayButton {
-                            id: playButton
-                            anchors.centerIn: parent
-                            size: root.px(56)
+                        MouseArea {
+                            id: grabArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.SizeVerCursor
+                            preventStealing: true
+
+                            property real startY: 0
+                            property real startSide: 0
+
+                            function windowY(mouse) {
+                                return mapToItem(win.contentItem, mouse.x, mouse.y).y
+                            }
+
+                            onPressed: mouse => {
+                                startY = windowY(mouse)
+                                startSide = root.shown
+                                root.dragSide = root.shown
+                                root.dragging = true
+                            }
+                            onPositionChanged: mouse => {
+                                if (!pressed) return
+                                const want = startSide + (windowY(mouse) - startY)
+                                const lo = root.minSide, hi = root.maxSide
+                                root.dragSide = want < lo ? lo - Math.sqrt(lo - want) * 2
+                                              : want > hi ? hi + Math.sqrt(want - hi) * 2 : want
+                            }
+                            onReleased: {
+                                root.side = Math.max(root.minSide, Math.min(root.maxSide, root.dragSide))
+                                root.dragging = false
+                                let next = root.side
+                                if (Math.abs(next - root.defaultSide) < 14) next = root.defaultSide
+                                root.side = next
+                                root.saveSide(next)
+                            }
                         }
-
-                        Glyph {
-                            id: nextButton
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.left: playButton.right
-                            anchors.leftMargin: root.px(26)
-                            size: root.px(44)
-                            glyph: ""
-                            glyphSize: root.px(16)
-                            nudge: 1
-                            dimmed: !root.player || !root.player.canGoNext
-                            onClicked: root.next()
-                        }
-                    }
-
-                    Seek {
-                        id: seek
-                        anchors.bottom: controls.top
-                        anchors.bottomMargin: root.px(10)
-                        width: parent.width
-                        opacity: root.stage(0.63)
-                        transform: Translate { y: 8 * (1 - root.stage(0.6)) }
-                    }
-                }
-            }
-
-            // drag the bottom edge to resize, snaps near the default size
-            Item {
-                id: grab
-                anchors.bottom: parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: root.px(90)
-                height: root.px(16)
-                opacity: root.stage(0.75)
-
-                Rectangle {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    y: root.px(7)
-                    height: 4
-                    width: grabArea.containsMouse || grabArea.pressed ? root.px(64) : root.px(36)
-                    radius: 2
-                    color: Theme.alpha(grabArea.containsMouse || grabArea.pressed ? Theme.accent : Theme.fg, grabArea.containsMouse || grabArea.pressed ? 0.85 : 0.18)
-                    Behavior on width { NumberAnimation { duration: Theme.ms(200); easing.type: Easing.OutCubic } }
-                    Behavior on color { ColorAnimation { duration: Theme.fast } }
-                }
-
-                MouseArea {
-                    id: grabArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.SizeVerCursor
-                    preventStealing: true
-
-                    property real startY: 0
-                    property real startSide: 0
-
-                    function windowY(mouse) {
-                        return mapToItem(win.contentItem, mouse.x, mouse.y).y
-                    }
-
-                    onPressed: mouse => {
-                        startY = windowY(mouse)
-                        startSide = root.shown
-                        root.dragSide = root.shown
-                        root.dragging = true
-                    }
-                    onPositionChanged: mouse => {
-                        if (!pressed) return
-                        const want = startSide + (windowY(mouse) - startY)
-                        const lo = root.minSide, hi = root.maxSide
-                        root.dragSide = want < lo ? lo - Math.sqrt(lo - want) * 2
-                                      : want > hi ? hi + Math.sqrt(want - hi) * 2 : want
-                    }
-                    onReleased: {
-                        root.side = Math.max(root.minSide, Math.min(root.maxSide, root.dragSide))
-                        root.dragging = false
-                        let next = root.side
-                        if (Math.abs(next - root.defaultSide) < 14) next = root.defaultSide
-                        root.side = next
-                        root.saveSide(next)
                     }
                 }
             }
@@ -807,24 +821,10 @@ ShellRoot {
     component PlayButton: Item {
         id: pb
         property real size: 56
-        property real ring: 1
         width: size
         height: size
 
-        function bump() { ringAnim.restart() }
-
-        NumberAnimation { id: ringAnim; target: pb; property: "ring"; from: 0; to: 1; duration: Theme.ms(520); easing.type: Easing.OutCubic }
-
-        Rectangle {
-            anchors.centerIn: parent
-            width: pb.size * (1 + 0.45 * pb.ring)
-            height: width
-            radius: width / 2
-            color: "transparent"
-            border.width: 2
-            border.color: Theme.accent
-            opacity: 0.55 * (1 - pb.ring)
-        }
+        function bump() {}
 
         Rectangle {
             id: disc
@@ -887,7 +887,7 @@ ShellRoot {
                     radius: parent.radius
                     width: Math.max(height, parent.width * sk.frac)
                     color: Theme.accent
-                    // no animation while playing, it would restart every frame and freeze
+                    // animating this restarts every frame and it stutters like hell
                     Behavior on width {
                         enabled: !sk.seeking && !root.playing
                         NumberAnimation { duration: Theme.ms(160); easing.type: Easing.OutCubic }
@@ -951,7 +951,7 @@ ShellRoot {
         property string url: ""
         property bool useA: true
 
-        // setting the same source doesn't fire onStatusChanged
+        // setting the same source doesn't fire onStatusChanged, found out the hard way
         onUrlChanged: {
             const front = useA ? imgA : imgB
             const back = useA ? imgB : imgA

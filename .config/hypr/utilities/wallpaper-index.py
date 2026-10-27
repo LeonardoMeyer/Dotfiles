@@ -9,9 +9,9 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 LIBRARY = Path(os.environ.get("WALLPAPER_LIBRARY", Path.home() / "wallpapers" / "library"))
+FAVORITES = LIBRARY / "favorites.txt"
 CACHE = Path.home() / ".cache" / "wallpaper-picker"
 THUMBS = CACHE / "thumbs"
-# palette from the original image, same as color-apply.sh
 PALETTES = CACHE / "palettes-full.json"
 INDEX = CACHE / "index.json"
 EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"}
@@ -28,22 +28,19 @@ def key_for(path: Path) -> str:
     return hashlib.sha1(f"{path}:{stat.st_mtime_ns}:{stat.st_size}".encode()).hexdigest()
 
 
-# thumb (640x360) and a screen-sized copy, one magick run
-def make_assets(path: Path, key: str) -> tuple[Path, Path]:
-    thumb, screen = THUMBS / f"{key}.jpg", THUMBS / f"{key}-s.jpg"
-    files = [thumb, screen]
-    if not all(f.exists() for f in files):
-        tmp = [f.with_name(f"{f.stem}.{os.getpid()}.tmp{f.suffix}") for f in files]
+# 640x360 thumb for cards and blur
+def make_thumb(path: Path, key: str) -> Path:
+    thumb = THUMBS / f"{key}.jpg"
+    if not thumb.exists():
+        tmp = thumb.with_name(f"{thumb.stem}.{os.getpid()}.tmp{thumb.suffix}")
         subprocess.run(
-            ["magick", "-define", "jpeg:size=1920x1080", f"{path}[0]", "-auto-orient",
-             "-thumbnail", "1920x1080^", "-write", "mpr:s", "-quality", "88", "-write", str(tmp[1]), "+delete",
-             "mpr:s", "-thumbnail", "640x360^", "-gravity", "center", "-extent", "640x360",
-             "-quality", "85", str(tmp[0])],
+            ["magick", "-define", "jpeg:size=1280x720", f"{path}[0]", "-auto-orient",
+             "-thumbnail", "640x360^", "-gravity", "center", "-extent", "640x360",
+             "-quality", "85", str(tmp)],
             check=True, capture_output=True,
         )
-        for t, f in zip(tmp, files):
-            os.replace(t, f)
-    return thumb, screen
+        os.replace(tmp, thumb)
+    return thumb
 
 
 def make_palette(path: Path) -> list[str]:
@@ -63,11 +60,13 @@ def main() -> None:
     files = sorted(
         p for p in LIBRARY.glob("*/*") if p.is_file() and p.suffix.lower() in EXTENSIONS
     )
+    # favorites are just paths in favorites.txt
+    favs = set(FAVORITES.read_text().split("\n")) if FAVORITES.exists() else set()
 
     def work(path: Path):
         key = key_for(path)
         try:
-            thumb, screen = make_assets(path, key)
+            thumb = make_thumb(path, key)
             colors = palettes.get(key) or make_palette(path)
         except (subprocess.CalledProcessError, OSError, KeyError, ValueError) as err:
             print(f"skip {path}: {err}", file=sys.stderr)
@@ -76,16 +75,15 @@ def main() -> None:
             "path": str(path),
             "name": path.stem,
             "theme": path.parent.name,
+            "fav": str(path.relative_to(LIBRARY)) in favs,
             "thumb": str(thumb),
-            "screen": str(screen),
             "colors": colors,
         }
 
     with ThreadPoolExecutor(max_workers=4) as pool:
         results = [r for r in pool.map(work, files) if r]
 
-    # remove stale cache files
-    live = {Path(v[f]).name for _, v in results for f in ("thumb", "screen")}
+    live = {Path(v["thumb"]).name for _, v in results}
     for f in THUMBS.iterdir():
         if f.name not in live and ".tmp" not in f.name:
             f.unlink(missing_ok=True)

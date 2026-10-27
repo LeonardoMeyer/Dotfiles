@@ -1,13 +1,13 @@
 {
   "animation": {
     "curve": [
-      0.31,
-      0.9,
-      0.85,
-      1
+      0.36,
+      0.63,
+      0.17,
+      1.02
     ],
     "preset": "custom",
-    "speed": 2.5,
+    "speed": 1.25,
     "window": "popin 60%",
     "workspace": "slidefadevert"
   },
@@ -35,7 +35,7 @@
       "motion_blur": {
         "enabled": false
       },
-      "rounding": 3,
+      "rounding": 14,
       "rounding_power": 5,
       "shadow": {
         "enabled": true,

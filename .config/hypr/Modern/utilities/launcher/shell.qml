@@ -11,21 +11,18 @@ ShellRoot {
     readonly property string home: Quickshell.env("HOME")
     readonly property string helper: Quickshell.shellPath("launcher/launcher.py")
     readonly property string terminal: "kitty"
-    // "<count> <key>" per line
     readonly property string cacheDir: home + "/.cache/launcher"
     readonly property string appCache: cacheDir + "/apps"
     readonly property string homeCache: cacheDir + "/commands"
     readonly property string shellCache: cacheDir + "/shell"
     readonly property string bindCache: cacheDir + "/keybinds"
 
-    // stays mapped so opening is instant
     property bool active: false
     property bool leaving: false
     property real t: 0
     property real gridIntro: 1
     property var targetScreen: null
 
-    // tab order
     readonly property var tabs: [
         { id: "home", label: "Home", title: "Home", icon: "", search: "" },
         { id: "apps", label: "Apps", title: "Applications", icon: "", search: "Search apps" },
@@ -59,7 +56,6 @@ ShellRoot {
     readonly property real mw: Math.max(0, Math.min(1.02, (t - 0.12) / 0.48))
     readonly property real mh: Math.max(0, Math.min(1.02, (t - 0.32) / 0.68))
 
-    // Apps
 
     property var drun: ({ hide: [], paths: {} })
     property var appUses: ({})
@@ -68,10 +64,9 @@ ShellRoot {
     property var slots: ({})
     property int selected: 0
     property bool searchPinned: false
-    readonly property string query: search.text
+    readonly property string query: ui ? ui.pSearch.text : ""
     readonly property var picked: results.length > 0 ? results[Math.min(selected, results.length - 1)] : null
 
-    // quickshell already drops NoDisplay
     Process {
         id: scan
         command: ["python3", root.helper, "apps"]
@@ -83,7 +78,6 @@ ShellRoot {
         }
     }
 
-    // wait for entries to settle at startup
     Connections {
         target: DesktopEntries.applications
         function onValuesChanged() { rebuild.restart(); rescan.restart() }
@@ -102,7 +96,6 @@ ShellRoot {
         onFileChanged: reload()
     }
 
-    // FileView only watches files that exist, so create them first
     Process {
         running: true
         command: ["python3", root.helper, "init", root.appCache, root.homeCache, root.shellCache, root.bindCache]
@@ -136,7 +129,7 @@ ShellRoot {
         if (key) Quickshell.execDetached(["python3", helper, "bump", cache, key])
     }
 
-    // only replace when it actually changed, it rebuilds every icon
+    // only replace on change, it rebuilds every icon and that was slow
     property string appsKey: ""
     function buildApps() {
         const hide = new Set(drun.hide || [])
@@ -196,8 +189,10 @@ ShellRoot {
         results = hits.map(h => h.a)
         slots = map
         selected = 0
-        grid.mouseMoved = false
-        grid.scrollTo(0)
+        if (ui) {
+            ui.pGrid.mouseMoved = false
+            ui.pGrid.scrollTo(0)
+        }
     }
 
     onQueryChanged: refresh()
@@ -218,7 +213,6 @@ ShellRoot {
         selected = Math.max(0, Math.min(n - 1, s))
     }
 
-    // Home, Commands, Keybinds
 
     FileView {
         id: homeCacheFile
@@ -266,11 +260,9 @@ ShellRoot {
     function runHome(id, cmd, afterClose) {
         bump(homeCache, id)
         close()
-        // wait for the panel to close first
         Quickshell.execDetached(["sh", "-c", (afterClose ? "sleep 0.3; " : "") + cmd])
     }
 
-    // interactive bash so aliases work
     function runShell(cmd, key, background) {
         bump(shellCache, key)
         close()
@@ -278,7 +270,6 @@ ShellRoot {
         else Quickshell.execDetached([terminal, "--hold", "bash", "-ic", cmd])
     }
 
-    // Tabs and keys
 
     function setTab(i) {
         i = Math.max(0, Math.min(tabs.length - 1, i))
@@ -290,14 +281,14 @@ ShellRoot {
     }
 
     function focusTab() {
-        if (searchable) search.input.forceActiveFocus()
-        else keyRoot.forceActiveFocus()
+        if (searchable) ui?.pSearch.input.forceActiveFocus()
+        else ui?.forceActiveFocus()
     }
 
     function back() {
-        if (tabId === "home" && homePage.cancel()) return
+        if (tabId === "home" && ui?.pHome.cancel()) return
         if (searchable && (query !== "" || searchPinned)) {
-            search.text = ""
+            if (ui) ui.pSearch.text = ""
             searchPinned = false
             return
         }
@@ -307,7 +298,7 @@ ShellRoot {
     function handleKey(event) {
         const k = event.key
         const ctrl = event.modifiers & Qt.ControlModifier
-        grid.mouseMoved = false
+        if (ui) ui.pGrid.mouseMoved = false
 
         if (k === Qt.Key_Escape) { back(); return true }
         if (k === Qt.Key_Backtab || (k === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier))) { setTab((tab + tabs.length - 1) % tabs.length); return true }
@@ -325,12 +316,11 @@ ShellRoot {
             else return false
             return true
         }
-        if (tabId === "home") return homePage.handleKey(event)
-        if (tabId === "commands") return shellPage.handleKey(event)
-        return binds.handleKey(event)
+        if (tabId === "home") return ui.pHome.handleKey(event)
+        if (tabId === "commands") return ui.pShell.handleKey(event)
+        return ui.pBinds.handleKey(event)
     }
 
-    // Open/close
 
 
     Component.onCompleted: {
@@ -357,7 +347,6 @@ ShellRoot {
         }
         const scr = focusedScreen()
         if (!active && scr !== targetScreen) {
-            // new monitor needs a new surface, wait a bit
             targetScreen = scr
             moveDelay.restart()
             return
@@ -376,7 +365,7 @@ ShellRoot {
 
     function close() {
         if (!active || leaving) return
-        if (tabId === "keybinds" && binds.touched) bump(bindCache, binds.currentId)
+        if (tabId === "keybinds" && ui?.pBinds.touched) bump(bindCache, ui.pBinds.currentId)
         leaving = true
         animateTo(0)
     }
@@ -412,12 +401,13 @@ ShellRoot {
             root.active = false
             root.leaving = false
             root.searchPinned = false
-            // reset now so opening has nothing to do
-            search.text = ""
+            if (ui) ui.pSearch.text = ""
             root.refresh()
-            shellPage.dirty = true
-            homePage.reset()
-            binds.reset()
+            if (ui) {
+                ui.pShell.dirty = true
+                ui.pHome.reset()
+                ui.pBinds.reset()
+            }
             scanCommands.running = true
         }
     }
@@ -430,6 +420,16 @@ ShellRoot {
         function tab(id: string): void { root.show(id) }
     }
 
+    // i think this frees the textures once it closes, saves some memory
+    readonly property Item ui: ld.item
+    property bool warm: false
+    onActiveChanged: {
+        if (active) { warm = true; cool.stop() }
+        else cool.restart()
+    }
+    Timer { id: cool; interval: 120000; onTriggered: root.warm = false }
+
+
     PanelWindow {
         id: win
         screen: root.targetScreen ?? Quickshell.screens[0]
@@ -441,9 +441,8 @@ ShellRoot {
         }
         color: "transparent"
         exclusionMode: ExclusionMode.Normal
-        // whole surface takes input so clicking outside closes it
         mask: Region {
-            item: root.active && !root.leaving ? keyRoot : null
+            item: root.active && !root.leaving ? ld.item : null
             Region {
                 readonly property var m: root.music.open && root.music.screen === win.screen?.name ? root.music : null
                 intersection: Intersection.Subtract
@@ -457,258 +456,269 @@ ShellRoot {
         WlrLayershell.namespace: "app-drawer"
         WlrLayershell.keyboardFocus: root.active && !root.leaving ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-        Item {
-            id: keyRoot
+        Loader {
+            id: ld
             anchors.fill: parent
-            focus: true
-
-            Keys.onPressed: event => {
-                if (root.handleKey(event)) { event.accepted = true; return }
-                const ch = event.text
-                if (ch.length === 1 && ch >= " " && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) {
-                    root.setTab(root.tabIndex("apps"))
-                    search.text += ch
-                    event.accepted = true
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onPressed: root.close()
-            }
-
-            // never hide it, that drops the icon textures and it stutters on open
-            Item {
-                id: card
-                width: root.dot + (root.cardW - root.dot) * root.mw
-                height: root.dot + (root.cardH - root.dot) * root.mh
-                readonly property real rest: Math.min(root.dot / 2, Theme.rounding)
-                readonly property real radius: Math.max(rest, root.dot / 2 - (root.dot / 2 - rest) * Math.min(1, root.mw))
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottom: parent.bottom
-                opacity: root.active ? Math.min(1, root.t * 8) : 0
-                transform: Translate { y: (1 - root.rise) * (root.dot + 24) }
-
-                MouseArea { anchors.fill: parent }
-
-                // pushed past the bottom edge so only the top corners round
-                Rectangle {
-                    width: parent.width
-                    height: parent.height + card.radius + 2
-                    radius: card.radius
-                    color: Theme.alpha(Theme.bg, 0.6)
-                    border.width: 1
-                    border.color: Theme.alpha(Theme.fg, 0.07)
-                }
-
+            active: root.active || root.warm
+            sourceComponent: Component {
                 Item {
+                    id: keyRoot
+                    property alias pSearch: search
+                    property alias pGrid: grid
+                    property alias pHome: homePage
+                    property alias pShell: shellPage
+                    property alias pBinds: binds
                     anchors.fill: parent
-                    clip: true
+                    focus: true
 
-                Item {
-                    id: content
-                    width: root.cardW - root.pad * 2
-                    height: root.cardH - root.pad - Math.round(root.pad * 0.7)
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: Math.round(root.pad * 0.7)
-
-                    Item {
-                        id: header
-                        width: parent.width
-                        height: Math.round(36 * root.u)
-                        opacity: root.stage(0.55)
-                        transform: Translate { y: 10 * (1 - root.stage(0.5)) }
-
-                        SearchPill {
-                            id: search
-                            height: parent.height
-                            fullWidth: header.width
-                            placeholder: root.tabs[root.tab].search
-                            expanded: root.searchable && (root.searchPinned || root.query !== "")
-                            hint: root.query === "" ? ""
-                                : root.tabId === "apps" ? (root.picked ? root.picked.name : "")
-                                : root.tabId === "commands" && shellPage.current ? shellPage.current.n : ""
-                            onClicked: {
-                                root.searchPinned = true
-                                if (!root.searchable) root.setTab(root.tabIndex("apps"))
-                                else root.focusTab()
-                            }
-                            keyHandler: event => root.handleKey(event)
-                        }
-
-                        Text {
-                            id: title
-                            anchors.left: parent.left
-                            anchors.leftMargin: header.height + 12
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.tabs[root.tab].title
-                            font.family: Theme.sans
-                            font.pixelSize: 17
-                            color: Theme.bright
-                            property real fade: 1
-                            opacity: fade * (1 - Math.min(1, search.open))
-                            transform: Translate { id: titleShift }
-
-                            Connections {
-                                target: root
-                                function onTabChanged() { titleAnim.restart() }
-                            }
-                            ParallelAnimation {
-                                id: titleAnim
-                                NumberAnimation { target: titleShift; property: "y"; from: 6; to: 0; duration: Theme.move; easing.type: Easing.OutCubic }
-                                NumberAnimation { target: title; property: "fade"; from: 0; to: 1; duration: Theme.ms(220); easing.type: Easing.OutCubic }
-                            }
-                        }
-
-                        Text {
-                            anchors.right: parent.right
-                            anchors.left: title.right
-                            anchors.leftMargin: 12
-                            anchors.verticalCenter: parent.verticalCenter
-                            horizontalAlignment: Text.AlignRight
-                            elide: Text.ElideRight
-                            text: root.tabId === "apps" ? (root.picked ? root.picked.name : "")
-                                : root.tabId === "home" ? "Enter to run"
-                                : root.tabId === "commands" ? root.shellCommands.length + " commands"
-                                : "shortcuts.lua"
-                            font.family: Theme.sans
-                            font.pixelSize: 12
-                            color: Theme.dim
-                            opacity: 1 - Math.min(1, search.open)
+                    Keys.onPressed: event => {
+                        if (root.handleKey(event)) { event.accepted = true; return }
+                        const ch = event.text
+                        if (ch.length === 1 && ch >= " " && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) {
+                            root.setTab(root.tabIndex("apps"))
+                            search.text += ch
+                            event.accepted = true
                         }
                     }
 
-                    Item {
-                        id: pages
-                        anchors.top: header.bottom
-                        anchors.topMargin: Math.round(12 * root.u)
-                        anchors.bottom: tabBar.top
-                        anchors.bottomMargin: Math.round(10 * root.u)
-                        width: parent.width
-                        opacity: root.stage(0.62)
-
-                        Page {
-                            tab: "apps"
-                            AppGrid {
-                                id: grid
-                                anchors.fill: parent
-                                apps: root.apps
-                                slots: root.slots
-                                count: root.results.length
-                                selected: root.selected
-                                cols: root.cols
-                                cell: root.cell
-                                gap: root.gap
-                                hlPad: root.hlPad
-                                intro: root.gridIntro
-                                emptyText: root.apps.length === 0 ? "Loading applications..." : "Nothing matches '" + root.query + "'"
-                                onLaunch: app => root.launch(app)
-                                onHover: slot => root.selected = slot
-                            }
-                        }
-
-                        Page {
-                            tab: "home"
-                            HomePage {
-                                id: homePage
-                                anchors.fill: parent
-                                counts: root.counts(homeCacheFile.text())
-                                intro: root.introHome
-                                onRun: (id, cmd, after) => root.runHome(id, cmd, after)
-                            }
-                        }
-
-                        Page {
-                            tab: "commands"
-                            ShellPage {
-                                id: shellPage
-                                anchors.fill: parent
-                                commands: root.shellCommands
-                                counts: root.counts(shellCacheFile.text())
-                                query: root.query
-                                live: root.active && root.tabId === "commands"
-                                onRun: (cmd, key, background) => root.runShell(cmd, key, background)
-                            }
-                        }
-
-                        Page {
-                            tab: "keybinds"
-                            KeybindsPage {
-                                id: binds
-                                anchors.fill: parent
-                                counts: root.counts(bindCacheFile.text())
-                                intro: root.introBinds
-                                query: root.query
-                            }
-                        }
+                    MouseArea {
+                        anchors.fill: parent
+                        onPressed: root.close()
                     }
 
+                    // never hide this, the icon textures drop and it stutters like hell
                     Item {
-                        id: tabBar
-                        anchors.bottom: parent.bottom
+                        id: card
+                        width: root.dot + (root.cardW - root.dot) * root.mw
+                        height: root.dot + (root.cardH - root.dot) * root.mh
+                        readonly property real rest: Math.min(root.dot / 2, Theme.rounding)
+                        readonly property real radius: Math.max(rest, root.dot / 2 - (root.dot / 2 - rest) * Math.min(1, root.mw))
                         anchors.horizontalCenter: parent.horizontalCenter
-                        readonly property real cellW: Math.round(Math.min(96 * root.u, (content.width - 12) / root.tabs.length))
-                        readonly property real gapW: 4
-                        width: cellW * root.tabs.length + gapW * (root.tabs.length - 1)
-                        height: Math.round(32 * root.u)
-                        opacity: root.stage(0.7)
-                        transform: Translate { y: 8 * (1 - root.stage(0.66)) }
+                        anchors.bottom: parent.bottom
+                        opacity: root.active ? Math.min(1, root.t * 8) : 0
+                        transform: Translate { y: (1 - root.rise) * (root.dot + 24) }
+
+                        MouseArea { anchors.fill: parent }
 
                         Rectangle {
-                            width: tabBar.cellW
-                            height: parent.height
-                            radius: Theme.r(9)
-                            x: root.tab * (tabBar.cellW + tabBar.gapW)
-                            color: Theme.alpha(Theme.accent, 0.3)
-                            Behavior on x { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                            width: parent.width
+                            height: parent.height + card.radius + 2
+                            radius: card.radius
+                            color: Theme.alpha(Theme.bg, 0.6)
+                            border.width: 1
+                            border.color: Theme.alpha(Theme.fg, 0.07)
                         }
 
-                        Repeater {
-                            model: root.tabs
+                        Item {
+                            anchors.fill: parent
+                            clip: true
+
+                        Item {
+                            id: content
+                            width: root.cardW - root.pad * 2
+                            height: root.cardH - root.pad - Math.round(root.pad * 0.7)
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: Math.round(root.pad * 0.7)
 
                             Item {
-                                id: tabItem
-                                required property var modelData
-                                required property int index
-                                readonly property bool on: root.tab === index
-                                x: index * (tabBar.cellW + tabBar.gapW)
-                                width: tabBar.cellW
-                                height: tabBar.height
+                                id: header
+                                width: parent.width
+                                height: Math.round(36 * root.u)
+                                opacity: root.stage(0.55)
+                                transform: Translate { y: 10 * (1 - root.stage(0.5)) }
 
-                                Row {
-                                    anchors.centerIn: parent
-                                    spacing: 6
-
-                                    Text {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: tabItem.modelData.icon
-                                        font.family: Theme.sans
-                                        font.pixelSize: 13
-                                        color: tabItem.on || tabArea.containsMouse ? Theme.bright : Theme.dim
-                                        Behavior on color { ColorAnimation { duration: Theme.fast } }
+                                SearchPill {
+                                    id: search
+                                    height: parent.height
+                                    fullWidth: header.width
+                                    placeholder: root.tabs[root.tab].search
+                                    expanded: root.searchable && (root.searchPinned || root.query !== "")
+                                    hint: root.query === "" ? ""
+                                        : root.tabId === "apps" ? (root.picked ? root.picked.name : "")
+                                        : root.tabId === "commands" && shellPage.current ? shellPage.current.n : ""
+                                    onClicked: {
+                                        root.searchPinned = true
+                                        if (!root.searchable) root.setTab(root.tabIndex("apps"))
+                                        else root.focusTab()
                                     }
-                                    Text {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: tabItem.modelData.label
-                                        font.family: Theme.sans
-                                        font.pixelSize: 11
-                                        color: tabItem.on || tabArea.containsMouse ? Theme.bright : Theme.dim
-                                        Behavior on color { ColorAnimation { duration: Theme.fast } }
+                                    keyHandler: event => root.handleKey(event)
+                                }
+
+                                Text {
+                                    id: title
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: header.height + 12
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: root.tabs[root.tab].title
+                                    font.family: Theme.sans
+                                    font.pixelSize: 17
+                                    color: Theme.bright
+                                    property real fade: 1
+                                    opacity: fade * (1 - Math.min(1, search.open))
+                                    transform: Translate { id: titleShift }
+
+                                    Connections {
+                                        target: root
+                                        function onTabChanged() { titleAnim.restart() }
+                                    }
+                                    ParallelAnimation {
+                                        id: titleAnim
+                                        NumberAnimation { target: titleShift; property: "y"; from: 6; to: 0; duration: Theme.move; easing.type: Easing.OutCubic }
+                                        NumberAnimation { target: title; property: "fade"; from: 0; to: 1; duration: Theme.ms(220); easing.type: Easing.OutCubic }
                                     }
                                 }
 
-                                MouseArea {
-                                    id: tabArea
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.setTab(tabItem.index)
+                                Text {
+                                    anchors.right: parent.right
+                                    anchors.left: title.right
+                                    anchors.leftMargin: 12
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    horizontalAlignment: Text.AlignRight
+                                    elide: Text.ElideRight
+                                    text: root.tabId === "apps" ? (root.picked ? root.picked.name : "")
+                                        : root.tabId === "home" ? "Enter to run"
+                                        : root.tabId === "commands" ? root.shellCommands.length + " commands"
+                                        : "shortcuts.lua"
+                                    font.family: Theme.sans
+                                    font.pixelSize: 12
+                                    color: Theme.dim
+                                    opacity: 1 - Math.min(1, search.open)
+                                }
+                            }
+
+                            Item {
+                                id: pages
+                                anchors.top: header.bottom
+                                anchors.topMargin: Math.round(12 * root.u)
+                                anchors.bottom: tabBar.top
+                                anchors.bottomMargin: Math.round(10 * root.u)
+                                width: parent.width
+                                opacity: root.stage(0.62)
+
+                                Page {
+                                    tab: "apps"
+                                    AppGrid {
+                                        id: grid
+                                        anchors.fill: parent
+                                        apps: root.apps
+                                        slots: root.slots
+                                        count: root.results.length
+                                        selected: root.selected
+                                        cols: root.cols
+                                        cell: root.cell
+                                        gap: root.gap
+                                        hlPad: root.hlPad
+                                        intro: root.gridIntro
+                                        emptyText: root.apps.length === 0 ? "Loading applications..." : "Nothing matches '" + root.query + "'"
+                                        onLaunch: app => root.launch(app)
+                                        onHover: slot => root.selected = slot
+                                    }
+                                }
+
+                                Page {
+                                    tab: "home"
+                                    HomePage {
+                                        id: homePage
+                                        anchors.fill: parent
+                                        counts: root.counts(homeCacheFile.text())
+                                        intro: root.introHome
+                                        onRun: (id, cmd, after) => root.runHome(id, cmd, after)
+                                    }
+                                }
+
+                                Page {
+                                    tab: "commands"
+                                    ShellPage {
+                                        id: shellPage
+                                        anchors.fill: parent
+                                        commands: root.shellCommands
+                                        counts: root.counts(shellCacheFile.text())
+                                        query: root.query
+                                        live: root.active && root.tabId === "commands"
+                                        onRun: (cmd, key, background) => root.runShell(cmd, key, background)
+                                    }
+                                }
+
+                                Page {
+                                    tab: "keybinds"
+                                    KeybindsPage {
+                                        id: binds
+                                        anchors.fill: parent
+                                        counts: root.counts(bindCacheFile.text())
+                                        intro: root.introBinds
+                                        query: root.query
+                                    }
+                                }
+                            }
+
+                            Item {
+                                id: tabBar
+                                anchors.bottom: parent.bottom
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                readonly property real cellW: Math.round(Math.min(96 * root.u, (content.width - 12) / root.tabs.length))
+                                readonly property real gapW: 4
+                                width: cellW * root.tabs.length + gapW * (root.tabs.length - 1)
+                                height: Math.round(32 * root.u)
+                                opacity: root.stage(0.7)
+                                transform: Translate { y: 8 * (1 - root.stage(0.66)) }
+
+                                Rectangle {
+                                    width: tabBar.cellW
+                                    height: parent.height
+                                    radius: Theme.r(9)
+                                    x: root.tab * (tabBar.cellW + tabBar.gapW)
+                                    color: Theme.alpha(Theme.accent, 0.3)
+                                    Behavior on x { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                                }
+
+                                Repeater {
+                                    model: root.tabs
+
+                                    Item {
+                                        id: tabItem
+                                        required property var modelData
+                                        required property int index
+                                        readonly property bool on: root.tab === index
+                                        x: index * (tabBar.cellW + tabBar.gapW)
+                                        width: tabBar.cellW
+                                        height: tabBar.height
+
+                                        Row {
+                                            anchors.centerIn: parent
+                                            spacing: 6
+
+                                            Text {
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: tabItem.modelData.icon
+                                                font.family: Theme.sans
+                                                font.pixelSize: 13
+                                                color: tabItem.on || tabArea.containsMouse ? Theme.bright : Theme.dim
+                                                Behavior on color { ColorAnimation { duration: Theme.fast } }
+                                            }
+                                            Text {
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: tabItem.modelData.label
+                                                font.family: Theme.sans
+                                                font.pixelSize: 11
+                                                color: tabItem.on || tabArea.containsMouse ? Theme.bright : Theme.dim
+                                                Behavior on color { ColorAnimation { duration: Theme.fast } }
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: tabArea
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: root.setTab(tabItem.index)
+                                        }
+                                    }
                                 }
                             }
                         }
+                        }
                     }
-                }
                 }
             }
         }

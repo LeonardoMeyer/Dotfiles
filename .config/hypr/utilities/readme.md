@@ -53,11 +53,11 @@ hypr-settings.py saved wipe         # delete all saved profiles and tweaks files
 
 The live entry is one of:
 
-- `default`: no overrides
+- `default`: no overrides, but it still remembers its own wallpaper, colors and bar in `tweaks/default-look.json`
 - `variant:NAME`: `tweaks/<Style>-NAME.json`
 - `saved:NAME`: `tweaks/saved/<Style>-<variant>/NAME.json`
 
-Editing while on Default writes to the active variant's file and makes that live. The current entry is tracked in `hypr/.active-saved.json`.
+Editing a Hyprland setting while on Default writes to the active variant's file and makes that live. The current entry is tracked in `hypr/.active-saved.json`.
 
 An entry can also carry a color theme, bar, bar style and wallpaper. Changing those from the picker or the scripts records them on the live entry. `sync` also writes which bar runs (`hypr/.active-bar`, gitignored), so a fresh install starts the bar the entry names.
 
@@ -96,8 +96,10 @@ Windows stay mapped with an empty input region while closed so they open instant
 
 - **launcher** (tap `Super`): Home dial (Home/Settings/Wallpaper pinned, the rest by use, logout/reboot/poweroff need a second press), app grid ranked by use, every bash command on a wheel (`.bashrc` aliases and functions too), and keybinds parsed from `shortcuts.lua`. A trailing `-- text` on a bind in `shortcuts.lua` is used as its description. `launcher.py` gives it the desktop entry info quickshell doesn't expose and keeps the usage counts.
 - **home-screen** (`ALT+Tab`): also the notification daemon, so it's always running. Popups go bottom left and hide while the home screen is open. Other monitors get a dimmed wallpaper and a clock.
-- **music** (`ALT+Enter`): card under the bar. Follows Spotify, else whatever is playing. Never grabs the keyboard, click it first. Drag the bottom edge to resize, drag anywhere else to move, double-click to put it back. It publishes where it is so the launcher and bar can work around it.
+- **music** (`ALT+Enter`): card under the bar. Follows Spotify, else whatever is playing. Opening moves the mouse onto it, and it has the keyboard while the mouse is over it. Drag the bottom edge to resize, drag anywhere else to move, double-click to put it back. It publishes where it is so the launcher and bar can work around it.
 - **wallpaper-picker** (`ALT+W`): previews the wallpaper full screen on every monitor and recolors both bars live. Waybar only watches `style.css`, so that gets rewritten in place. Thumbnails, screen-sized copies and palettes come from `wallpaper-index.py`, which reruns when the library changes. The theme chips are on their own layer (`wallpaper-picker-tab`) so hyprglass can glass them.
+- **profiles** (`Mod+P`): a small wheel on the right edge, one card per profile entry showing its wallpaper and a window with its blur, glass, rounding, opacity, border and open animation, plus which bar it uses. Tab / Shift+Tab or scroll to pick, Enter or click to apply, Esc or clicking outside closes. The list comes from `hypr-settings.py saved preview` every time it opens.
+- **overview** (`Super+Tab`): every workspace as a big tile with live windows, plus the special workspace and open scratchpads below. Drag windows between tiles (onto New to start a workspace, onto Special to stash it), × closes a window. The save icon keeps a workspace as a custom one (each window's launch command from `/proc`, and for terminals the folder and program the shell was running, via `bar/procs.sh`, plus position and size) in `~/.local/state/overview/workspaces.json` (saving the same apps again replaces the entry), and the trash icon closes everything on it. Saved workspaces are listed at the bottom: click one to reopen it on a new workspace (or drag it onto New or Special), floating windows land where they were and tiled ones open one at a time left to right so the layout splits the same way. Reuses `bar/Workspaces.qml`, and the bar's Overview button opens it over IPC.
 - **osd**: `osd.sh` does the action and then shows it.
 - Spotify always opens through `common/spotify.sh`: its pypr scratchpad if pypr is running, a normal window otherwise.
 
@@ -108,7 +110,7 @@ Windows stay mapped with an empty input region while closed so they open instant
 - `Module.qml`: `user`, `workspaces`, `media`, `date`, `constdate`, `timer`, `clock`, `tray`, `updates`, `network`, `audio`, `battery`, `power`, and `|` for a divider. `media` and `updates` hide when empty.
 - `Island.qml`: the media/clock page, with tabs for media, a focus timer, the color picker and weather (wttr.in). The timer and weather live in the shell so every monitor shares them.
 - `Menus.qml`: network (Wi-Fi and Bluetooth), audio, power and tray menus.
-- `Workspaces.qml`: the dots, the workspace page and the `Super+Tab` overview. Hyprland is only polled while one of those is showing.
+- `Workspaces.qml`: the dots, the workspace page, and the workspace data, tiles, drag proxy and saved workspaces the overview reuses. The page works like a small overview: drag windows between tiles, × closes a window, the save and trash icons by each name save or clear that workspace, and saved workspaces are listed below (click or drag onto New to open, trash to delete). Hyprland is only polled while something is showing. pypr scratchpads (by class from `pypr/config.toml`) are left off the tiles.
 
 A style is `quickshellbar/<name>/config.json` (`hypr/.quickshell-bar` names the active one): `left`/`center`/`right` modules (only `center` gives one big pill), `strip` (a full-width strip the cards grow out of), `background`, `attached` (pills hang from the top edge), `height`, `gap` and `shape` (`round`, `capsule`, `square`).
 

@@ -650,7 +650,11 @@ Every screenshot below is shown three times, once for each of my saved profiles:
 
 `Alt+Enter` - Music Player
 
+`Mod+P` - Profile Switcher
+
 `Alt+A` - Toggle Bar
+
+`Mod+Tab` - Workspace Overview
 
 > [!NOTE]
 > This isnt every Keybind. Just some highlighted ones.

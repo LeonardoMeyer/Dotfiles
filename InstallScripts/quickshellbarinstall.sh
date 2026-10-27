@@ -1,5 +1,5 @@
 #!/bin/bash
-# installs just the quickshell bar to ~/.config/quickshell/dotfiles-bar (run with qs -c dotfiles-bar)
+# installs only the bar to ~/.config/quickshell/dotfiles-bar
 
 set -euo pipefail
 
@@ -21,12 +21,11 @@ STYLE_FILE=""
 PACKAGES=(
     quickshell otf-codenewroman-nerd networkmanager bluez bluez-utils blueman
     pipewire pipewire-pulse wireplumber pavucontrol cava curl jq wl-clipboard
-    libnotify pacman-contrib kitty hyprpicker
+    libnotify pacman-contrib kitty hyprpicker grim slurp wf-recorder
+    brightnessctl ffmpeg
 )
-# AUR only, optional
 AUR_PACKAGES=(python-pywal16)
 
-# packages
 
 install_packages() {
     local helper=""
@@ -43,7 +42,6 @@ install_packages() {
     fi
 }
 
-# style
 
 select_style() {
     section "Quickshell Bar Style"
@@ -69,7 +67,6 @@ select_style() {
     success "Selected $(basename "$(dirname "$STYLE_FILE")")"
 }
 
-# config
 
 install_config() {
     section "Installing the Quickshell Bar"
@@ -83,11 +80,10 @@ install_config() {
     mkdir -p "$DEST/music" "$DEST/styles"
 
     cp "$REPO/.config/hypr/utilities/shell.qml" "$DEST/shell.qml"
-    cp -a "$UTIL/bar" "$UTIL/common" "$DEST/"
-    # the waveform reads the music player's cava.conf
+    cp -a "$UTIL/bar" "$UTIL/common" "$UTIL/overview" "$DEST/"
     cp "$UTIL/music/cava.conf" "$DEST/music/cava.conf"
     cp "$REPO/.config/waybar/scripts/colorpicker.sh" "$DEST/colorpicker.sh"
-    chmod +x "$DEST/colorpicker.sh" "$DEST/common/spotify.sh"
+    chmod +x "$DEST/colorpicker.sh" "$DEST/common/spotify.sh" "$DEST/bar/procs.sh" "$DEST/bar/capture.sh"
 
     local f
     for f in "$REPO"/.config/hypr/*/quickshellbar/*/config.json; do
@@ -105,7 +101,6 @@ ensure_palette() {
 
     if command -v wal >/dev/null && [[ -f "$wallpaper" ]]; then
         info "Generating a pywal palette from the default wallpaper."
-        # -n keeps the wallpaper, -s -t skips terminals
         wal -q -n -s -t -i "$wallpaper" || true
     fi
     if [[ -f "$json" ]]; then
@@ -160,7 +155,7 @@ Add these to your Hyprland config to start the bar at login and control it from 
 ${BOLD}~/.config/hypr/hyprland.conf${RESET}
     exec-once = qs -c $NAME
     bind = ALT, A, exec, $ipc toggle          # hide / show the bar
-    bind = SUPER, TAB, exec, $ipc overview    # workspace overview
+    bind = SUPER, TAB, exec, qs -c $NAME ipc call overview toggle    # workspace overview
     bind = SUPER, ESCAPE, exec, $ipc close    # close any open page
 
 ${BOLD}~/.config/hypr/hyprland.lua${RESET} (if you configure Hyprland in Lua)
@@ -168,13 +163,13 @@ ${BOLD}~/.config/hypr/hyprland.lua${RESET} (if you configure Hyprland in Lua)
         hl.exec_cmd("qs -c $NAME")
     end)
     hl.bind("ALT + a", hl.dsp.exec_cmd("$ipc toggle"))
-    hl.bind("SUPER + TAB", hl.dsp.exec_cmd("$ipc overview"))
+    hl.bind("SUPER + TAB", hl.dsp.exec_cmd("qs -c $NAME ipc call overview toggle"))
     hl.bind("SUPER + ESCAPE", hl.dsp.exec_cmd("$ipc close"))
 
 Then reload Hyprland (hyprctl reload). For a blurred bar, add a blur layer rule for the namespace "quickshell-bar".
 
 More IPC calls: $ipc menu network|audio|power|workspaces
-                $ipc island media|timer|color
+                $ipc island media|timer|color|capture
 Restart:  qs kill -c $NAME; qs -c $NAME --daemonize
 Style:    cp $dir/styles/<name>.json $dir/style.json   (applies live)
 Colors:   ~/.cache/wal/colors.json (run 'wal -i <image>' to recolor from a wallpaper)

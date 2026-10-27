@@ -27,10 +27,11 @@ else
     exit 1
 fi
 
+[ -f "$wallpaper" ] && printf '%s' "$wallpaper" > "$HOME/.cache/wal/wal"
+
 cat ~/.cache/wal/colors-kitty.conf > ~/.config/kitty/current-theme.conf
 pywalfox update >/dev/null 2>&1 || true
 
-# terminal cava uses the same gradient as the music player
 walc() { awk -v k="$1" 'match($0, "^" k "=\47(.*)\47", a) { print a[1] }' ~/.cache/wal/colors.sh; }
 cat > "$HOME/.config/cava/config" <<CAVA
 [general]
@@ -38,7 +39,7 @@ framerate = 60
 autosens = 1
 lower_cutoff_freq = 50
 higher_cutoff_freq = 12000
-bar_width = 2
+bar_width = 1
 bar_spacing = 1
 
 [output]
@@ -57,8 +58,7 @@ horizontal_gradient_color_5 = '$(walc color14)'
 [smoothing]
 noise_reduction = 72
 CAVA
-# USR1 reloads everything, USR2 is colors only
+# USR1 reloads everything, USR2 colors only (i think)
 pkill -USR1 cava 2>/dev/null || true
 
-# borders only update on reload
 hyprctl reload config-only >/dev/null 2>&1 || true
