@@ -1,0 +1,168 @@
+[
+  {
+    "name": "Rice 1",
+    "w": 1920,
+    "h": 1080,
+    "windows": [
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''perl'\\'' '\\''/usr/bin/asciiquarium'\\''; exec \"$SHELL\"'",
+        "app": "asciiquarium",
+        "floating": true,
+        "x": 31,
+        "y": 89,
+        "w": 644,
+        "h": 684
+      },
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''cava'\\''; exec \"$SHELL\"'",
+        "app": "cava",
+        "floating": true,
+        "x": 40,
+        "y": 864,
+        "w": 636,
+        "h": 148
+      },
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''yazi'\\''; exec \"$SHELL\"'",
+        "app": "yazi",
+        "floating": true,
+        "x": 1263,
+        "y": 73,
+        "w": 607,
+        "h": 957
+      }
+    ],
+    "renamed": true
+  },
+  {
+    "name": "youtube",
+    "w": 1080,
+    "h": 1920,
+    "windows": [
+      {
+        "cmd": "'/usr/lib/firefox/firefox' --new-window 'https://www.youtube.com/'",
+        "app": "Firefox",
+        "floating": false,
+        "x": 10,
+        "y": 57,
+        "w": 1060,
+        "h": 1853
+      }
+    ],
+    "renamed": true
+  },
+  {
+    "name": "Dev Space",
+    "renamed": true,
+    "w": 1920,
+    "h": 1080,
+    "windows": [
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\''; exec \"$SHELL\"'",
+        "app": "kitty",
+        "floating": true,
+        "x": 1438,
+        "y": 56,
+        "w": 473,
+        "h": 1015
+      },
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''nvim'\\''; exec \"$SHELL\"'",
+        "app": "nvim",
+        "floating": true,
+        "x": 10,
+        "y": 56,
+        "w": 1415,
+        "h": 1017
+      }
+    ]
+  },
+  {
+    "name": "bunch of stuff lol",
+    "renamed": true,
+    "w": 1920,
+    "h": 1080,
+    "windows": [
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''cmatrix'\\'' '\\''-ab'\\''; exec \"$SHELL\"'",
+        "app": "cmatrix",
+        "floating": true,
+        "x": 1373,
+        "y": 86,
+        "w": 514,
+        "h": 268
+      },
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''cava'\\''; exec \"$SHELL\"'",
+        "app": "cava",
+        "floating": true,
+        "x": 32,
+        "y": 865,
+        "w": 662,
+        "h": 192
+      },
+      {
+        "cmd": "'kitty' 'sh' '-c' 'cd '\\''/home/ws-73'\\'' && '\\''perl'\\'' '\\''/usr/bin/asciiquarium'\\''; exec \"$SHELL\"' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''perl'\\'' '\\''/usr/bin/asciiquarium'\\''; exec \"$SHELL\"'",
+        "app": "asciiquarium",
+        "floating": true,
+        "x": 31,
+        "y": 89,
+        "w": 662,
+        "h": 751
+      },
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''clock-rs'\\''; exec \"$SHELL\"'",
+        "app": "clock-rs",
+        "floating": true,
+        "x": 1362,
+        "y": 838,
+        "w": 523,
+        "h": 213
+      },
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''cbonsai'\\'' '\\''-li'\\'' '\\''-t'\\'' '\\''0.01'\\'' '\\''-w'\\'' '\\''0.3'\\'' '\\''-L'\\'' '\\''25'\\'' '\\''-M'\\'' '\\''5'\\''; exec \"$SHELL\"'",
+        "app": "cbonsai",
+        "floating": true,
+        "x": 1368,
+        "y": 370,
+        "w": 525,
+        "h": 452
+      },
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''genact'\\''; exec \"$SHELL\"'",
+        "app": "genact",
+        "floating": true,
+        "x": 720,
+        "y": 641,
+        "w": 606,
+        "h": 415
+      },
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''pipes-rs'\\'' '\\''-p'\\'' '\\''10'\\'' '\\''-d'\\'' '\\''20'\\'' '\\''-t'\\'' '\\''0.18'\\'' '\\''-k'\\'' '\\''heavy,curved'\\'' '\\''--bold'\\'' '\\''true'\\'' '\\''-i'\\'' '\\''true'\\'' '\\''-r'\\'' '\\''1.0'\\''; exec \"$SHELL\"'",
+        "app": "pipes-rs",
+        "floating": true,
+        "x": 718,
+        "y": 85,
+        "w": 615,
+        "h": 531
+      }
+    ]
+  },
+  {
+    "name": "Visual Studio Code",
+    "renamed": false,
+    "w": 1920,
+    "h": 1080,
+    "windows": [
+      {
+        "cmd": "'/usr/share/code/code'",
+        "app": "Visual Studio Code",
+        "floating": false,
+        "x": 0,
+        "y": 36,
+        "w": 1920,
+        "h": 1044
+      }
+    ]
+  }
+]

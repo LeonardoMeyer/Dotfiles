@@ -169,22 +169,21 @@ Item {
         Theme.dispatch("hl.dsp.focus({ workspace = " + id + " })", "workspace " + id)
     }
 
-    // saved workspaces: launch command, plus geometry when floating
+    // saved workspaces live in the repo so they show up in git: launch command, plus geometry when floating
     readonly property var saved: { try { return JSON.parse(savedFile.text()) } catch (e) { return [] } }
     FileView {
         id: savedFile
-        path: Quickshell.env("HOME") + "/.local/state/overview/workspaces.json"
+        path: Quickshell.env("HOME") + "/.config/hypr/Modern/utilities/overview/workspaces.json"
         watchChanges: true
         printErrors: false
         onFileChanged: reload()
     }
-    function write(list) { savedFile.setText(JSON.stringify(list)) }
+    function write(list) { savedFile.setText(JSON.stringify(list, null, 2)) }
     function forget(e) { write(saved.filter(s => s !== e)) }
     function rename(e, name) {
         name = name.trim()
         if (name && name !== e.name) write(saved.map(s => s === e ? Object.assign({}, s, { name: name, renamed: true }) : s))
     }
-    Component.onCompleted: Quickshell.execDetached(["mkdir", "-p", Quickshell.env("HOME") + "/.local/state/overview"])
 
     function save(id, geom) {
         const wins = windowsOn(id)
