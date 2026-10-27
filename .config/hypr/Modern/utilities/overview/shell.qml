@@ -512,24 +512,26 @@ ShellRoot {
                             add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
                             move: Transition { NumberAnimation { properties: "x,y"; duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
                             Repeater {
-                                model: ScriptModel { values: ex.saved; objectProp: "name" }
+                                // keys survive renames so the card slides to its new spot instead of popping in
+                                model: ScriptModel { values: ex.saved.map(e => e.key) }
                                 Mini {
                                     id: entry
-                                    required property var modelData
-                                    required property int index
+                                    required property string modelData
+                                    readonly property var ws: ex.byKey[modelData] ?? { name: "", windows: [] }
                                     // fit the whole layout, i think this handles other monitors
-                                    readonly property real sw: Math.max(modelData.w || 0, ...modelData.windows.map(w => w.x + w.w))
-                                    readonly property real sh: Math.max(modelData.h || 0, ...modelData.windows.map(w => w.y + w.h))
+                                    readonly property real sw: Math.max(ws.w || 0, ...ws.windows.map(w => w.x + w.w))
+                                    readonly property real sh: Math.max(ws.h || 0, ...ws.windows.map(w => w.y + w.h))
                                     readonly property real k: Math.min(150 / sw, 90 / sh)
                                     cw: sw * k
                                     ch: sh * k
-                                    label: modelData.name
-                                    dragEntry: modelData
+                                    label: ws.name
+                                    dragEntry: ws
+                                    Pop { target: entry; label: entry.label }
                                     ghost: proxy
-                                    onPicked: root.restore(modelData, ex.savedTarget(ov.activeId, ov.spaces.next), ov.geom)
-                                    onRemoved: ex.forget(modelData)
+                                    onPicked: root.restore(ws, ex.savedTarget(ov.activeId, ov.spaces.next), ov.geom)
+                                    onRemoved: ex.forget(ws)
                                     renamable: true
-                                    onRenamed: name => ex.rename(modelData, name)
+                                    onRenamed: name => ex.rename(ws, name)
                                     onClosed: keyCatcher.forceActiveFocus()
 
                                     Image {
@@ -541,7 +543,7 @@ ShellRoot {
                                         opacity: 0.6
                                     }
                                     Repeater {
-                                        model: entry.modelData.windows
+                                        model: entry.ws.windows
                                         Rectangle {
                                             required property var modelData
                                             x: modelData.x * entry.k

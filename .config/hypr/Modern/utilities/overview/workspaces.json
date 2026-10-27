@@ -35,50 +35,7 @@
     "renamed": true
   },
   {
-    "name": "youtube",
-    "w": 1080,
-    "h": 1920,
-    "windows": [
-      {
-        "cmd": "'/usr/lib/firefox/firefox' --new-window 'https://www.youtube.com/'",
-        "app": "Firefox",
-        "floating": false,
-        "x": 10,
-        "y": 57,
-        "w": 1060,
-        "h": 1853
-      }
-    ],
-    "renamed": true
-  },
-  {
-    "name": "Dev Space",
-    "renamed": true,
-    "w": 1920,
-    "h": 1080,
-    "windows": [
-      {
-        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\''; exec \"$SHELL\"'",
-        "app": "kitty",
-        "floating": true,
-        "x": 1438,
-        "y": 56,
-        "w": 473,
-        "h": 1015
-      },
-      {
-        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''nvim'\\''; exec \"$SHELL\"'",
-        "app": "nvim",
-        "floating": true,
-        "x": 10,
-        "y": 56,
-        "w": 1415,
-        "h": 1017
-      }
-    ]
-  },
-  {
-    "name": "bunch of stuff lol",
+    "name": "Rice 2 (Fun)",
     "renamed": true,
     "w": 1920,
     "h": 1080,
@@ -149,20 +106,46 @@
     ]
   },
   {
-    "name": "Visual Studio Code",
-    "renamed": false,
+    "name": "Dev Space",
+    "renamed": true,
     "w": 1920,
     "h": 1080,
     "windows": [
       {
-        "cmd": "'/usr/share/code/code'",
-        "app": "Visual Studio Code",
-        "floating": false,
-        "x": 0,
-        "y": 36,
-        "w": 1920,
-        "h": 1044
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\''; exec \"$SHELL\"'",
+        "app": "kitty",
+        "floating": true,
+        "x": 1438,
+        "y": 56,
+        "w": 473,
+        "h": 1015
+      },
+      {
+        "cmd": "'kitty' sh -c 'cd '\\''/home/ws-73'\\'' && '\\''nvim'\\''; exec \"$SHELL\"'",
+        "app": "nvim",
+        "floating": true,
+        "x": 10,
+        "y": 56,
+        "w": 1415,
+        "h": 1017
       }
     ]
+  },
+  {
+    "name": "Youtube",
+    "w": 1080,
+    "h": 1920,
+    "windows": [
+      {
+        "cmd": "'/usr/lib/firefox/firefox' --new-window 'https://www.youtube.com/'",
+        "app": "Firefox",
+        "floating": false,
+        "x": 10,
+        "y": 57,
+        "w": 1060,
+        "h": 1853
+      }
+    ],
+    "renamed": true
   }
 ]

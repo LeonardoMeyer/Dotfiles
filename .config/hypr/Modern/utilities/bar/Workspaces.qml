@@ -170,7 +170,16 @@ Item {
     }
 
     // saved workspaces live in the repo so they show up in git: launch command, plus geometry when floating
-    readonly property var saved: { try { return JSON.parse(savedFile.text()) } catch (e) { return [] } }
+    // sorted a-z. key is the window commands, it survives a rename so the row keeps its delegate and slides instead of popping in
+    function keyOf(windows) { return windows.map(w => w.cmd).sort().join("\n") }
+    readonly property var saved: {
+        try {
+            return JSON.parse(savedFile.text()).map(e => Object.assign(e, { key: keyOf(e.windows) }))
+                .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }))
+        } catch (e) { return [] }
+    }
+    // qt's js engine has no Object.fromEntries, that one cooked everything
+    readonly property var byKey: { const m = {}; for (const e of saved) m[e.key] = e; return m }
     FileView {
         id: savedFile
         path: Quickshell.env("HOME") + "/.config/hypr/Modern/utilities/overview/workspaces.json"
@@ -178,11 +187,11 @@ Item {
         printErrors: false
         onFileChanged: reload()
     }
-    function write(list) { savedFile.setText(JSON.stringify(list, null, 2)) }
-    function forget(e) { write(saved.filter(s => s !== e)) }
+    function write(list) { savedFile.setText(JSON.stringify(list, (k, v) => k === "key" ? undefined : v, 2)) }
+    function forget(e) { write(saved.filter(s => s.key !== e.key)) }
     function rename(e, name) {
         name = name.trim()
-        if (name && name !== e.name) write(saved.map(s => s === e ? Object.assign({}, s, { name: name, renamed: true }) : s))
+        if (name && name !== e.name) write(saved.map(s => s.key === e.key ? Object.assign({}, s, { name: name, renamed: true }) : s))
     }
 
     function save(id, geom) {
@@ -240,8 +249,8 @@ Item {
                     }
                     return { cmd: cmd, app: app, floating: o.floating, x: o.at[0] - g.x, y: o.at[1] - g.y, w: o.size[0], h: o.size[1] }
                 }).filter(w => w.cmd)
-                const key = windows.map(w => w.cmd).sort().join("\n")
-                const old = ex.saved.find(e => e.windows.map(w => w.cmd).sort().join("\n") === key)
+                const key = ex.keyOf(windows)
+                const old = ex.saved.find(e => e.key === key)
                 const name = old && old.renamed ? old.name : [...new Set(windows.map(w => w.app))].join(" · ")
                 if (windows.length) ex.write(ex.saved.filter(e => e !== old)
                     .concat([{ name: name, renamed: !!(old && old.renamed), w: g.w, h: g.h, windows: windows }]))
@@ -803,14 +812,21 @@ Item {
         Menus.Group {
             title: "Saved"
             visible: page.expose.saved.length > 0
+            Column {
+                width: parent.width
+                spacing: 2
+                move: Transition { NumberAnimation { property: "y"; duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
             Repeater {
-                model: page.expose.saved
+                // model is just the keys so rows stay put through renames, the entry gets looked up fresh
+                model: ScriptModel { values: page.expose.saved.map(e => e.key) }
                 Menus.Entry {
                     id: savedRow
-                    required property var modelData
+                    required property string modelData
+                    readonly property var entry: page.expose.byKey[modelData] ?? { name: "", windows: [] }
                     glyph: "\uf0c7"
-                    label: modelData.name
-                    sub: modelData.windows.length + (modelData.windows.length > 1 ? " windows" : " window")
+                    label: entry.name
+                    sub: entry.windows.length + (entry.windows.length > 1 ? " windows" : " window")
+                    Pop { target: savedRow; label: savedRow.label }
                     // no hover here, i think the row stops lighting up otherwise
                     MouseArea {
                         anchors.fill: parent
@@ -818,9 +834,9 @@ Item {
                         preventStealing: true
                         drag.target: proxy
                         drag.threshold: 6
-                        onPressed: mouse => proxy.start(savedRow, null, savedRow.modelData, mouse.x, mouse.y)
+                        onPressed: mouse => proxy.start(savedRow, null, savedRow.entry, mouse.x, mouse.y)
                         drag.onActiveChanged: drag.active ? proxy.dragging = true : proxy.end()
-                        onClicked: { page.picked(); page.expose.restore(savedRow.modelData, page.expose.savedTarget(page.activeId, page.spaces.next), page.geom) }
+                        onClicked: { page.picked(); page.expose.restore(savedRow.entry, page.expose.savedTarget(page.activeId, page.spaces.next), page.geom) }
                     }
                     Row {
                         anchors.right: parent.right
@@ -851,7 +867,7 @@ Item {
                                 anchors.fill: parent
                                 anchors.margins: -6
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: page.expose.forget(savedRow.modelData)
+                                onClicked: page.expose.forget(savedRow.entry)
                             }
                         }
                     }
@@ -862,7 +878,7 @@ Item {
                         color: Theme.alpha(Theme.bg, 0.95)
                         border.width: 1
                         border.color: Theme.alpha(Theme.accent, 0.6)
-                        onVisibleChanged: if (visible) { field.text = savedRow.modelData.name; field.selectAll(); field.forceActiveFocus() }
+                        onVisibleChanged: if (visible) { field.text = savedRow.entry.name; field.selectAll(); field.forceActiveFocus() }
                         MouseArea { anchors.fill: parent }
                         TextInput {
                             id: field
@@ -875,12 +891,13 @@ Item {
                             color: Theme.bright
                             selectionColor: Theme.alpha(Theme.accent, 0.5)
                             clip: true
-                            onAccepted: { const e = savedRow.modelData, t = text; page.renaming = null; page.expose.rename(e, t) }
+                            onAccepted: { const e = savedRow.entry, t = text; page.renaming = null; page.expose.rename(e, t) }
                             Keys.onEscapePressed: page.renaming = null
                             onActiveFocusChanged: if (!activeFocus && page.renaming === savedRow.modelData) page.renaming = null
                         }
                     }
                 }
+            }
             }
         }
 
