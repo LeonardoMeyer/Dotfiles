@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "hex.sistema",
+  "name": "Sistema",
+  "version": "0.1.0",
+  "author": "Hex",
+  "license": "MIT",
+  "description": "Monitor de CPU, GPU, RAM e disco, atualizações (pacman, AUR, Flatpak) e limpeza guiada.",
+  "kinds": ["bar-widget"],
+  "entryPoints": { "barWidget": "BarWidget.qml" }
+}

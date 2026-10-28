@@ -1,0 +1,96 @@
+#!/bin/bash
+# hex-sistema-limpar: limpeza guiada. Cada passo mostra o tamanho e só
+# apaga se você responder "s". Enter sozinho pula (o padrão é NÃO).
+set -uo pipefail
+
+B=$'\e[1m'; D=$'\e[2m'; G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[0m'
+
+tam() { local t; t=$(du -sch "$@" 2>/dev/null | tail -1 | cut -f1); echo "${t:-0}"; }
+pergunta() { local r; read -rp "$1 [s/N] " r; [[ "${r,,}" == s* ]]; }
+passo() { echo; echo "${B}== $1 ==${R}"; }
+
+echo "${B}Limpeza do sistema${R}  ${D}(Enter pula qualquer passo)${R}"
+
+# 1. Pacotes antigos do pacman: mantém as 2 últimas versões de cada um
+if command -v paccache >/dev/null; then
+    passo "Cache do pacman ($(tam /var/cache/pacman/pkg))"
+    echo "Mantém as 2 versões mais recentes de cada pacote (para poder voltar atrás)"
+    echo "e apaga todas as versões de pacotes que você já desinstalou."
+    paccache -dk2 2>/dev/null | tail -1
+    if pergunta "Limpar?"; then
+        sudo paccache -rk2 && sudo paccache -ruk0
+    fi
+fi
+
+# 2. Pastas de compilação do yay (baixa de novo quando precisar)
+if [ -d "$HOME/.cache/yay" ]; then
+    passo "Compilações do AUR em ~/.cache/yay ($(tam "$HOME/.cache/yay"))"
+    echo "São só os arquivos usados para compilar; os programas instalados não são afetados."
+    if pergunta "Limpar?"; then
+        find "$HOME/.cache/yay" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+        echo "${G}ok${R}"
+    fi
+fi
+
+# 3. Pacotes órfãos (instalados como dependência e que ninguém usa mais)
+orfaos=$(pacman -Qdtq 2>/dev/null)
+if [ -n "$orfaos" ]; then
+    passo "Pacotes órfãos ($(echo "$orfaos" | wc -l))"
+    echo "$orfaos" | column -c "${COLUMNS:-80}"
+    echo "${Y}Confira a lista: se reconhecer algo que usa, responda N e me avise.${R}"
+    if pergunta "Remover?"; then
+        # shellcheck disable=SC2086
+        sudo pacman -Rns $orfaos
+    fi
+fi
+
+# 4. Flatpak: runtimes que nenhum app usa
+if command -v flatpak >/dev/null; then
+    passo "Runtimes do Flatpak sem uso"
+    if pergunta "Verificar e remover?"; then
+        flatpak uninstall --unused
+    fi
+fi
+
+# 5. Logs do sistema: mantém as últimas 2 semanas
+passo "Logs do systemd ($(journalctl --disk-usage 2>/dev/null | grep -oE '[0-9.]+[BKMGT]' | head -1))"
+if pergunta "Manter só as últimas 2 semanas?"; then
+    sudo journalctl --vacuum-time=2weeks
+fi
+
+# 6. Lixeira
+if [ -d "$HOME/.local/share/Trash" ]; then
+    passo "Lixeira ($(tam "$HOME/.local/share/Trash"))"
+    if pergunta "Esvaziar?"; then
+        rm -rf "$HOME/.local/share/Trash/files/"* "$HOME/.local/share/Trash/info/"* 2>/dev/null
+        echo "${G}ok${R}"
+    fi
+fi
+
+# 7. Cache de cada aplicativo, um por um.
+# Ficam de fora as pastas que o próprio desktop usa (cores, wallpapers, barra).
+passo "Cache dos aplicativos"
+protegidas="wal wallpaper-picker quickshell yay pip fontconfig mesa_shader_cache"
+mapfile -t pastas < <(du -s "$HOME/.cache"/* "$HOME/.cache"/.[!.]* 2>/dev/null | sort -rn | head -15 | cut -f2-)
+achou=0
+for p in "${pastas[@]}"; do
+    nome=$(basename "$p")
+    [[ " $protegidas " == *" $nome "* ]] && continue
+    achou=1
+    if pergunta "  ${nome} ($(tam "$p"))  limpar?"; then
+        rm -rf "$p"
+        echo "  ${G}ok${R}"
+    fi
+done
+[ "$achou" = 0 ] && echo "${D}nada grande para limpar${R}"
+
+# 8. Caches de desenvolvimento (npm, pip), que crescem muito
+for item in "npm:$HOME/.npm/_cacache" "pip:$HOME/.cache/pip"; do
+    nome=${item%%:*}; dir=${item#*:}
+    [ -d "$dir" ] || continue
+    passo "Cache do $nome ($(tam "$dir"))"
+    if pergunta "Limpar?"; then rm -rf "$dir"; echo "${G}ok${R}"; fi
+done
+
+echo
+echo "${G}${B}Limpeza concluída.${R}"

@@ -1,4 +1,23 @@
 [
-  { "id": "io.github.qempexe.hangman", "dir": "plugins/hangman", "barWidget": "qml/BarWidget.qml", "service": "qml/Service.qml", "settings": {} },
-  { "id": "avb7.omarchy-controller", "dir": "plugins/controller", "barWidget": "Panel.qml", "service": "", "settings": {} }
+  {
+    "id": "hex.sistema",
+    "dir": "plugins/sistema",
+    "barWidget": "BarWidget.qml",
+    "service": "",
+    "settings": {}
+  },
+  {
+    "id": "io.github.qempexe.hangman",
+    "dir": "plugins/hangman",
+    "barWidget": "qml/BarWidget.qml",
+    "service": "qml/Service.qml",
+    "settings": {}
+  },
+  {
+    "id": "avb7.omarchy-controller",
+    "dir": "plugins/controller",
+    "barWidget": "Panel.qml",
+    "service": "",
+    "settings": {}
+  }
 ]

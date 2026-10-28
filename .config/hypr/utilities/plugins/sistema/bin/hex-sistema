@@ -1,0 +1,159 @@
+#!/usr/bin/env python3
+"""hex-sistema: dados do plugin Sistema (monitor, atualizações e limpeza).
+
+  hex-sistema stats    uso de CPU, RAM, disco e temperaturas (JSON)
+  hex-sistema scan     atualizações pendentes e tamanho das sobras (JSON),
+                       também salvo em ~/.cache/hex-sistema/scan.json
+
+Só lê. Nada aqui apaga ou instala; isso fica com hex-sistema-limpar e
+com o yay, sempre num terminal onde você confirma cada passo.
+"""
+
+import fcntl
+import glob
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+
+HOME = os.path.expanduser("~")
+
+
+def read(path, default=""):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return default
+
+
+def cpu_times():
+    parts = read("/proc/stat").splitlines()[0].split()[1:]
+    nums = [int(x) for x in parts]
+    idle = nums[3] + (nums[4] if len(nums) > 4 else 0)
+    return idle, sum(nums)
+
+
+def hwmon(names):
+    """Temperatura (°C) do primeiro sensor hwmon cujo nome está em names."""
+    for d in glob.glob("/sys/class/hwmon/hwmon*"):
+        if read(d + "/name") in names:
+            # k10temp: temp1 = Tctl; coretemp: temp1 = pacote; amdgpu: temp1 = edge
+            raw = read(d + "/temp1_input")
+            if raw.isdigit():
+                return round(int(raw) / 1000)
+    return None
+
+
+def gpu_busy():
+    for p in glob.glob("/sys/class/drm/card*/device/gpu_busy_percent"):
+        v = read(p)
+        if v.isdigit():
+            return int(v)
+    return None
+
+
+def stats():
+    i1, t1 = cpu_times()
+    time.sleep(0.4)
+    i2, t2 = cpu_times()
+    cpu = 0 if t2 == t1 else round(100 * (1 - (i2 - i1) / (t2 - t1)))
+
+    mem = {}
+    for line in read("/proc/meminfo").splitlines():
+        k, v = line.split(":", 1)
+        mem[k] = int(v.split()[0]) * 1024
+    disk = shutil.disk_usage(HOME)
+
+    return {
+        "cpu": cpu,
+        "cpuTemp": hwmon({"k10temp", "coretemp", "zenpower"}),
+        "gpu": gpu_busy(),
+        "gpuTemp": hwmon({"amdgpu"}),
+        "memUsed": mem.get("MemTotal", 0) - mem.get("MemAvailable", 0),
+        "memTotal": mem.get("MemTotal", 0),
+        "diskUsed": disk.used,
+        "diskTotal": disk.total,
+    }
+
+
+def count_lines(cmd):
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=120).stdout
+        return len([l for l in out.splitlines() if l.strip()])
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+
+
+def du(path):
+    """Tamanho em bytes, sem seguir links e ignorando o que não dá para ler."""
+    total = 0
+    if not os.path.exists(path):
+        return 0
+    for root, dirs, files in os.walk(path, onerror=lambda e: None):
+        for name in files:
+            try:
+                total += os.lstat(os.path.join(root, name)).st_size
+            except OSError:
+                pass
+    return total
+
+
+def scan():
+    repo = count_lines(["checkupdates"]) if shutil.which("checkupdates") else None
+    aur = count_lines(["yay", "-Qua"]) if shutil.which("yay") else None
+    flat = None
+    if shutil.which("flatpak"):
+        flat = count_lines(["flatpak", "remote-ls", "--updates", "--columns=application"])
+    orphans = count_lines(["pacman", "-Qdtq"])
+
+    journal = 0
+    try:
+        out = subprocess.run(["journalctl", "--disk-usage"], capture_output=True, text=True, timeout=20).stdout
+        # "Archived and active journals take up 1.2G in the file system."
+        for tok in out.split():
+            if tok[:-1].replace(".", "", 1).isdigit() and tok[-1] in "BKMGT":
+                mult = {"B": 1, "K": 1 << 10, "M": 1 << 20, "G": 1 << 30, "T": 1 << 40}[tok[-1]]
+                journal = int(float(tok[:-1]) * mult)
+                break
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+    return {
+        "updates": {"repo": repo, "aur": aur, "flatpak": flat},
+        "clean": {
+            "pacman": du("/var/cache/pacman/pkg"),
+            "yay": du(HOME + "/.cache/yay"),
+            "userCache": du(HOME + "/.cache"),
+            "trash": du(HOME + "/.local/share/Trash"),
+            "journal": journal,
+            "orphans": orphans,
+        },
+        "time": int(time.time()),
+    }
+
+
+if __name__ == "__main__":
+    cmd = sys.argv[1] if len(sys.argv) > 1 else ""
+    if cmd == "stats":
+        print(json.dumps(stats()))
+    elif cmd == "scan":
+        # um scan por vez (dois monitores = dois widgets); o outro só lê o arquivo
+        cache = os.path.join(HOME, ".cache", "hex-sistema")
+        os.makedirs(cache, exist_ok=True)
+        with open(os.path.join(cache, "scan.lock"), "w") as lock:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                sys.exit(0)
+            data = json.dumps(scan())
+            tmp = os.path.join(cache, "scan.json.tmp")
+            with open(tmp, "w") as f:
+                f.write(data)
+            os.replace(tmp, os.path.join(cache, "scan.json"))
+            print(data)
+    else:
+        print(__doc__, file=sys.stderr)
+        sys.exit(2)

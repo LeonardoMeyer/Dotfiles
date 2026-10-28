@@ -81,6 +81,8 @@ hl.animation({ leaf = "layers", enabled = true, speed = 2, bezier = "snappy", st
 
 -- spotify-launcher forks so pypr can't float it. no idea why it does that
 hl.window_rule({ match = { class = "(?i)^spotify$" }, float = true })
+-- Hex: terminais abertos pelos plugins (atualizar, limpar) flutuam no centro
+hl.window_rule({ match = { class = "^floating-term$" }, float = true })
 
 hl.layer_rule({ name = "waybar-blur", match = { namespace = "waybar" }, blur = true, ignore_alpha = 0.5 })
 -- half the pill opacity or the blur halos, i think
