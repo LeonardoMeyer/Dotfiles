@@ -5,7 +5,6 @@ local mainMod = "SUPER"
 -- Hex: atalhos antigos mantidos
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("rofi -show drun"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 local function pop_out()
     local w = hl.get_active_window()
