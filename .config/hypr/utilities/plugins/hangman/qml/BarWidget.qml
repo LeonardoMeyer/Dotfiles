@@ -213,7 +213,8 @@ BarWidget {
         id: button
         anchors.fill: parent
         bar: root.bar
-        text: root.label
+        // Hex: só o ícone na barra; o nome do jogo fica na dica
+        text: "\uf12e"
         tooltipText: root.tooltip
         onPressed: function(buttonCode) {
             if (buttonCode === Qt.LeftButton) root.toggle()

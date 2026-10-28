@@ -53,7 +53,9 @@
     "dir": "plugins/konobeat",
     "barWidget": "BarWidget.qml",
     "service": "Service.qml",
-    "settings": {}
+    "settings": {
+      "labelFormat": "none"
+    }
   },
   {
     "id": "slylem0.locked-in",

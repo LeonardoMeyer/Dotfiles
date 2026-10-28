@@ -64,7 +64,7 @@ BarWidget {
     bar: root.bar
     text: root.featured
       ? root.featured.icon + "  " + Model.compactTitle(root.featured.title, 20) + " · " + root.featured.relative
-      : "󰔛  Countdown"
+      : "󰔛"  // Hex: só o ícone quando nada está fixado na barra
     dimmed: !root.notificationsEnabled
     tooltipText: root.featured
       ? root.featured.title + "\n" + root.featured.detail + (root.notificationsEnabled ? "" : "\nNotifications paused")
