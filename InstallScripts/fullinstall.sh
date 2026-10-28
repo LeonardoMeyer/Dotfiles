@@ -226,10 +226,11 @@ glass_uninstall() {
 }
 glass() {
     local choice
-    read -rp "hyprglass: (1) Install/Update (2) Uninstall [1]: " choice
-    case "${choice:-1}" in
+    read -rp "hyprglass: (1) Install/Update (2) Uninstall (3) Pular [3]: " choice
+    case "${choice:-3}" in
         1) glass_install ;;
         2) glass_uninstall ;;
+        3) warn "hyprglass pulado." ;;
         *) error "Invalid option."; return 1 ;;
     esac
 }

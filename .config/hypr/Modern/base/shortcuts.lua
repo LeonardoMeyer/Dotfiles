@@ -1,9 +1,11 @@
 local terminal = "kitty"
-local fileManager = "thunar"
+local fileManager = "dolphin"  -- Hex: dolphin como antes
 local mainMod = "SUPER"
 
-hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
-hl.bind(mainMod .. " + B", hl.dsp.window.close())
+-- Hex: atalhos antigos mantidos
+hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
+hl.bind(mainMod .. " + Q", hl.dsp.window.close())
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("rofi -show drun"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 local function pop_out()
     local w = hl.get_active_window()
@@ -31,7 +33,8 @@ local function pop_out()
 end
 hl.bind(mainMod .. " + V", pop_out)
 hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh launcher"), { release = true })
-hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh profiles"))
+hl.bind(mainMod .. " + P", hl.dsp.window.pseudo({ action = "toggle" }))
+hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh profiles"))
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- Toggle split direction
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 
@@ -69,6 +72,9 @@ hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
+hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
+hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh wallpaper"))
 hl.bind("ALT + TAB", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh home"))
 hl.bind("ALT + w", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh wallpaper"))
 hl.bind("ALT + a", hl.dsp.exec_cmd("~/.config/hypr/utilities/bar.sh toggle"))

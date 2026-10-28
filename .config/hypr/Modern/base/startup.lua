@@ -30,8 +30,13 @@ hl.on("hyprland.start", function()
 end)
 
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
-hl.env("LIBVA_DRIVER_NAME", "nvidia")
-hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+-- Hex: variáveis da NVIDIA só quando o driver da NVIDIA está carregado
+local nv = io.open("/proc/driver/nvidia/version", "r")
+if nv then
+    nv:close()
+    hl.env("LIBVA_DRIVER_NAME", "nvidia")
+    hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+end
 hl.env("XCURSOR_THEME", cursor.theme or defaults.cursor.theme)
 hl.env("XCURSOR_SIZE", tostring(cursor.size or defaults.cursor.size))
 hl.device({ name = "epic-mouse-v1", sensitivity = 0 })
