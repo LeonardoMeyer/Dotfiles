@@ -14,6 +14,9 @@
     "bar": {
       "kind": "quickshell"
     },
+    "quickshell": {
+      "style": "default"
+    },
     "wallpaper": {
       "path": "/home/$USER/wallpapers/library/nature/nat-11.jpg"
     },

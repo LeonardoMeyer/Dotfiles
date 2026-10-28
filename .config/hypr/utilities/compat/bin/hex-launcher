@@ -5,6 +5,6 @@
 f="${XDG_RUNTIME_DIR:-/tmp}/hex-launcher.t"
 now=$(date +%s%N); last=$(cat "$f" 2>/dev/null || echo 0)
 echo "$(date +%T.%N) $(( (now - last) / 1000000 ))ms" >> "${XDG_RUNTIME_DIR:-/tmp}/hex-launcher.log"
-(( now - last < 400000000 )) && exit 0
+(( now - last < 1000000000 )) && exit 0
 echo "$now" > "$f"
 exec "$HOME/.config/hypr/utilities/shells.sh" launcher
