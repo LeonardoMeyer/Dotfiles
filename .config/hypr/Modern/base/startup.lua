@@ -19,7 +19,11 @@ hl.on("hyprland.start", function()
     -- Hex: autologin + bloqueio. A primeira coisa da sessão é a tela de
     -- bloqueio do elifouts; se ela falhar (sai com erro), o hyprlock assume,
     -- para a sessão nunca ficar aberta sem senha.
-    hl.exec_cmd([[sh -c '~/.config/hypr/utilities/lock.sh || hyprlock']])
+    -- Quem entrou pelo tuigreet (depois do SUPER+M) já digitou a senha:
+    -- o greetd marca essa sessão com HEX_SKIPLOCK=1. Sem a marca, bloqueia.
+    if os.getenv("HEX_SKIPLOCK") ~= "1" then
+        hl.exec_cmd([[sh -c '~/.config/hypr/utilities/lock.sh || hyprlock']])
+    end
     if boot.enabled ~= false then
         hl.exec_cmd("BOOT_BLACK_MS=" .. (boot.black_ms or defaults.boot.black_ms) .. " qs -p ~/.config/hypr/utilities/boot --daemonize")
     end

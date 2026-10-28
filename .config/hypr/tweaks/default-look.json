@@ -10,6 +10,17 @@
       "style": "default"
     }
   },
+  "Modern/hex": {
+    "bar": {
+      "kind": "quickshell"
+    },
+    "wallpaper": {
+      "path": "/home/$USER/wallpapers/library/nature/nat-11.jpg"
+    },
+    "waybar": {
+      "style": "default"
+    }
+  },
   "Modern/laptop": {
     "bar": {
       "kind": "waybar"
