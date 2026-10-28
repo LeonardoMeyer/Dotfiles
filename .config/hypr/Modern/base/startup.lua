@@ -18,7 +18,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("~/.config/hypr/utilities/pypr.sh")
     hl.exec_cmd("pactl set-sink-mute @DEFAULT_SINK@ 0")
     hl.exec_cmd("hypridle")
-    hl.exec_cmd("sleep .5 && swww restore")
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd([[sh -c '
         command -v hyprpm >/dev/null 2>&1 || exit 0
