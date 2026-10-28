@@ -75,10 +75,12 @@ BarWidget {
     Process {
         id: scanProc
         command: [root.bin + "/hex-sistema", "scan"]
-        onExited: root.scanning = false
+        // o arquivo pode não existir antes do primeiro scan; relê ao terminar
+        onExited: { root.scanning = false; scanFile.reload() }
     }
     // o resultado do scan fica num arquivo; todos os monitores leem o mesmo
     FileView {
+        id: scanFile
         path: Quickshell.env("HOME") + "/.cache/hex-sistema/scan.json"
         watchChanges: true
         printErrors: false
@@ -185,6 +187,16 @@ BarWidget {
                 label: "Disco (home)"
                 value: root.human(root.st.diskUsed) + " / " + root.human(root.st.diskTotal)
                 frac: root.st.diskTotal ? root.st.diskUsed / root.st.diskTotal : 0
+            }
+
+            Caption { text: "Ventoinhas"; visible: (root.st.fans || []).length > 0 }
+            Repeater {
+                model: root.st.fans || []
+                delegate: Row2 {
+                    required property var modelData
+                    label: modelData.label
+                    value: modelData.rpm > 0 ? modelData.rpm + " RPM" : "parada (0 RPM)"
+                }
             }
 
             Sep {}

@@ -55,6 +55,25 @@ def gpu_busy():
     return None
 
 
+def fans():
+    """Ventoinhas girando agora: placa-mãe (nct668x) e placa de vídeo (amdgpu)."""
+    out = []
+    for d in sorted(glob.glob("/sys/class/hwmon/hwmon*")):
+        name = read(d + "/name")
+        if name.startswith("nct668"):
+            # nas MSI o fan1 é o conector CPU_FAN
+            for f in sorted(glob.glob(d + "/fan*_input"), key=lambda x: int(x.split("fan")[-1].split("_")[0])):
+                n = f.split("/fan")[-1].split("_")[0]
+                rpm = read(f)
+                if rpm.isdigit() and int(rpm) > 0:
+                    out.append({"label": "CPU" if n == "1" else "Gabinete " + n, "rpm": int(rpm)})
+        elif name == "amdgpu":
+            rpm = read(d + "/fan1_input")
+            if rpm.isdigit():
+                out.append({"label": "GPU", "rpm": int(rpm)})
+    return out
+
+
 def stats():
     i1, t1 = cpu_times()
     time.sleep(0.4)
@@ -76,6 +95,7 @@ def stats():
         "memTotal": mem.get("MemTotal", 0),
         "diskUsed": disk.used,
         "diskTotal": disk.total,
+        "fans": fans(),
     }
 
 
