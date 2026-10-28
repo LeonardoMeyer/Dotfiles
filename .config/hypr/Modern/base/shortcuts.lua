@@ -32,7 +32,7 @@ local function pop_out()
     hl.dispatch(hl.dsp.window.center({ window = target }))
 end
 hl.bind(mainMod .. " + V", pop_out)
-hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh launcher"), { release = true })
+hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("~/.config/hypr/utilities/compat/bin/hex-launcher"), { release = true })
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo({ action = "toggle" }))
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("~/.config/hypr/utilities/shells.sh profiles"))
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- Toggle split direction

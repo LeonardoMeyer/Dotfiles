@@ -199,7 +199,16 @@ Item {
     publicIpProcess.running = true
   }
 
+  // Hex: sem o tailscale instalado, não consulta (evita um aviso a cada poucos segundos)
+  property bool hasTailscale: false
+  Process {
+    running: true
+    command: ["sh", "-c", "command -v tailscale"]
+    onExited: function(code) { root.hasTailscale = code === 0; if (code !== 0) root.tailscaleLine = "não instalado" }
+  }
+
   function refreshTailscale() {
+    if (!root.hasTailscale) return
     if (tailscaleProcess.running) return
     tailscaleProcess.running = true
   }
