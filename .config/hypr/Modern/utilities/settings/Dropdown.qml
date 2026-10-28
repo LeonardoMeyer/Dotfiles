@@ -22,23 +22,20 @@ Item {
     implicitHeight: headH + list.height
 
     Item {
-        id: head
         width: parent.width
         height: dd.headH
 
-        Text {
+        Label {
             anchors.left: parent.left
             anchors.leftMargin: Theme.pad
             anchors.verticalCenter: parent.verticalCenter
             text: dd.label
-            font.family: Theme.sans
             font.pixelSize: 13
             color: headArea.containsMouse ? Theme.bright : Theme.fg
             Behavior on color { ColorAnimation { duration: Theme.fast } }
         }
 
         Rectangle {
-            id: pill
             anchors.right: parent.right
             anchors.rightMargin: Theme.pad
             anchors.verticalCenter: parent.verticalCenter
@@ -63,18 +60,16 @@ Item {
                     }
                 }
 
-                Text {
+                Label {
                     anchors.verticalCenter: parent.verticalCenter
                     text: dd.selected ? dd.selected.l : "-"
-                    font.family: Theme.sans
                     font.pixelSize: 12
                     color: Theme.bright
                 }
 
-                Text {
+                Label {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "\uf078"
-                    font.family: Theme.sans
                     font.pixelSize: 9
                     color: Theme.fg
                     rotation: dd.open ? 180 : 0
@@ -83,11 +78,9 @@ Item {
             }
         }
 
-        MouseArea {
+        Hover {
             id: headArea
             anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
             onClicked: dd.open = !dd.open
         }
     }
@@ -152,10 +145,9 @@ Item {
                             }
                         }
 
-                        Text {
+                        Label {
                             anchors.verticalCenter: parent.verticalCenter
                             text: modelData.l
-                            font.family: Theme.sans
                             font.pixelSize: 13
                             color: on || rowArea.containsMouse ? Theme.bright : Theme.fg
                         }
@@ -176,22 +168,19 @@ Item {
                         Behavior on opacity { NumberAnimation { duration: Theme.fast } }
                     }
 
-                    Text {
+                    Label {
                         visible: on
                         anchors.right: parent.right
                         anchors.rightMargin: 12
                         y: (dd.rowH - height) / 2
                         text: "\uf00c"
-                        font.family: Theme.sans
                         font.pixelSize: 11
                         color: Theme.accent
                     }
 
-                    MouseArea {
+                    Hover {
                         id: rowArea
                         anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
                         onClicked: { dd.picked(modelData.v); dd.open = false }
                     }
                 }

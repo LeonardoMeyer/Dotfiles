@@ -28,12 +28,11 @@ Item {
         onPicked: v => pick.picked(v)
     }
 
-    Text {
+    Label {
         visible: !pick.many
         x: Theme.pad
         y: pick.inline ? (pick.height - height) / 2 : 12
         text: pick.label
-        font.family: Theme.sans
         font.pixelSize: 13
         color: Theme.fg
     }

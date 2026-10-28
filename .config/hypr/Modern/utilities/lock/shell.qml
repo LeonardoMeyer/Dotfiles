@@ -2,16 +2,17 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import "../common"
 
 ShellRoot {
     id: root
 
-    // last frame of each monitor, to fade from
+    // last frame of each monitor to fade from. lock.sh grabs them while qs starts so we don't wait
     property bool captured: false
+    property bool released: false
     Process {
-        running: true
-        command: ["sh", "-c", 'mkdir -p "$0" && for o in "$@"; do grim -t ppm -o "$o" "$0/$o.ppm" & done; wait',
-            Lock.shots].concat(Quickshell.screens.map(s => s.name))
+        running: !root.captured
+        command: ["sh", "-c", 'until [ -e "$0/.done" ]; do sleep 0.005; done', Lock.shots]
         onExited: root.captured = true
     }
     // don't wait on grim for long
@@ -20,7 +21,7 @@ ShellRoot {
     WlSessionLock {
         id: lock
         locked: root.captured && !Lock.preview
-        onSecureChanged: if (secure) startTimer.restart()
+        onSecureChanged: if (secure) Lock.enter()
 
         // transparent, opaque surfaces get a low precision format and the blur bands
         WlSessionLockSurface {
@@ -32,12 +33,15 @@ ShellRoot {
         }
     }
 
-    // handoff layers sit under the lock so unlocking is seamless
+    // handoff layers sit under the lock so unlocking doesn't just cut to the desktop.
+    // hidden on unlock and hyprland fades them out (lock-handoff rule in style.lua).
+    // made after the lock is up, making them at the same time added like 60ms
     Variants {
-        model: !Lock.preview && root.captured ? Quickshell.screens : []
+        model: !Lock.preview && (Lock.t === 1 || Lock.leaving) ? Quickshell.screens : []
         PanelWindow {
             required property var modelData
             screen: modelData
+            visible: !root.released
             anchors { top: true; bottom: true; left: true; right: true }
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
@@ -48,9 +52,7 @@ ShellRoot {
 
             Backdrop {
                 anchors.fill: parent
-                visible: Lock.handoff
-                amount: Lock.fade
-                opacity: Lock.fade
+                source: Lock.wallpaper
             }
         }
     }
@@ -75,7 +77,7 @@ ShellRoot {
 
     Connections {
         target: Lock
-        function onUnlock() { lock.locked = false }
+        function onUnlock() { lock.locked = false; root.released = true }
         function onFinish() { Qt.quit() }
     }
 }

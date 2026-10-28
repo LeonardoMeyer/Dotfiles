@@ -1,7 +1,6 @@
 import QtQuick
 
 Dropdown {
-    id: control
 
     property var def
 

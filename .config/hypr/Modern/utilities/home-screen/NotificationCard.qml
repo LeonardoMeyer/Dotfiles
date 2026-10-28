@@ -44,12 +44,11 @@ Item {
     }
 
     Rectangle {
-        id: bg
         anchors.fill: parent
         radius: card.shell.rounding
         color: card.popup ? shell.popupBg : (area.containsMouse ? "#26ffffff" : "#14ffffff")
         border.width: card.popup || card.critical ? 1 : 0
-        border.color: card.critical ? "#b3ff6b6b" : Qt.alpha(shell.accent, 0.4)
+        border.color: card.critical ? "#b3ff6b6b" : Qt.alpha(Theme.accent, 0.4)
         Behavior on color { ColorAnimation { duration: Theme.ms(150) } }
         layer.enabled: card.popup
         layer.effect: MultiEffect {
@@ -74,7 +73,6 @@ Item {
     }
 
     ClippingRectangle {
-        id: iconBox
         x: card.pad
         y: card.pad
         width: card.iconSize
@@ -92,13 +90,12 @@ Item {
             fillMode: card.n.image !== "" ? Image.PreserveAspectCrop : Image.PreserveAspectFit
             asynchronous: true
         }
-        Text {
+        Label {
             anchors.centerIn: parent
             visible: card.iconSrc === ""
             text: card.critical ? "\uf071" : "\uf0f3"
-            font.family: shell.sans
             font.pixelSize: card.iconSize * 0.45
-            color: card.critical ? "#ff6b6b" : shell.accent
+            color: card.critical ? "#ff6b6b" : Theme.accent
         }
     }
 
@@ -109,16 +106,15 @@ Item {
         width: card.width - x - card.pad - 14 * card.u
         spacing: 3 * card.u
 
-        Text {
+        Label {
             width: parent.width
             text: card.n.summary
             elide: Text.ElideRight
-            font.family: shell.sans
             font.pixelSize: (card.popup ? 14 : 13) * card.u
             font.weight: Font.DemiBold
             color: "#ffffff"
         }
-        Text {
+        Label {
             width: parent.width
             visible: text !== ""
             text: card.n.body
@@ -126,15 +122,13 @@ Item {
             wrapMode: Text.Wrap
             maximumLineCount: card.expanded ? 14 : (card.popup ? 3 : 2)
             elide: Text.ElideRight
-            font.family: shell.sans
             font.pixelSize: (card.popup ? 12.5 : 12) * card.u
             color: "#cfffffff"
         }
-        Text {
+        Label {
             width: parent.width
             text: (card.n.appName !== "" ? card.n.appName + "  ·  " : "") + shell.ago(card.n)
             elide: Text.ElideRight
-            font.family: shell.sans
             font.pixelSize: 10.5 * card.u
             color: "#66ffffff"
         }
@@ -158,11 +152,10 @@ Item {
                         color: actArea.containsMouse ? "#40ffffff" : "#26ffffff"
                         Behavior on color { ColorAnimation { duration: Theme.ms(150) } }
                     }
-                    Text {
+                    Label {
                         id: actLabel
                         anchors.centerIn: parent
                         text: act.modelData.text
-                        font.family: shell.sans
                         font.pixelSize: 11 * card.u
                         color: "#ffffff"
                     }
@@ -187,16 +180,15 @@ Item {
         width: (card.width - card.pad * 2) * card.progress
         height: 2 * card.u
         radius: height / 2
-        color: card.critical ? "#ff6b6b" : shell.accent
+        color: card.critical ? "#ff6b6b" : Theme.accent
         opacity: 0.8
     }
 
-    Text {
+    Label {
         x: card.width - card.pad - width + 2 * card.u
         y: card.pad - 2 * card.u
         text: "\uf00d"
         opacity: card.hovered ? 1 : 0
-        font.family: shell.sans
         font.pixelSize: 13 * card.u
         color: closeArea.containsMouse ? "#ffffff" : "#99ffffff"
         Behavior on opacity { NumberAnimation { duration: Theme.ms(150) } }

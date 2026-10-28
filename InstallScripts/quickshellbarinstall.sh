@@ -20,11 +20,11 @@ STYLE_FILE=""
 
 PACKAGES=(
     quickshell otf-codenewroman-nerd networkmanager bluez bluez-utils blueman
-    pipewire pipewire-pulse wireplumber pavucontrol cava curl jq wl-clipboard
+    pipewire pipewire-pulse wireplumber pavucontrol cava jq wl-clipboard
     libnotify pacman-contrib kitty hyprpicker grim slurp wf-recorder
-    brightnessctl ffmpeg
+    brightnessctl ffmpeg python avahi xdg-desktop-portal-hyprland playerctl imagemagick
 )
-AUR_PACKAGES=(python-pywal16)
+AUR_PACKAGES=(python-pywal16 gnome-network-displays)
 
 
 install_packages() {
@@ -114,9 +114,10 @@ enable_services() {
     command -v systemctl >/dev/null || return 0
     local unit choice
 
-    for unit in NetworkManager bluetooth; do
+    # avahi is how the cast button finds tvs
+    for unit in NetworkManager bluetooth avahi-daemon; do
         systemctl is-enabled --quiet "$unit" 2>/dev/null && continue
-        read -rp "Enable the $unit service (used by the bar's network page)? (Y/n): " choice
+        read -rp "Enable the $unit service (used by the bar)? (Y/n): " choice
         if [[ "${choice:-y}" =~ ^[Yy]$ ]]; then
             sudo systemctl enable --now "$unit" || warn "Could not enable $unit; run 'sudo systemctl enable --now $unit'."
         fi

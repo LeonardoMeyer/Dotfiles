@@ -1,6 +1,6 @@
 {
     "left": [],
-    "center": ["user", "workspaces", "media", "date", "timer", "clock", "battery", "updates", "network", "audio", "power", "|", "tray"],
+    "center": ["user", "workspaces", "media", "date", "timer", "clock", "updates", "network", "audio", "power", "|", "tray"],
     "right": [],
     "strip": false,
     "background": true,

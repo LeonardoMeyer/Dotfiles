@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 Item {
     id: d
@@ -14,12 +15,11 @@ Item {
 
     TextMetrics { id: cell; font: label.font; text: "0" }
 
-    Text {
+    Label {
         id: label
         anchors.horizontalCenter: parent.horizontalCenter
         y: 0
         text: d.cur
-        font.family: Lock.sans
         font.pixelSize: d.size
         font.weight: d.weight
         color: d.color
@@ -30,13 +30,13 @@ Item {
     SequentialAnimation {
         id: flip
         ParallelAnimation {
-            NumberAnimation { target: label; property: "y"; to: -d.size * 0.22; duration: 180; easing.type: Easing.InCubic }
-            NumberAnimation { target: label; property: "opacity"; to: 0; duration: 180 }
+            NumberAnimation { target: label; property: "y"; to: -d.size * 0.22; duration: Theme.ms(180); easing.type: Easing.InCubic }
+            NumberAnimation { target: label; property: "opacity"; to: 0; duration: Theme.ms(180) }
         }
         ScriptAction { script: { d.cur = d.value; label.y = d.size * 0.22 } }
         ParallelAnimation {
-            NumberAnimation { target: label; property: "y"; to: 0; duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: Lock.settle }
-            NumberAnimation { target: label; property: "opacity"; to: 1; duration: 300 }
+            Settle { target: label; property: "y"; to: 0; duration: Theme.ms(420) }
+            NumberAnimation { target: label; property: "opacity"; to: 1; duration: Theme.ms(300) }
         }
     }
 }

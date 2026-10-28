@@ -19,22 +19,20 @@ Item {
     implicitHeight: 58
     opacity: ready ? 1 : 0.35
 
-    Text {
+    Label {
         x: Theme.pad
         y: 10
         text: control.def.label
-        font.family: Theme.sans
         font.pixelSize: 13
         color: control.hot ? Theme.bright : Theme.fg
         Behavior on color { ColorAnimation { duration: Theme.fast } }
     }
 
-    Text {
+    Label {
         anchors.right: parent.right
         anchors.rightMargin: Theme.pad
         y: 10
         text: Number(control.shown).toFixed(control.decimals) + control.def.unit
-        font.family: Theme.sans
         font.pixelSize: 13
         color: Theme.accent
     }

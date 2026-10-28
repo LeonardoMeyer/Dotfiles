@@ -5,7 +5,6 @@ import Quickshell.Bluetooth
 import Quickshell.Networking
 import Quickshell.Services.Pipewire
 import Quickshell.Services.SystemTray
-import Quickshell.Services.UPower
 import "../common"
 import Quickshell.Io
 
@@ -46,11 +45,11 @@ Item {
         id: loader
         anchors.verticalCenter: parent.verticalCenter
         sourceComponent: ({ user: userC, workspaces: workspacesC, media: mediaC, date: dateC, constdate: constdateC, timer: timerC, clock: clockC,
-            tray: trayC, updates: updatesC, network: networkC, audio: audioC, battery: batteryC, power: powerC,
+            tray: trayC, updates: updatesC, network: networkC, audio: audioC, power: powerC,
             "|": dividerC })[mod.name] ?? null
     }
 
-    component Label: Text {
+    component ChipText: Text {
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined
         font.family: Theme.sans
         font.pixelSize: 12
@@ -111,7 +110,7 @@ Item {
                         }
                     }
 
-                    Label {
+                    ChipText {
                         id: title
                         // shrinks first when space runs out
                         property real fit: 170
@@ -142,7 +141,7 @@ Item {
             Item {
                 implicitWidth: dateText.implicitWidth + 20
                 implicitHeight: mod.pill.pillH
-                Label {
+                ChipText {
                     id: dateText
                     x: 10
                     text: Qt.formatDate(mod.ctx.now, "ddd, MMM d")
@@ -157,7 +156,7 @@ Item {
             Item {
                 implicitWidth: dateText.implicitWidth + 20
                 implicitHeight: mod.pill.pillH
-                Label {
+                ChipText {
                     id: dateText
                     x: 10
                     text: Qt.formatDate(mod.ctx.now, "ddd, MMM d")
@@ -181,11 +180,10 @@ Item {
                     width: timerText.implicitWidth + 14
                     radius: Math.min(Theme.rounding, height / 2)
                     color: Theme.alpha(Theme.accent, mod.ctx.timer.running ? 0.3 : 0.14)
-                    Text {
+                    Label {
                         id: timerText
                         anchors.centerIn: parent
                         text: "󰔛 " + mod.ctx.timer.format(mod.ctx.timer.remaining)
-                        font.family: Theme.sans
                         font.pixelSize: 11
                         color: Theme.bright
                     }
@@ -199,11 +197,10 @@ Item {
         Item {
             implicitWidth: clockText.implicitWidth + 20
             implicitHeight: mod.pill.pillH
-            Text {
+            Label {
                 id: clockText
                 anchors.centerIn: parent
                 text: Qt.formatTime(mod.ctx.now, "h:mm AP")
-                font.family: Theme.sans
                 font.pixelSize: 13
                 font.bold: true
                 color: Theme.bright
@@ -220,7 +217,6 @@ Item {
                 model: SystemTray.items
 
                 Chip {
-                    id: trayChip
                     required property SystemTrayItem modelData
                     pill: mod.pill
                     page: modelData.hasMenu ? "tray" : ""
@@ -298,42 +294,75 @@ Item {
     Component {
         id: audioC
         Chip {
+            id: vol
             readonly property var sink: Pipewire.defaultAudioSink
             readonly property real volume: sink && sink.audio ? sink.audio.volume : 0
+            readonly property real level: Math.min(1, volume)
             readonly property bool muted: !!sink && !!sink.audio && sink.audio.muted
             PwObjectTracker { objects: [Pipewire.defaultAudioSink] }
+
+            function set(v) { if (sink && sink.audio) { sink.audio.volume = Math.max(0, Math.min(1, v)); if (v > 0) sink.audio.muted = false } }
 
             pill: mod.pill
             page: "audio"
             visible: !!sink
-            faded: muted
             glyph: muted ? "󰝟" : volume > 0.66 ? "󰕾" : volume > 0.33 ? "󰖀" : "󰕿"
-            text: Math.round(volume * 100) + "%"
-            widest: "100%"
+            glyphColor: muted ? Theme.dim : lit ? Theme.accent : Theme.along(Theme.spectrum, level)
+            scrub: track
+            onScrubbed: f => set(f)
             onClicked: b => {
                 if (b === Qt.MiddleButton) { if (sink && sink.audio) sink.audio.muted = !muted }
                 else if (b === Qt.RightButton) mod.ctx.run("pavucontrol")
             }
-            onWheel: dir => { if (sink && sink.audio) sink.audio.volume = Math.max(0, Math.min(1, volume + dir * 0.05)) }
-        }
-    }
+            onWheel: dir => set(Math.round((volume + dir * 0.02) * 50) / 50)
 
-    Component {
-        id: batteryC
-        Fold {
-            id: bat
-            readonly property var dev: UPower.displayDevice
-            readonly property bool present: !!dev && dev.isLaptopBattery && dev.isPresent
-            readonly property real charge: present ? (dev.percentage > 1 ? dev.percentage / 100 : dev.percentage) : 0
-            readonly property bool charging: present && (dev.state === UPowerDeviceState.Charging || dev.state === UPowerDeviceState.FullyCharged)
-            on: present
+            // the fill just uncovers the gradient so the colors don't squish
+            Item {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 46
+                height: 14
 
-            Chip {
-                pill: mod.pill
-                glyph: bat.charging ? "󰂄" : ["󰁻", "󰁼", "󰁾", "󰂀", "󰂂", "󰁹"][Math.min(5, Math.floor(bat.charge * 6))]
-                glyphColor: !bat.charging && bat.charge < 0.2 ? Theme.warn : Theme.bright
-                text: Math.round(bat.charge * 100) + "%"
-                widest: "100%"
+                Rectangle {
+                    id: track
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width
+                    height: vol.hot ? 6 : 4
+                    radius: height / 2
+                    color: Theme.alpha(Theme.fg, 0.16)
+                    Behavior on height { NumberAnimation { duration: Theme.fast; easing.type: Easing.OutCubic } }
+
+                    ClippingRectangle {
+                        width: Math.max(parent.height, parent.width * vol.level)
+                        height: parent.height
+                        radius: parent.radius
+                        color: "transparent"
+                        opacity: vol.muted ? 0.35 : 1
+                        Behavior on width { NumberAnimation { duration: vol.scrubbing ? 0 : Theme.fast; easing.type: Easing.OutCubic } }
+                        Behavior on opacity { NumberAnimation { duration: Theme.fast } }
+
+                        Rectangle {
+                            width: track.width
+                            height: parent.height
+                            gradient: Gradient {
+                                orientation: Gradient.Horizontal
+                                GradientStop { position: 0; color: Theme.spectrum[0] }
+                                GradientStop { position: 0.5; color: Theme.spectrum[Math.floor(Theme.spectrum.length / 2)] }
+                                GradientStop { position: 1; color: Theme.spectrum[Theme.spectrum.length - 1] }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    x: Math.max(0, Math.min(parent.width - width, parent.width * vol.level - width / 2))
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 10
+                    height: 10
+                    radius: 5
+                    color: Theme.bright
+                    scale: vol.hot ? 1 : 0
+                    Behavior on scale { NumberAnimation { duration: Theme.ms(160); easing.type: Easing.OutBack } }
+                }
             }
         }
     }
@@ -341,10 +370,11 @@ Item {
     Component {
         id: powerC
         Chip {
+            readonly property bool low: Power.discharging && Power.charge < 0.15
             pill: mod.pill
             page: "power"
             glyph: ""
-            glyphColor: lit ? Theme.warn : Theme.bright
+            glyphColor: lit || low ? Theme.warn : Theme.bright
         }
     }
 
@@ -381,8 +411,14 @@ Item {
         property bool clickOpens: true
         readonly property bool lit: page !== "" && pill.open && pill.shownPage === page && (page !== "tray" || pill.shownTray === tray)
         property color glyphColor: lit ? Theme.accent : Theme.bright
+        // dragging on this sets a value instead of clicking
+        property Item scrub: null
+        property bool scrubbing: false
+        readonly property bool hot: area.containsMouse || scrubbing
+        default property alias extra: row.data
         signal clicked(int button)
         signal wheel(int dir)
+        signal scrubbed(real f)
 
         implicitWidth: bg.width + 2
         implicitHeight: pill.pillH
@@ -391,7 +427,7 @@ Item {
         Rectangle {
             id: bg
             anchors.centerIn: parent
-            height: chip.pill.pillH - 8
+            height: chip.pill.pillH - 2
             width: Math.max(height, row.implicitWidth + 14)
             radius: chip.pill.radius(height)
             color: chip.lit ? Theme.alpha(Theme.accent, 0.26) : Theme.alpha(Theme.fg, area.containsMouse ? 0.1 : 0)
@@ -409,18 +445,17 @@ Item {
                     implicitSize: 15
                     source: chip.icon
                 }
-                Text {
+                Label {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: chip.glyph !== ""
                     width: Math.max(implicitWidth, 15)
                     horizontalAlignment: Text.AlignRight
                     text: chip.glyph
-                    font.family: Theme.sans
                     font.pixelSize: 14
                     color: chip.glyphColor
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
                 }
-                Text {
+                Label {
                     id: label
                     anchors.verticalCenter: parent.verticalCenter
                     visible: chip.text !== ""
@@ -428,25 +463,36 @@ Item {
                     TextMetrics { id: widestText; font: label.font; text: chip.widest }
                     text: chip.text
                     elide: Text.ElideRight
-                    font.family: Theme.sans
                     font.pixelSize: 12
                     color: chip.lit || area.containsMouse ? Theme.bright : Theme.fg
                 }
             }
         }
 
-        MouseArea {
+        Hover {
             id: area
             anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
             onContainsMouseChanged: {
                 if (chip.page === "") return
                 if (containsMouse) chip.pill.rest(chip.page, chip.tray, chip)
                 else chip.pill.unrest(chip)
             }
+            function scrubTo(m) {
+                const p = mapToItem(chip.scrub, m.x, m.y)
+                chip.scrubbed(Math.max(0, Math.min(1, p.x / chip.scrub.width)))
+            }
+            onPressed: m => {
+                if (m.button !== Qt.LeftButton || !chip.scrub) return
+                const p = mapToItem(chip.scrub, m.x, m.y)
+                if (p.x < -4 || p.x > chip.scrub.width + 4) return
+                chip.scrubbing = true
+                scrubTo(m)
+            }
+            onPositionChanged: m => { if (chip.scrubbing) scrubTo(m) }
+            onReleased: Qt.callLater(() => chip.scrubbing = false)
             onClicked: m => {
+                if (chip.scrubbing) return
                 if (m.button === Qt.LeftButton && chip.clickOpens && chip.page !== "") chip.pill.toggle(chip.page, chip.tray)
                 chip.clicked(m.button)
             }

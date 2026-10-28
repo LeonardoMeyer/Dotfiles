@@ -221,11 +221,16 @@ def themes():
         if path.stem in INTERNAL_SCHEMES:
             continue
         data = load(path, {})
-        colors = data.get("colors", {})
-        swatch = [data.get("special", {}).get("background")] + [colors.get(f"color{i}") for i in (1, 2, 3, 4, 5, 6, 9)]
+        colors, special = data.get("colors", {}), data.get("special", {})
+        # the whole scheme: color0-15, then background, foreground, cursor
+        palette = [colors.get(f"color{i}") for i in range(16)]
+        if not all(palette):
+            continue
+        palette += [special.get("background", palette[0]), special.get("foreground", palette[15]),
+                    special.get("cursor", special.get("foreground", palette[15]))]
         out.append({"id": f"{path.parent.name}/{path.stem}",
-                    "name": path.stem.replace("-", " ").replace("_", " ").title(),
-                    "swatch": [c for c in swatch if c]})
+                    "name": data.get("name") or path.stem.replace("-", " ").replace("_", " ").title(),
+                    "palette": palette, "custom": bool(data.get("custom"))})
     return out
 
 

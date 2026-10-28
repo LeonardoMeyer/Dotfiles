@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../common"
 
@@ -37,11 +36,7 @@ ShellRoot {
     property real introHome: 0
     property real introBinds: 0
 
-    readonly property real u: {
-        const s = win.screen
-        if (!s) return 1
-        return Math.max(0.8, Math.min(1.35, Math.min(s.width / 1920, s.height / 1080)))
-    }
+    readonly property real u: Theme.scaleFor(win.screen)
     readonly property int cols: 4
     readonly property real cell: Math.round(70 * u)
     readonly property real gap: Math.round(26 * u)
@@ -88,12 +83,9 @@ ShellRoot {
     readonly property var music: {
         try { return JSON.parse(musicFile.text()) } catch (e) { return { open: false } }
     }
-    FileView {
+    Watched {
         id: musicFile
         path: Quickshell.env("XDG_RUNTIME_DIR") + "/music-player.json"
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
     }
 
     Process {
@@ -107,12 +99,9 @@ ShellRoot {
         }
     }
 
-    FileView {
+    Watched {
         id: appCacheFile
         path: root.appCache
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
         onLoaded: root.appUses = root.counts(text())
     }
 
@@ -214,26 +203,17 @@ ShellRoot {
     }
 
 
-    FileView {
+    Watched {
         id: homeCacheFile
         path: root.homeCache
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
     }
-    FileView {
+    Watched {
         id: shellCacheFile
         path: root.shellCache
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
     }
-    FileView {
+    Watched {
         id: bindCacheFile
         path: root.bindCache
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
     }
 
     property var shellCommands: []
@@ -260,7 +240,7 @@ ShellRoot {
     function runHome(id, cmd, afterClose) {
         bump(homeCache, id)
         close()
-        Quickshell.execDetached(["sh", "-c", (afterClose ? "sleep 0.3; " : "") + cmd])
+        Theme.run((afterClose ? "sleep 0.3; " : "") + cmd)
     }
 
     function runShell(cmd, key, background) {
@@ -324,15 +304,11 @@ ShellRoot {
 
 
     Component.onCompleted: {
-        targetScreen = focusedScreen()
+        targetScreen = Theme.focusedScreen()
         scan.running = true
         scanCommands.running = true
     }
 
-    function focusedScreen() {
-        const mon = Hyprland.focusedMonitor
-        return Quickshell.screens.find(s => s.name === mon?.name) ?? Quickshell.screens[0]
-    }
 
     function show(which) {
         const i = tabs.findIndex(x => x.id === which)
@@ -345,7 +321,7 @@ ShellRoot {
         } else if (i >= 0) {
             tab = i
         }
-        const scr = focusedScreen()
+        const scr = Theme.focusedScreen()
         if (!active && scr !== targetScreen) {
             targetScreen = scr
             moveDelay.restart()
@@ -462,7 +438,6 @@ ShellRoot {
             active: root.active || root.warm
             sourceComponent: Component {
                 Item {
-                    id: keyRoot
                     property alias pSearch: search
                     property alias pGrid: grid
                     property alias pHome: homePage
@@ -545,13 +520,12 @@ ShellRoot {
                                     keyHandler: event => root.handleKey(event)
                                 }
 
-                                Text {
+                                Label {
                                     id: title
                                     anchors.left: parent.left
                                     anchors.leftMargin: header.height + 12
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: root.tabs[root.tab].title
-                                    font.family: Theme.sans
                                     font.pixelSize: 17
                                     color: Theme.bright
                                     property real fade: 1
@@ -569,7 +543,7 @@ ShellRoot {
                                     }
                                 }
 
-                                Text {
+                                Label {
                                     anchors.right: parent.right
                                     anchors.left: title.right
                                     anchors.leftMargin: 12
@@ -580,7 +554,6 @@ ShellRoot {
                                         : root.tabId === "home" ? "Enter to run"
                                         : root.tabId === "commands" ? root.shellCommands.length + " commands"
                                         : "shortcuts.lua"
-                                    font.family: Theme.sans
                                     font.pixelSize: 12
                                     color: Theme.dim
                                     opacity: 1 - Math.min(1, search.open)
@@ -588,7 +561,6 @@ ShellRoot {
                             }
 
                             Item {
-                                id: pages
                                 anchors.top: header.bottom
                                 anchors.topMargin: Math.round(12 * root.u)
                                 anchors.bottom: tabBar.top
@@ -669,7 +641,7 @@ ShellRoot {
                                     radius: Theme.r(9)
                                     x: root.tab * (tabBar.cellW + tabBar.gapW)
                                     color: Theme.alpha(Theme.accent, 0.3)
-                                    Behavior on x { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                                    Behavior on x { Settle { duration: Theme.move } }
                                 }
 
                                 Repeater {
@@ -688,29 +660,25 @@ ShellRoot {
                                             anchors.centerIn: parent
                                             spacing: 6
 
-                                            Text {
+                                            Label {
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 text: tabItem.modelData.icon
-                                                font.family: Theme.sans
                                                 font.pixelSize: 13
                                                 color: tabItem.on || tabArea.containsMouse ? Theme.bright : Theme.dim
                                                 Behavior on color { ColorAnimation { duration: Theme.fast } }
                                             }
-                                            Text {
+                                            Label {
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 text: tabItem.modelData.label
-                                                font.family: Theme.sans
                                                 font.pixelSize: 11
                                                 color: tabItem.on || tabArea.containsMouse ? Theme.bright : Theme.dim
                                                 Behavior on color { ColorAnimation { duration: Theme.fast } }
                                             }
                                         }
 
-                                        MouseArea {
+                                        Hover {
                                             id: tabArea
                                             anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
                                             onClicked: root.setTab(tabItem.index)
                                         }
                                     }
@@ -734,7 +702,7 @@ ShellRoot {
         opacity: on ? 1 : 0
         property real slide: on ? 0 : (index < root.tab ? -1 : 1) * 28
         Behavior on opacity { NumberAnimation { duration: Theme.ms(220); easing.type: Easing.OutCubic } }
-        Behavior on slide { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+        Behavior on slide { Settle { duration: Theme.move } }
         transform: Translate { x: slide }
     }
 }

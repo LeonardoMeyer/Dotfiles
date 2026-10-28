@@ -127,7 +127,7 @@ Item {
         width: parent.width
         spacing: 4
 
-        Text {
+        Label {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
@@ -136,15 +136,13 @@ Item {
                 : page.current.k === "function" ? "function from .bashrc"
                 : page.current.k === "run" ? "runs the line as typed"
                 : (page.summary !== "" ? page.summary : page.current.d)
-            font.family: Theme.sans
             font.pixelSize: 12
             color: Theme.fg
         }
-        Text {
+        Label {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             text: "↵ run in kitty    ⇧↵ run in background"
-            font.family: Theme.sans
             font.pixelSize: 10
             font.letterSpacing: 0.8
             color: Theme.dim

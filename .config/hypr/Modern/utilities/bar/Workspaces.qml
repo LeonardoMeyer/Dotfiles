@@ -17,12 +17,9 @@ Item {
 
     readonly property string wallpaper: wallFile.text().trim()
 
-    FileView {
+    Watched {
         id: wallFile
         path: Quickshell.env("HOME") + "/.cache/wallpaper-picker/current"
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
     }
 
     // pypr scratchpads by class, kept off the tiles
@@ -180,12 +177,9 @@ Item {
     }
     // qt's js engine has no Object.fromEntries, that one cooked everything
     readonly property var byKey: { const m = {}; for (const e of saved) m[e.key] = e; return m }
-    FileView {
+    Watched {
         id: savedFile
-        path: Quickshell.env("HOME") + "/.config/hypr/Modern/utilities/overview/workspaces.json"
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
+        path: decodeURIComponent(Qt.resolvedUrl("../overview/workspaces.json").toString().replace(/^file:\/\//, ""))
     }
     function write(list) { savedFile.setText(JSON.stringify(list, (k, v) => k === "key" ? undefined : v, 2)) }
     function forget(e) { write(saved.filter(s => s.key !== e.key)) }
@@ -232,18 +226,24 @@ Item {
             onStreamFinished: {
                 const lines = text.split("\n")
                 const q = a => "'" + a.replace(/'/g, "'\\''") + "'"
+                // home gets saved as $HOME so it still works on my other machines
+                const home = Quickshell.env("HOME")
+                const qh = a => a === home ? '"$HOME"' : a.startsWith(home + "/") ? '"$HOME"' + q(a.slice(home.length)) : q(a)
                 const g = cmdlines.geom
                 const base = a => (a || "").split("/").pop()
                 const windows = cmdlines.wins.map((w, i) => {
                     const o = w.lastIpcObject
-                    const [c, dir, run] = (lines[i] || "").split("\x1e").map(f => (f || "").split("\x1f").filter(a => a))
-                    let cmd = c.map(q).join(" "), app = ex.appName(o.class)
+                    const [all, dir, run] = (lines[i] || "").split("\x1e").map(f => (f || "").split("\x1f").filter(a => a))
+                    // restored terminals still have the old sh -c, cut it or it piles up every save
+                    const cut = dir.length ? all.findIndex((a, j) => j > 0 && (a === "-e" || (base(a) === "sh" && all[j + 1] === "-c"))) : -1
+                    const c = cut > 0 ? all.slice(0, cut) : all
+                    let cmd = c.map(qh).join(" "), app = ex.appName(o.class)
                     const urls = tabs.urls[i] || []
                     if (c.length && urls.length)
                         cmd = q(c[0]) + " --new-window " + q(urls[0]) + urls.slice(1).map(u => " --new-tab " + q(u)).join("")
                     // terminals reopen in the same folder running the same thing. works for me
                     else if (dir.length) {
-                        const inner = "cd " + q(dir[0]) + (run.length ? " && " + run.map(q).join(" ") : "") + "; exec \"$SHELL\""
+                        const inner = "cd " + qh(dir[0]) + (run.length ? " && " + run.map(qh).join(" ") : "") + "; exec \"$SHELL\""
                         cmd += (base(c[0]) === "kitty" ? "" : " -e") + " sh -c " + q(inner)
                         if (run.length) app = base(run[/^(perl|python3?|node|bash|sh)$/.test(base(run[0])) && run.length > 1 ? 1 : 0])
                     }
@@ -328,15 +328,13 @@ Item {
                 color: active ? Theme.accent
                     : full ? (dotArea.containsMouse ? Theme.bright : Theme.fg)
                     : Theme.alpha(Theme.fg, dotArea.containsMouse ? 0.5 : 0.25)
-                Behavior on width { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                Behavior on width { Settle { duration: Theme.move } }
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
 
-                MouseArea {
+                Hover {
                     id: dotArea
                     anchors.fill: parent
                     anchors.margins: -4
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
                     onClicked: dots.go(parent.modelData)
                 }
             }
@@ -382,7 +380,7 @@ Item {
             radius: tile.r
             color: Theme.alpha(Theme.fg, 0.06)
             scale: drop.containsDrag ? 1.03 : area.containsMouse && !tile.big ? 1.03 : 1
-            Behavior on scale { NumberAnimation { duration: Theme.fast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+            Behavior on scale { Settle { duration: Theme.fast } }
 
             Image {
                 anchors.fill: parent
@@ -395,11 +393,9 @@ Item {
                 Behavior on opacity { NumberAnimation { duration: Theme.fast } }
             }
 
-            MouseArea {
+            Hover {
                 id: area
                 anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
                 onClicked: tile.workspacePicked(tile.wsId)
             }
 
@@ -407,18 +403,16 @@ Item {
                 anchors.centerIn: parent
                 visible: tile.isNew
                 spacing: 4
-                Text {
+                Label {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: ""
-                    font.family: Theme.sans
                     font.pixelSize: tile.big ? 28 : 16
                     color: area.containsMouse ? Theme.accent : Theme.dim
                 }
-                Text {
+                Label {
                     anchors.horizontalCenter: parent.horizontalCenter
                     visible: tile.big
                     text: tile.hint
-                    font.family: Theme.sans
                     font.pixelSize: 12
                     color: Theme.dim
                 }
@@ -435,11 +429,11 @@ Item {
                     opacity: tile.ghost && tile.ghost.dragging && tile.ghost.toplevel === modelData ? 0.25 : 1
                     scale: hot && tile.big && !(tile.ghost && tile.ghost.dragging) ? 1.02 : 1
                     Behavior on opacity { NumberAnimation { duration: Theme.fast } }
-                    Behavior on scale { NumberAnimation { duration: Theme.fast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-                    Behavior on x { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-                    Behavior on y { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-                    Behavior on width { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-                    Behavior on height { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                    Behavior on scale { Settle { duration: Theme.fast } }
+                    Behavior on x { Settle { duration: Theme.move } }
+                    Behavior on y { Settle { duration: Theme.move } }
+                    Behavior on width { Settle { duration: Theme.move } }
+                    Behavior on height { Settle { duration: Theme.move } }
                     x: (o.at[0] - tile.geom.x) * tile.k
                     y: (o.at[1] - tile.geom.y) * tile.k
                     width: Math.max(8, o.size[0] * tile.k)
@@ -487,13 +481,12 @@ Item {
                         height: tile.big ? 24 : 16
                         radius: Math.min(Theme.rounding, height / 2)
                         color: Theme.alpha(Theme.bg, 0.85)
-                        Text {
+                        Label {
                             id: label
                             anchors.centerIn: parent
                             width: Math.min(implicitWidth, parent.width - 12)
                             text: win.o.title || tile.expose.appName(win.o.class)
                             elide: Text.ElideRight
-                            font.family: Theme.sans
                             font.pixelSize: tile.big ? 11 : 9
                             color: Theme.bright
                         }
@@ -511,22 +504,16 @@ Item {
                         onClicked: tile.windowPicked(win.modelData)
                     }
 
-                    Text {
+                    IconButton {
                         visible: win.hot && win.width >= 24
                         anchors.right: parent.right
                         anchors.top: parent.top
                         anchors.margins: tile.big ? 6 : 3
                         text: "\uf00d"
-                        font.family: Theme.sans
                         font.pixelSize: tile.big ? 13 : 9
-                        color: closeArea.containsMouse ? Theme.warn : Theme.bright
-                        MouseArea {
-                            id: closeArea
-                            anchors.fill: parent
-                            anchors.margins: -5
-                            hoverEnabled: true
-                            onClicked: tile.expose.closeWindow(win.modelData)
-                        }
+                        hot: Theme.warn
+                        idle: Theme.bright
+                        onClicked: tile.expose.closeWindow(win.modelData)
                     }
                 }
             }
@@ -571,31 +558,16 @@ Item {
         property int size: 13
         spacing: size + 1
 
-        Text {
+        IconButton {
             text: "\uf0c7"
-            font.family: Theme.sans
             font.pixelSize: acts.size
-            color: saveArea.containsMouse ? Theme.accent : Theme.dim
-            MouseArea {
-                id: saveArea
-                anchors.fill: parent
-                anchors.margins: -5
-                hoverEnabled: true
-                onClicked: acts.expose.save(acts.wsId, acts.geom)
-            }
+            onClicked: acts.expose.save(acts.wsId, acts.geom)
         }
-        Text {
+        IconButton {
             text: "\uf1f8"
-            font.family: Theme.sans
             font.pixelSize: acts.size
-            color: trash.containsMouse ? Theme.warn : Theme.dim
-            MouseArea {
-                id: trash
-                anchors.fill: parent
-                anchors.margins: -5
-                hoverEnabled: true
-                onClicked: acts.expose.clear(acts.wsId, acts.ids, acts.activeId)
-            }
+            hot: Theme.warn
+            onClicked: acts.expose.clear(acts.wsId, acts.ids, acts.activeId)
         }
     }
 
@@ -613,13 +585,13 @@ Item {
         property real fromW: width
         property real fromH: height
         property real grow: dragging ? 1 : 0
-        Behavior on grow { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+        Behavior on grow { Settle { duration: Theme.move } }
         readonly property real g: entry ? grow : 1
         visible: opacity > 0
         opacity: dragging ? 0.9 : 0
         scale: dragging ? 1.04 : 0.96
         Behavior on opacity { NumberAnimation { duration: Theme.fast; easing.type: Easing.BezierSpline; easing.bezierCurve: proxy.dragging ? Theme.settle : Theme.leave } }
-        Behavior on scale { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+        Behavior on scale { Settle { duration: Theme.move } }
         z: 10
         Drag.active: dragging
         // so drops land under the pointer, not the card centre
@@ -679,37 +651,15 @@ Item {
                     captureSource: proxy.expose && proxy.expose.active && proxy.toplevel && !proxy.expose.isClosing(proxy.toplevel) ? proxy.toplevel.wayland : null
                     live: proxy.dragging
                 }
-                Item {
-                    id: layout
+                Layout {
                     anchors.fill: parent
                     visible: !!proxy.entry
                     opacity: proxy.g
-                    readonly property var f: proxy.entry && proxy.expose ? proxy.expose.fit(proxy.entry, proxy.shown.w, proxy.shown.h) : ({ s: 1, ox: 0, oy: 0 })
-                    readonly property real k: body.width / proxy.shown.w
-                    Repeater {
-                        model: proxy.entry ? proxy.entry.windows : []
-                        Rectangle {
-                            required property var modelData
-                            x: (layout.f.ox + modelData.x * layout.f.s) * layout.k
-                            y: (layout.f.oy + modelData.y * layout.f.s) * layout.k
-                            width: modelData.w * layout.f.s * layout.k
-                            height: modelData.h * layout.f.s * layout.k
-                            radius: 3
-                            color: Theme.alpha(Theme.fg, 0.1)
-                            border.width: 1
-                            border.color: Theme.alpha(Theme.fg, 0.25)
-                            Text {
-                                anchors.centerIn: parent
-                                width: parent.width - 6
-                                horizontalAlignment: Text.AlignHCenter
-                                elide: Text.ElideRight
-                                text: modelData.app
-                                font.family: Theme.sans
-                                font.pixelSize: 8
-                                color: Theme.dim
-                            }
-                        }
-                    }
+                    windows: proxy.entry ? proxy.entry.windows : []
+                    f: proxy.entry && proxy.expose ? proxy.expose.fit(proxy.entry, proxy.shown.w, proxy.shown.h) : ({ s: 1, ox: 0, oy: 0 })
+                    k: body.width / proxy.shown.w
+                    fill: Theme.alpha(Theme.fg, 0.1)
+                    edge: Theme.alpha(Theme.fg, 0.25)
                 }
             }
             Rectangle {
@@ -718,6 +668,39 @@ Item {
                 color: "transparent"
                 border.width: 1
                 border.color: Theme.alpha(Theme.fg, 0.25)
+            }
+        }
+    }
+
+    // a saved workspace's windows as little labelled boxes. f fits the layout, k scales it to the card
+    component Layout: Item {
+        id: lay
+        property var windows: []
+        property var f: ({ s: 1, ox: 0, oy: 0 })
+        property real k: 1
+        property color fill
+        property color edge
+        Repeater {
+            model: lay.windows
+            Rectangle {
+                required property var modelData
+                x: (lay.f.ox + modelData.x * lay.f.s) * lay.k
+                y: (lay.f.oy + modelData.y * lay.f.s) * lay.k
+                width: modelData.w * lay.f.s * lay.k
+                height: modelData.h * lay.f.s * lay.k
+                radius: Math.min(Theme.rounding, 3)
+                color: lay.fill
+                border.width: 1
+                border.color: lay.edge
+                Label {
+                    anchors.centerIn: parent
+                    width: parent.width - 6
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                    text: modelData.app
+                    font.pixelSize: 8
+                    color: Theme.dim
+                }
             }
         }
     }
@@ -782,10 +765,9 @@ Item {
                         Item {
                             width: page.tileW
                             height: 14
-                            Text {
+                            Label {
                                 x: 2
                                 text: cell.isNew ? "New" : cell.wsId + "  ·  " + (cell.count === 0 ? "empty" : cell.count + (cell.count > 1 ? " windows" : " window"))
-                                font.family: Theme.sans
                                 font.pixelSize: 10
                                 color: cell.wsId === page.activeId ? Theme.accent : Theme.dim
                             }
@@ -815,7 +797,7 @@ Item {
             Column {
                 width: parent.width
                 spacing: 2
-                move: Transition { NumberAnimation { property: "y"; duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                move: Transition { Settle { property: "y"; duration: Theme.move } }
             Repeater {
                 // model is just the keys so rows stay put through renames, the entry gets looked up fresh
                 model: ScriptModel { values: page.expose.saved.map(e => e.key) }
@@ -844,9 +826,8 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 14
                         visible: savedRow.hot || pencil.hovered || bin.hovered
-                        Text {
+                        Label {
                             text: "\uf040"
-                            font.family: Theme.sans
                             font.pixelSize: 11
                             color: pencil.hovered ? Theme.accent : Theme.dim
                             HoverHandler { id: pencil }
@@ -857,9 +838,8 @@ Item {
                                 onClicked: page.renaming = savedRow.modelData
                             }
                         }
-                        Text {
+                        Label {
                             text: "\uf1f8"
-                            font.family: Theme.sans
                             font.pixelSize: 11
                             color: bin.hovered ? Theme.warn : Theme.dim
                             HoverHandler { id: bin }
@@ -874,7 +854,7 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         visible: page.renaming === savedRow.modelData
-                        radius: 8
+                        radius: Math.min(Theme.rounding, 8)
                         color: Theme.alpha(Theme.bg, 0.95)
                         border.width: 1
                         border.color: Theme.alpha(Theme.accent, 0.6)

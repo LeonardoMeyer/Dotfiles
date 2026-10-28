@@ -27,23 +27,21 @@ Item {
         if (m) commit(m[1].toLowerCase(), (m[2] || alphaHex).toLowerCase())
     }
 
-    Text {
+    Label {
         x: Theme.pad
         y: 12
         text: control.def.label
-        font.family: Theme.sans
         font.pixelSize: 13
         color: Theme.fg
     }
 
     Rectangle {
-        id: field
         anchors.right: parent.right
         anchors.rightMargin: Theme.pad
         y: 6
         width: 118
         height: 28
-        radius: 9
+        radius: Math.min(Theme.rounding, 9)
         color: Theme.alpha(Theme.fg, input.activeFocus ? 0.14 : 0.07)
         border.width: input.activeFocus ? 1 : 0
         border.color: Theme.alpha(Theme.accent, 0.8)
@@ -53,7 +51,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: 16
             height: 16
-            radius: 5
+            radius: Math.min(Theme.rounding, 5)
             border.width: 1
             border.color: Theme.alpha(Theme.fg, 0.3)
             color: "#" + control.alphaHex + control.hex.slice(0, 6)
@@ -108,11 +106,9 @@ Item {
                 scale: chipArea.containsMouse ? 1.15 : 1
                 Behavior on scale { NumberAnimation { duration: Theme.fast } }
 
-                MouseArea {
+                Hover {
                     id: chipArea
                     anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
                     onClicked: control.commit(String(chip.modelData).slice(1).toLowerCase(),
                                               control.alphaHex === "00" ? "33" : control.alphaHex)
                 }

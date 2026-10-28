@@ -2,7 +2,6 @@ import QtQuick
 import "../common"
 
 Picker {
-    id: control
 
     property var def
     readonly property var raw: Store.values[def.key]

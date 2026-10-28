@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
+import "../common"
 
 Item {
     id: face
@@ -51,7 +52,8 @@ Item {
     }
     Backdrop {
         anchors.fill: parent
-        amount: Lock.t
+        t: Lock.t
+        source: Lock.wallpaper
         opacity: Math.max(0.001, shot.status === Image.Ready ? Math.min(1, (Lock.t - 0.2) * 1.8) : 1)
     }
 
@@ -102,10 +104,9 @@ Item {
         delay: 0.1
         on: face.main && Lock.cfg.greeter && face.awake
         u: face.u
-        Text {
+        Label {
             text: "Hello, <b>" + Lock.user + "</b>"
             textFormat: Text.StyledText
-            font.family: Lock.sans
             font.pixelSize: 22 * face.u
             color: "#ffffff"
         }
@@ -134,14 +135,13 @@ Item {
 
                     Digit { value: clockRow.hh[0]; size: clockRow.size }
                     Digit { value: clockRow.hh[1]; size: clockRow.size }
-                    Text {
+                    Label {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.verticalCenterOffset: -clockRow.size * 0.06
                         text: ":"
-                        font.family: Lock.sans
                         font.pixelSize: clockRow.size * 0.9
                         font.weight: Font.Light
-                        color: Lock.accent
+                        color: Theme.accent
                     }
                     Digit { value: clockRow.mm[0]; size: clockRow.size }
                     Digit { value: clockRow.mm[1]; size: clockRow.size }
@@ -150,14 +150,13 @@ Item {
                         anchors.bottomMargin: clockRow.size * 0.2
                         leftPadding: 10 * face.u
                         readonly property string ss: String(clock.seconds).padStart(2, "0")
-                        Digit { value: parent.ss[0]; size: clockRow.size * 0.26; color: Lock.accent; weight: Font.Normal }
-                        Digit { value: parent.ss[1]; size: clockRow.size * 0.26; color: Lock.accent; weight: Font.Normal }
+                        Digit { value: parent.ss[0]; size: clockRow.size * 0.26; color: Theme.accent; weight: Font.Normal }
+                        Digit { value: parent.ss[1]; size: clockRow.size * 0.26; color: Theme.accent; weight: Font.Normal }
                     }
                 }
-                Text {
+                Label {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: Qt.formatDate(clock.date, "dddd, d MMMM")
-                    font.family: Lock.sans
                     font.pixelSize: 24 * face.u
                     color: "#ccffffff"
                 }
@@ -178,16 +177,16 @@ Item {
                 readonly property bool typing: Lock.password !== ""
                 width: typing ? dots.width + h + 22 * face.u : h
                 height: h
-                Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Lock.settle } }
+                Behavior on width { Settle { duration: Theme.ms(300) } }
 
                 transform: Translate { id: shakeX }
                 SequentialAnimation {
                     id: shake
-                    NumberAnimation { target: shakeX; property: "x"; to: 14 * face.u; duration: 50; easing.type: Easing.OutQuad }
-                    NumberAnimation { target: shakeX; property: "x"; to: -11 * face.u; duration: 90; easing.type: Easing.InOutQuad }
-                    NumberAnimation { target: shakeX; property: "x"; to: 7 * face.u; duration: 80; easing.type: Easing.InOutQuad }
-                    NumberAnimation { target: shakeX; property: "x"; to: -3 * face.u; duration: 70; easing.type: Easing.InOutQuad }
-                    NumberAnimation { target: shakeX; property: "x"; to: 0; duration: 60; easing.type: Easing.OutQuad }
+                    NumberAnimation { target: shakeX; property: "x"; to: 14 * face.u; duration: Theme.ms(50); easing.type: Easing.OutQuad }
+                    NumberAnimation { target: shakeX; property: "x"; to: -11 * face.u; duration: Theme.ms(90); easing.type: Easing.InOutQuad }
+                    NumberAnimation { target: shakeX; property: "x"; to: 7 * face.u; duration: Theme.ms(80); easing.type: Easing.InOutQuad }
+                    NumberAnimation { target: shakeX; property: "x"; to: -3 * face.u; duration: Theme.ms(70); easing.type: Easing.InOutQuad }
+                    NumberAnimation { target: shakeX; property: "x"; to: 0; duration: Theme.ms(60); easing.type: Easing.OutQuad }
                 }
                 Connections {
                     target: Lock
@@ -203,20 +202,19 @@ Item {
                     radius: Lock.corner(field.h, face.u)
                     color: "transparent"
                     border.width: 1.5 * face.u
-                    border.color: Lock.failed ? Lock.warn : Lock.accent
+                    border.color: Lock.failed ? Theme.warn : Theme.accent
                     opacity: Lock.failed ? 1 : field.typing ? 0.5 : 0
-                    Behavior on opacity { NumberAnimation { duration: 200 } }
-                    Behavior on border.color { ColorAnimation { duration: 200 } }
+                    Behavior on opacity { NumberAnimation { duration: Theme.ms(200) } }
+                    Behavior on border.color { ColorAnimation { duration: Theme.ms(200) } }
                 }
 
-                Text {
+                Label {
                     x: (field.h - width) / 2
                     anchors.verticalCenter: parent.verticalCenter
                     text: ""
-                    font.family: Lock.sans
                     font.pixelSize: 19 * face.u
-                    color: Lock.failed ? Lock.warn : field.typing ? Lock.accent : "#ffffff"
-                    Behavior on color { ColorAnimation { duration: 200 } }
+                    color: Lock.failed ? Theme.warn : field.typing ? Theme.accent : "#ffffff"
+                    Behavior on color { ColorAnimation { duration: Theme.ms(200) } }
                 }
 
                 Row {
@@ -233,10 +231,10 @@ Item {
                             width: 10 * face.u
                             height: width
                             radius: width / 2
-                            color: Lock.accent
+                            color: Theme.accent
                             scale: 0
                             Component.onCompleted: pop.start()
-                            NumberAnimation on scale { id: pop; running: false; to: 1; duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+                            NumberAnimation on scale { id: pop; running: false; to: 1; duration: Theme.ms(260); easing.type: Easing.OutBack; easing.overshoot: 2.2 }
                             SequentialAnimation on opacity {
                                 running: Lock.checking
                                 loops: Animation.Infinite
@@ -260,13 +258,12 @@ Item {
             Item {
                 width: capsText.implicitWidth
                 height: capsText.implicitHeight + 16 * face.u
-                Text {
+                Label {
                     id: capsText
                     y: 16 * face.u
                     text: "\u{f0a5b}  Caps Lock"
-                    font.family: Lock.sans
                     font.pixelSize: 13 * face.u
-                    color: Lock.warn
+                    color: Theme.warn
                 }
             }
         }
@@ -295,12 +292,12 @@ Item {
             onArtistChanged: swap.restart()
             SequentialAnimation {
                 id: swap
-                NumberAnimation { target: info; property: "opacity"; to: 0; duration: 160 }
+                NumberAnimation { target: info; property: "opacity"; to: 0; duration: Theme.ms(160) }
                 ScriptAction { script: { card.shownTitle = card.title; card.shownArtist = card.artist } }
-                NumberAnimation { target: info; property: "opacity"; to: 1; duration: 320; easing.type: Easing.OutCubic }
+                NumberAnimation { target: info; property: "opacity"; to: 1; duration: Theme.ms(320); easing.type: Easing.OutCubic }
             }
 
-            Card { anchors.fill: parent }
+            Card { anchors.fill: parent; u: face.u }
 
             ClippingRectangle {
                 id: art
@@ -309,15 +306,14 @@ Item {
                 width: 120 * face.u
                 height: width
                 radius: Lock.corner(width, face.u)
-                color: Lock.alpha(Lock.accent, 0.12)
+                color: Theme.alpha(Theme.accent, 0.12)
 
-                Text {
+                Label {
                     anchors.centerIn: parent
                     visible: cover.status !== Image.Ready
                     text: ""
-                    font.family: Lock.sans
                     font.pixelSize: 40 * face.u
-                    color: Lock.accent
+                    color: Theme.accent
                 }
                 Image {
                     id: cover
@@ -327,7 +323,7 @@ Item {
                     sourceSize: Qt.size(256, 256)
                     asynchronous: true
                     opacity: status === Image.Ready ? 1 : 0
-                    Behavior on opacity { NumberAnimation { duration: 400 } }
+                    Behavior on opacity { NumberAnimation { duration: Theme.ms(400) } }
                 }
             }
 
@@ -344,32 +340,30 @@ Item {
                 Row {
                     height: 16 * face.u
                     spacing: 8 * face.u
-                    Text {
+                    Label {
                         anchors.verticalCenter: parent.verticalCenter
                         text: "Now Playing"
-                        font.family: Lock.sans
                         font.pixelSize: 12 * face.u
                         color: "#80ffffff"
                     }
                     Wave {
                         anchors.verticalCenter: parent.verticalCenter
                         u: face.u
-                        playing: face.main && Lock.cfg.music && !!card.p && card.p.isPlaying && Lock.t > 0 && !Lock.leaving
+                        // only while the card is on screen, cava is the one real background job
+                        playing: face.main && face.awake && Lock.cfg.music && !!card.p && card.p.isPlaying && Lock.t > 0 && !Lock.leaving
                     }
                 }
-                Text {
+                Label {
                     width: parent.width
                     text: card.shownTitle
                     elide: Text.ElideRight
-                    font.family: Lock.sans
                     font.pixelSize: 17 * face.u
                     color: "#ffffff"
                 }
-                Text {
+                Label {
                     width: parent.width
                     text: card.shownArtist
                     elide: Text.ElideRight
-                    font.family: Lock.sans
                     font.pixelSize: 13 * face.u
                     color: "#99ffffff"
                 }
@@ -380,12 +374,12 @@ Item {
                     width: parent.width
                     height: 3 * face.u
                     radius: height / 2
-                    color: Lock.alpha(Lock.fg, 0.15)
+                    color: Theme.alpha(Theme.fg, 0.15)
                     visible: !!card.p && card.p.lengthSupported && card.p.length > 0
                     Rectangle {
                         height: parent.height
                         radius: parent.radius
-                        color: Lock.accent
+                        color: Theme.accent
                         width: card.p && card.p.length > 0 ? parent.width * Math.min(1, card.p.position / card.p.length) : 0
                         Behavior on width { NumberAnimation { duration: 1000; easing.type: Easing.Linear } }
                     }
@@ -421,34 +415,33 @@ Item {
         x: face.width - width - face.margin
         y: face.margin
         delay: 0.28
-        on: face.main && face.awake && ((Lock.cfg.battery && Lock.hasBattery) || Lock.cfg.power)
+        on: face.main && face.awake && ((Lock.cfg.battery && Power.hasBattery) || Lock.cfg.power)
         u: face.u
 
         Row {
             spacing: 8 * face.u
 
             Item {
-                visible: Lock.cfg.battery && Lock.hasBattery
+                visible: Lock.cfg.battery && Power.hasBattery
                 width: batText.implicitWidth + 30 * face.u
                 height: 40 * face.u
                 Card { anchors.fill: parent; radius: Lock.corner(parent.height, face.u) }
-                Text {
+                Label {
                     id: batText
                     anchors.centerIn: parent
-                    readonly property bool low: !Lock.charging && Lock.charge < 0.2
-                    text: (Lock.charging ? "\u{f0084}" : ["\u{f007b}", "\u{f007c}", "\u{f007e}", "\u{f0080}", "\u{f0082}", "\u{f0079}"][Math.min(5, Math.floor(Lock.charge * 6))])
-                        + "  " + Math.round(Lock.charge * 100) + "%"
-                    font.family: Lock.sans
+                    readonly property bool low: !Lock.charging && Power.charge < 0.2
+                    text: (Lock.charging ? "\u{f0084}" : ["\u{f007b}", "\u{f007c}", "\u{f007e}", "\u{f0080}", "\u{f0082}", "\u{f0079}"][Math.min(5, Math.floor(Power.charge * 6))])
+                        + "  " + Math.round(Power.charge * 100) + "%"
                     font.pixelSize: 13 * face.u
-                    color: low ? Lock.warn : "#ffffff"
+                    color: low ? Theme.warn : "#ffffff"
                 }
             }
 
             Repeater {
                 model: Lock.cfg.power ? [
-                    { glyph: "\u{f04b2}", cmd: "systemctl suspend", confirm: false },
-                    { glyph: "\u{f0709}", cmd: "systemctl reboot", confirm: true },
-                    { glyph: "\u{f0425}", cmd: "systemctl poweroff", confirm: true }
+                    { glyph: "\u{f04b2}", id: "suspend" },
+                    { glyph: "\u{f0709}", id: "reboot" },
+                    { glyph: "\u{f0425}", id: "poweroff" }
                 ] : []
                 RoundButton {
                     id: pb
@@ -460,9 +453,9 @@ Item {
                     armed: armedNow
                     Timer { id: disarm; interval: 3000; onTriggered: pb.armedNow = false }
                     onClicked: {
-                        if (modelData.confirm && !armedNow) { armedNow = true; disarm.restart(); return }
+                        if (Power.confirm(modelData.id) && !armedNow) { armedNow = true; disarm.restart(); return }
                         armedNow = false
-                        if (!Lock.preview) Quickshell.execDetached(["sh", "-c", modelData.cmd])
+                        if (!Lock.preview) Power.act(modelData.id)
                     }
                 }
             }
@@ -484,7 +477,7 @@ Item {
             size: 40 * face.u
             glyph: ""
             rotation: Lock.menuOpen ? 90 : 0
-            Behavior on rotation { NumberAnimation { duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: Lock.settle } }
+            Behavior on rotation { Settle { duration: Theme.ms(420) } }
             onClicked: Lock.menuOpen = !Lock.menuOpen
         }
     }
@@ -492,7 +485,7 @@ Item {
     Item {
         id: menu
         property real p: Lock.menuOpen && face.main && !Lock.leaving ? 1 : 0
-        Behavior on p { NumberAnimation { duration: 320; easing.type: Easing.BezierSpline; easing.bezierCurve: Lock.settle } }
+        Behavior on p { Settle { duration: Theme.ms(320) } }
 
         x: face.margin
         y: gearReveal.y - height - 10 * face.u
@@ -504,7 +497,7 @@ Item {
         transformOrigin: Item.BottomLeft
         transform: Translate { y: (1 - menu.p) * 10 * face.u }
 
-        Card { anchors.fill: parent }
+        Card { anchors.fill: parent; u: face.u }
         // eat clicks so the menu stays open
         MouseArea { anchors.fill: parent; hoverEnabled: true }
 
@@ -515,11 +508,10 @@ Item {
             width: parent.width - 24 * face.u
             spacing: 2 * face.u
 
-            Text {
+            Label {
                 leftPadding: 8 * face.u
                 bottomPadding: 6 * face.u
                 text: "Lock screen"
-                font.family: Lock.sans
                 font.pixelSize: 13 * face.u
                 color: "#80ffffff"
             }
@@ -536,12 +528,11 @@ Item {
         }
     }
 
-    Text {
+    Label {
         visible: Lock.preview
         anchors.horizontalCenter: parent.horizontalCenter
         y: 12 * face.u
         text: "Preview · Esc closes"
-        font.family: Lock.sans
         font.pixelSize: 12 * face.u
         color: "#80ffffff"
     }

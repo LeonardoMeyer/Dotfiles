@@ -39,21 +39,17 @@ ShellRoot {
             if (ui.page && Schema.PAGES.some(p => p.id === ui.page)) page = ui.page
         } catch (e) {}
         dragFrac = frac
-        targetScreen = usableScreen(focusedScreen())
+        targetScreen = usableScreen(Theme.focusedScreen())
         Store.refresh()
     }
 
-    function focusedScreen() {
-        const mon = Hyprland.focusedMonitor
-        return Quickshell.screens.find(s => s.name === mon?.name) ?? Quickshell.screens[0]
-    }
 
     function screenNamed(name) {
-        return Quickshell.screens.find(s => s.name === name) ?? focusedScreen()
+        return Quickshell.screens.find(s => s.name === name) ?? Theme.focusedScreen()
     }
 
     function show(name) {
-        showOn(name ? screenNamed(name) : focusedScreen())
+        showOn(name ? screenNamed(name) : Theme.focusedScreen())
     }
 
     function landscape(scr) {
@@ -81,29 +77,17 @@ ShellRoot {
         begin()
     }
 
-    function screenAt(x, y) {
-        return Quickshell.screens.find(s => x >= s.x && x < s.x + s.width && y >= s.y && y < s.y + s.height) ?? null
-    }
-
-    function followCursor(text) {
+    function followCursor(scr) {
         if (!active || leaving || dragging) return
-        let pos
-        try { pos = JSON.parse(text) } catch (e) { return }
-        const scr = screenAt(pos.x, pos.y)
         if (landscape(scr) && scr !== targetScreen) showOn(scr)
-    }
-
-    Process {
-        id: cursorProc
-        command: ["hyprctl", "-j", "cursorpos"]
-        stdout: StdioCollector { onStreamFinished: root.followCursor(text) }
     }
 
     Timer {
         interval: 200
         repeat: true
         running: root.active && !root.leaving
-        onTriggered: if (!cursorProc.running) cursorProc.running = true
+        // skip a tick if the last lookup hasn't come back
+        onTriggered: if (Theme.located.length === 0) Theme.locate(root.followCursor)
     }
 
     function begin() {
@@ -121,7 +105,7 @@ ShellRoot {
     }
 
     function toggle(name) {
-        const scr = usableScreen(name ? screenNamed(name) : focusedScreen())
+        const scr = usableScreen(name ? screenNamed(name) : Theme.focusedScreen())
         if (active && !leaving && scr === targetScreen) close()
         else show(name)
     }
@@ -132,8 +116,7 @@ ShellRoot {
     }
 
     function moveSelection(d) {
-        const w = Store.wheels.length > 0 ? Store.wheels[Store.wheels.length - 1] : null
-        if (w) { w.step(d); return }
+        if (Store.picker) { Store.picker.step(d); return }
         if (!ld.item) return
         const s = ld.item.pScrollAnim, scroller = ld.item.pScroller
         s.stop()
@@ -273,7 +256,7 @@ ShellRoot {
                         else if (k === Qt.Key_Right || k === Qt.Key_L || k === Qt.Key_Tab) root.stepPage(1)
                         else if (k === Qt.Key_Down || k === Qt.Key_J) root.moveSelection(1)
                         else if (k === Qt.Key_Up || k === Qt.Key_K) root.moveSelection(-1)
-                        else if ((k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) && Store.wheels.length > 0) Store.wheels[Store.wheels.length - 1].apply(Store.wheels[Store.wheels.length - 1].cur)
+                        else if ((k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) && Store.picker) Store.picker.pick()
                         else { event.accepted = false; return }
                         event.accepted = true
                     }
@@ -302,16 +285,14 @@ ShellRoot {
                         }
 
                         Item {
-                            id: content
                             anchors.fill: parent
                             anchors.leftMargin: 16
                             anchors.rightMargin: 18
 
-                            Text {
+                            Label {
                                 id: title
                                 y: 16
                                 text: root.current.label
-                                font.family: Theme.sans
                                 font.pixelSize: 20
                                 color: Theme.bright
 
@@ -329,11 +310,10 @@ ShellRoot {
                                 }
                             }
 
-                            Text {
+                            Label {
                                 anchors.right: parent.right
                                 anchors.verticalCenter: title.verticalCenter
                                 text: "Hyprland · Alt+S"
-                                font.family: Theme.sans
                                 font.pixelSize: 11
                                 color: Theme.dim
                             }
@@ -375,10 +355,9 @@ ShellRoot {
                                             Behavior on color { ColorAnimation { duration: Theme.fast } }
                                         }
 
-                                        Text {
+                                        Label {
                                             anchors.centerIn: parent
                                             text: tab.modelData.icon
-                                            font.family: Theme.sans
                                             font.pixelSize: 15
                                             scale: tab.on ? 1.12 : 1
                                             color: tab.on || tabArea.containsMouse ? Theme.bright : Theme.fg
@@ -386,11 +365,9 @@ ShellRoot {
                                             Behavior on color { ColorAnimation { duration: Theme.fast } }
                                         }
 
-                                        MouseArea {
+                                        Hover {
                                             id: tabArea
                                             anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
                                             onClicked: root.selectPage(tab.modelData.id)
                                         }
                                     }
@@ -409,7 +386,7 @@ ShellRoot {
                                 boundsBehavior: Flickable.StopAtBounds
                                 flickableDirection: Flickable.VerticalFlick
 
-                                visible: !root.current.wheel
+                                visible: !root.current.themes
 
                                 Connections {
                                     target: root
@@ -450,10 +427,9 @@ ShellRoot {
                                                 function onEnterSerialChanged() { enterAnim.restart() }
                                             }
 
-                                            Text {
+                                            Label {
                                                 x: 4
                                                 text: sec.modelData.label.toUpperCase()
-                                                font.family: Theme.sans
                                                 font.pixelSize: 10
                                                 font.letterSpacing: 1.6
                                                 color: Theme.dim
@@ -530,21 +506,20 @@ ShellRoot {
                             }
 
                             Loader {
-                                id: wheelHost
+                                id: themesHost
                                 anchors.top: tabs.bottom
                                 anchors.topMargin: 6
                                 anchors.bottom: parent.bottom
                                 anchors.bottomMargin: 8
                                 width: parent.width
-                                active: root.current.wheel === true
-                                source: "ColorWheel.qml"
-                                onLoaded: wheelFade.restart()
-                                NumberAnimation { id: wheelFade; target: wheelHost; property: "opacity"; from: 0; to: 1; duration: Theme.ms(240); easing.type: Easing.OutCubic }
+                                active: root.current.themes === true
+                                source: "Themes.qml"
+                                onLoaded: themesFade.restart()
+                                NumberAnimation { id: themesFade; target: themesHost; property: "opacity"; from: 0; to: 1; duration: Theme.ms(240); easing.type: Easing.OutCubic }
                             }
                         }
 
                         Item {
-                            id: grab
                             anchors.right: parent.right
                             width: 16
                             height: parent.height

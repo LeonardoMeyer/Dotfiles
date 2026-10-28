@@ -1,0 +1,415 @@
+import QtQuick
+import Quickshell
+import Quickshell.Io
+import "../common"
+
+// color themes, shown as a lil terminal cause it looked cool. hover a row to preview, click to apply.
+// customize copies the whole scheme into a draft, then you pick a color, mess with it, name it, save. pretty sure that's it
+Item {
+    id: tp
+
+    // a palette is color0-15 then background, foreground, cursor, same order as the scheme files.
+    // the preview colors stuff by what quickshell actually uses it for (see common/Theme.qml):
+    // color9 accent, color7 text, color15 bright, color8 comments, color1 warn. took me a minute to figure out
+    readonly property var entries: {
+        const p = Store.pywalPalette
+        const pywal = p.length >= 16 ? [{ id: "pywal", name: "Pywal", palette: p.slice(0, 16).concat([p[0], p[15], p[15]]) }] : []
+        return pywal.concat(Store.themes)
+    }
+    readonly property var slotNames: Array.from({ length: 16 }, (_, i) => "color" + i)
+    property int cur: 0
+    readonly property var entry: entries[cur] ?? { id: "", name: "", palette: [] }
+    property var draft: null
+    property string draftName: ""
+    property int slot: 1
+    // color0-7 by default, 16 felt crammed. the toggle opens the rest
+    property bool full: false
+    readonly property var compact: [0, 1, 2, 3, 4, 5, 6, 7]
+    readonly property var slots: full ? Array.from({ length: 16 }, (_, i) => i) : compact
+    readonly property var shown: draft ?? entry.palette
+    readonly property color picked: draft ? draft[slot] : "black"
+    // follows hyprland's rounding so it matches everything else
+    readonly property real r: Math.min(Theme.rounding, 10)
+
+    // every color eases from wherever it was so the hex values count up/down. edits skip it or the sliders feel laggy
+    property var from: []
+    property var to: []
+    property real k: 1
+    property bool instant: false
+    onShownChanged: {
+        from = instant ? shown.slice() : live
+        instant = false
+        to = shown.slice()
+        k = 0
+        fade.restart()
+    }
+    NumberAnimation { id: fade; target: tp; property: "k"; to: 1; duration: Theme.ms(280); easing.type: Easing.OutCubic }
+    readonly property var live: to.map((c, i) => from[i] && from[i] !== c ? String(Theme.along([from[i], c], k)) : c)
+    function lc(i) { return live[i] ?? "#888888" }
+    readonly property color bg: lc(16)
+    readonly property color fg: lc(7)
+
+    function sync() {
+        const i = entries.findIndex(e => e.id === Store.colorTheme)
+        if (i >= 0 && !draft && !listHover.hovered) cur = i
+    }
+    onEntriesChanged: sync()
+    // the name and comment scramble into the new ones, 0 is all noise 1 is done
+    property real settle: 1
+    NumberAnimation { id: jumble; target: tp; property: "settle"; from: 0; to: 1; duration: Theme.ms(650); easing.type: Easing.OutCubic }
+    onCurChanged: jumble.restart()
+    // wait a sec before snapping back when the mouse leaves, otherwise it flickers
+    Timer { id: back; interval: 140; onTriggered: tp.sync() }
+    Connections { target: Store; function onColorThemeChanged() { tp.sync() } }
+
+    // arrows and enter from the settings window end up here
+    function step(d) { if (!draft && entries.length) cur = (cur + d + entries.length) % entries.length }
+    function pick() { draft ? save() : Store.applyTheme(entry.id) }
+    Component.onCompleted: { sync(); Store.picker = tp }
+    Component.onDestruction: if (Store.picker === tp) Store.picker = null
+
+    function customize() {
+        const p = entry.palette
+        pairs = [16, 17, 18].map(s => p.slice(0, 16).findIndex(c => String(c).toLowerCase() === String(p[s]).toLowerCase()))
+        instant = true
+        draft = p.slice()
+        jumble.restart()
+        draftName = entry.custom ? entry.name : entry.name + " custom"
+        slot = 1
+    }
+    // background, foreground and cursor don't get their own swatches, they just follow
+    // whichever of the 16 they matched when you hit customize. -1 means no match so leave it alone
+    property var pairs: [-1, -1, -1]
+    function setSlot(c) {
+        const d = draft.slice()
+        d[slot] = String(c)
+        pairs.forEach((p, i) => { if (p === slot) d[16 + i] = String(c) })
+        instant = true
+        draft = d
+    }
+
+    function save() {
+        const name = draftName.trim() || "Custom"
+        const id = (Qt.color(draft[16]).hslLightness > 0.5 ? "light/" : "dark/")
+            + (name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "custom")
+        const colors = {}
+        draft.slice(0, 16).forEach((c, i) => colors["color" + i] = c)
+        run(id, ["sh", "-c", 'mkdir -p "$(dirname "$1")" && printf "%s" "$2" > "$1"', "sh", file(id),
+            JSON.stringify({ name: name, custom: true, special: { background: draft[16], foreground: draft[17], cursor: draft[18] }, colors: colors })])
+        draft = null
+    }
+    function remove(e) { run(e.id === Store.colorTheme ? "pywal" : "", ["rm", "-f", file(e.id)]) }
+    function file(id) { return Quickshell.env("HOME") + "/.config/wal/colorschemes/" + id + ".json" }
+    function run(then, cmd) { writer.then = then; writer.command = cmd; writer.running = true }
+    Process {
+        id: writer
+        property string then
+        onExited: { if (then) Store.applyTheme(then); Store.refresh() }
+    }
+
+    function t(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
+    function j(s) {
+        const n = settle
+        return t(n < 1 ? s.replace(/\S/g, ch => Math.random() < n ? ch : "!<>-_/[]{}=+*^?#01"[Math.floor(Math.random() * 18)]) : s)
+    }
+    // a chunk of text in color i. span() wants html already, c() escapes it for you
+    function c(i, s) { return span(i, t(s)) }
+    function span(i, h) { return "<font color='" + lc(i) + "'>" + h + "</font>" }
+
+    // shows value until you start typing, otherwise the binding breaks and it stops updating
+    component Field: Rectangle {
+        property string value
+        readonly property alias text: input.text
+        signal done()
+        onValueChanged: if (!input.activeFocus) input.text = value
+        Component.onCompleted: input.text = value
+        height: 30
+        radius: tp.r
+        color: Theme.alpha(Theme.fg, 0.05)
+        border.width: 1
+        border.color: input.activeFocus ? Theme.accent : Theme.alpha(Theme.fg, 0.12)
+        TextInput {
+            id: input
+            anchors.fill: parent
+            anchors.leftMargin: 10
+            anchors.rightMargin: 10
+            verticalAlignment: TextInput.AlignVCenter
+            selectByMouse: true
+            clip: true
+            font.family: Theme.sans
+            font.pixelSize: 12
+            color: Theme.bright
+            selectionColor: Theme.alpha(Theme.accent, 0.6)
+            onEditingFinished: parent.done()
+            Keys.onEscapePressed: tp.draft = null
+        }
+    }
+
+    Column {
+        id: body
+        anchors.fill: parent
+        anchors.margins: Theme.pad
+        spacing: 14
+
+        // the fake terminal
+        Rectangle {
+            id: term
+            width: parent.width
+            height: stack.implicitHeight + 24
+            Behavior on height { Settle { duration: Theme.move } }
+            radius: tp.r
+            clip: true
+            color: tp.bg
+            border.width: 1
+            border.color: Theme.alpha(Theme.fg, 0.14)
+
+            Column {
+                id: stack
+                x: 14
+                y: 12
+                width: parent.width - 28
+
+                Label {
+                    width: parent.width
+                    textFormat: Text.StyledText
+                    lineHeight: 1.35
+                    font.pixelSize: 12
+                    color: tp.fg
+                    text: tp.c(4, "~/themes") + " " + tp.c(9, "❯") + tp.t(" wal --theme ") + tp.j((tp.draft ? tp.draftName : tp.entry.name).toLowerCase().replace(/ /g, "-")) + "<br>"
+                        + tp.c(13, "fn") + " " + tp.c(12, "apply") + tp.t("(scheme: ") + tp.c(14, "&[Rgb; 16]") + tp.t(") {") + "<br>"
+                        + "&nbsp;&nbsp;" + tp.c(13, "let") + tp.t(" glow = ") + tp.c(3, "0.35") + tp.t("; ") + tp.span(8, tp.t("// ") + tp.j(tp.draft ? "editing " + tp.slotNames[tp.slot] : tp.entry.id === "pywal" ? "from the wallpaper" : tp.entry.custom ? "yours" : "stock")) + "<br>"
+                        + "&nbsp;&nbsp;" + tp.c(1, "panic!") + tp.t("(") + tp.c(2, "\"warn\"") + tp.t(");") + "<br>"
+                        + "&nbsp;&nbsp;" + tp.c(13, "return") + " " + tp.c(9, "\"" + tp.lc(9) + "\"") + tp.t("; ") + tp.span(8, tp.t("// accent")) + "<br>"
+                        + tp.t("}") + " " + tp.c(18, "▌")
+                }
+
+                // open/close the bright row
+                Item {
+                    width: parent.width
+                    height: 46
+                    Button {
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 8
+                        label: tp.full ? "fewer ▴" : "all 16 ▾"
+                        onPressed: tp.full = !tp.full
+                    }
+                }
+
+                // the swatches. tap one to edit it while customizing
+                Grid {
+                    id: grid
+                    width: parent.width
+                    columns: 8
+                    columnSpacing: 4
+                    rowSpacing: 6
+                    Repeater {
+                        model: tp.slots
+                        Column {
+                            id: cell
+                            required property int modelData
+                            required property int index
+                            readonly property int s: modelData
+                            readonly property bool on: !!tp.draft && tp.slot === s
+                            width: (grid.width - 7 * grid.columnSpacing) / 8
+                            spacing: 3
+                            // each one drops in a lil after the last, looks nice idk
+                            property real p: 0
+                            opacity: p
+                            transform: Translate { y: (1 - cell.p) * -6 }
+                            SequentialAnimation on p {
+                                PauseAnimation { duration: Theme.ms(cell.index * 18) }
+                                NumberAnimation { to: 1; duration: Theme.ms(260); easing.type: Easing.OutCubic }
+                            }
+                            Rectangle {
+                                width: parent.width
+                                height: 16
+                                radius: Math.min(Theme.rounding, 4)
+                                color: tp.lc(cell.s)
+                                border.width: cell.on ? 2 : 1
+                                border.color: cell.on ? tp.fg : Theme.alpha(tp.fg, 0.15)
+                                Hover {
+                                    anchors.fill: parent
+                                    enabled: !!tp.draft
+                                    onClicked: tp.slot = cell.s
+                                }
+                            }
+                            Label {
+                                width: parent.width
+                                horizontalAlignment: Text.AlignHCenter
+                                // reads the animating color so the digits roll
+                                text: tp.lc(cell.s).slice(1)
+                                font.pixelSize: 9
+                                // the theme's own white but faded, keeps it calm
+                                color: tp.lc(15)
+                                opacity: cell.on ? 1 : 0.45
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // one row per theme
+        ListView {
+            id: list
+            visible: !tp.draft
+            width: parent.width
+            height: body.height - term.height - add.height - body.spacing * 2
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            model: tp.entries
+            currentIndex: tp.cur
+            highlightMoveDuration: Theme.ms(160)
+            highlightResizeDuration: 0
+            // one hover for the whole list. per row hover kept dropping when the mouse sat still
+            // and it jumped back to pywal, this fixed it i think
+            HoverHandler {
+                id: listHover
+                onPointChanged: {
+                    const i = list.indexAt(point.position.x, point.position.y + list.contentY)
+                    if (i >= 0) { back.stop(); tp.cur = i }
+                }
+                // leaving goes back to whatever's applied
+                onHoveredChanged: hovered ? back.stop() : back.restart()
+            }
+            // hover, same look as the bar menus
+            highlight: Rectangle {
+                radius: tp.r
+                color: Theme.alpha(Theme.fg, 0.1)
+            }
+
+            delegate: Item {
+                id: row
+                required property var modelData
+                required property int index
+                readonly property bool on: modelData.id === Store.colorTheme
+                width: list.width
+                height: 32
+
+                // applied one, also same as the bar menus
+                Rectangle {
+                    anchors.fill: parent
+                    radius: tp.r
+                    color: Theme.alpha(Theme.accent, rowArea.containsMouse ? 0.34 : 0.26)
+                    opacity: row.on ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: Theme.ms(120) } }
+                }
+
+                Hover {
+                    id: rowArea
+                    anchors.fill: parent
+                    onClicked: Store.applyTheme(row.modelData.id)
+                }
+                Label {
+                    x: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: row.modelData.name.toLowerCase()
+                    font.pixelSize: 12
+                    color: row.on ? Theme.accent : row.index === tp.cur ? Theme.bright : Theme.fg
+                }
+                IconButton {
+                    visible: !!row.modelData.custom && (rowArea.containsMouse || hovered)
+                    anchors.right: swatches.left
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "rm"
+                    font.pixelSize: 10
+                    hot: Theme.warn
+                    onClicked: tp.remove(row.modelData)
+                }
+                Row {
+                    id: swatches
+                    anchors.right: parent.right
+                    anchors.rightMargin: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    Repeater {
+                        model: tp.compact.map(i => row.modelData.palette[i])
+                        Rectangle {
+                            required property var modelData
+                            width: 12
+                            height: 12
+                            color: modelData
+                        }
+                    }
+                }
+            }
+        }
+
+        IconButton {
+            id: add
+            visible: !tp.draft
+            text: "+ customize " + tp.entry.name.toLowerCase()
+            font.pixelSize: 12
+            onClicked: tp.customize()
+        }
+
+        // customize mode
+        Column {
+            visible: !!tp.draft
+            width: parent.width
+            spacing: 12
+
+            Row {
+                width: parent.width
+                spacing: 8
+                Field {
+                    width: (parent.width - 8) * 0.35
+                    value: String(tp.picked)
+                    onDone: if (/^#?[0-9a-f]{6}$/i.test(text.trim())) tp.setSlot("#" + text.trim().replace("#", "").toLowerCase())
+                }
+                Field {
+                    width: (parent.width - 8) * 0.65
+                    value: tp.draftName
+                    onTextChanged: tp.draftName = text
+                    onDone: tp.save()
+                }
+            }
+
+            Repeater {
+                // hue / sat / light of the picked color
+                model: [["hue", "hslHue"], ["sat", "hslSaturation"], ["light", "hslLightness"]]
+                Row {
+                    required property var modelData
+                    required property int index
+                    readonly property real v: Math.max(0, tp.picked[modelData[1]])
+                    width: parent.width
+                    spacing: 10
+                    Label {
+                        width: 44
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData[0]
+                        font.pixelSize: 11
+                        color: Theme.dim
+                    }
+                    Slider {
+                        width: parent.width - 98
+                        anchors.verticalCenter: parent.verticalCenter
+                        step: 0.01
+                        value: parent.v
+                        onMoved: v => {
+                            const c = tp.picked, h = [Math.max(0, c.hslHue), c.hslSaturation, c.hslLightness]
+                            h[index] = v
+                            tp.setSlot(Qt.hsla(h[0], h[1], h[2], 1))
+                        }
+                    }
+                    Label {
+                        width: 34
+                        anchors.verticalCenter: parent.verticalCenter
+                        horizontalAlignment: Text.AlignRight
+                        text: Math.round(parent.v * (index === 0 ? 360 : 100))
+                        font.pixelSize: 11
+                        color: Theme.fg
+                    }
+                }
+            }
+
+            Row {
+                anchors.right: parent.right
+                spacing: 18
+                IconButton { text: "esc cancel"; font.pixelSize: 12; onClicked: tp.draft = null }
+                IconButton { text: "↵ save"; font.pixelSize: 12; idle: Theme.accent; hot: Theme.bright; onClicked: tp.save() }
+            }
+        }
+    }
+}

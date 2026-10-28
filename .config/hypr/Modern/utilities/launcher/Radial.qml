@@ -29,7 +29,7 @@ Item {
         glide.to = Math.round(pos) + d
         glide.start()
     }
-    NumberAnimation { id: glide; target: ring; property: "pos"; duration: Theme.ms(320); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
+    Settle { id: glide; target: ring; property: "pos"; duration: Theme.ms(320) }
 
     function local(i) {
         const s = 0.35
@@ -104,10 +104,9 @@ Item {
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
             }
 
-            Text {
+            Label {
                 anchors.centerIn: parent
                 text: b.modelData.icon
-                font.family: Theme.sans
                 font.pixelSize: Math.round(ring.btn * 0.36)
                 scale: b.on ? 1.14 : 1
                 color: b.on || area.containsMouse ? Theme.bright : Theme.fg
@@ -115,11 +114,9 @@ Item {
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
             }
 
-            MouseArea {
+            Hover {
                 id: area
                 anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
                 onEntered: if (ring.moved) ring.picked(b.index)
                 onPositionChanged: if (ring.moved && !b.on) ring.picked(b.index)
                 onClicked: ring.activated(b.index)

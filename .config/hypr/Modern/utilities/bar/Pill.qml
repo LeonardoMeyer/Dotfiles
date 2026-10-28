@@ -131,8 +131,8 @@ Item {
     readonly property real targetW: Math.max(rowW, Math.min(maxW, widths[shownPage] ?? 340))
     property real bodyW: targetW
     property real bodyH: front.item ? Math.ceil(front.item.implicitHeight) + 6 + pad : 0
-    Behavior on bodyW { enabled: self.t === 1; NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-    Behavior on bodyH { enabled: self.t === 1; NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+    Behavior on bodyW { enabled: self.t === 1; Settle { duration: Theme.move } }
+    Behavior on bodyH { enabled: self.t === 1; Settle { duration: Theme.move } }
 
     property real t: open ? 1 : 0
     Behavior on t {
@@ -273,7 +273,7 @@ Item {
         property var tray: null
         property bool front: false
         property real f: front ? 1 : 0
-        Behavior on f { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+        Behavior on f { Settle { duration: Theme.move } }
 
         property real room: 0
         Binding on room { when: slot.front; value: self.targetW - self.pad * 2 }
@@ -293,6 +293,6 @@ Item {
     Component { id: islandC; Island { ctx: self.ctx; pill: self } }
     Component { id: networkC; Menus.Network { open: self.open; onRun: c => self.ctx.run(c) } }
     Component { id: audioC; Menus.Audio { open: self.open; onRun: c => self.ctx.run(c); onDone: self.close() } }
-    Component { id: powerC; Menus.Power { open: self.open; standalone: self.ctx.standalone; onRun: c => self.ctx.run(c); onDone: self.close() } }
+    Component { id: powerC; Menus.Session { open: self.open; standalone: self.ctx.standalone; onRun: c => self.ctx.run(c); onDone: self.close() } }
     Component { id: trayC; Menus.Tray { open: self.open; item: parent ? parent.tray : null; onRun: c => self.ctx.run(c); onDone: self.close() } }
 }

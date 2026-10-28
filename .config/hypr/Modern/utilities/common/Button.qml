@@ -16,20 +16,17 @@ Rectangle {
     Behavior on color { ColorAnimation { duration: Theme.fast } }
     Behavior on scale { NumberAnimation { duration: Theme.ms(120) } }
 
-    Text {
+    Label {
         id: caption
         anchors.centerIn: parent
         text: b.label
-        font.family: Theme.sans
         font.pixelSize: 12
         color: b.primary ? Theme.bg : Theme.fg
     }
 
-    MouseArea {
+    Hover {
         id: area
         anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
         onClicked: b.pressed()
     }
 }

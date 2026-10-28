@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
@@ -66,7 +65,7 @@ ShellRoot {
             width: mini.cw
             height: mini.ch
             scale: hov.hovered ? 1.03 : 1
-            Behavior on scale { NumberAnimation { duration: Theme.fast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+            Behavior on scale { Settle { duration: Theme.fast } }
             HoverHandler { id: hov }
 
             ClippingRectangle {
@@ -92,57 +91,43 @@ ShellRoot {
                 drag.onActiveChanged: if (mini.dragEntry && mini.ghost) drag.active ? mini.ghost.dragging = true : mini.ghost.end()
                 onClicked: mini.picked()
             }
-            Text {
+            IconButton {
                 id: closeX
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.margins: 6
                 text: "\uf00d"
-                font.family: Theme.sans
                 font.pixelSize: 11
                 opacity: hov.hovered ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: Theme.fast } }
-                color: xArea.containsMouse ? Theme.warn : Theme.bright
-                MouseArea {
-                    id: xArea
-                    anchors.fill: parent
-                    anchors.margins: -5
-                    hoverEnabled: true
-                    onClicked: mini.removed()
-                }
+                hot: Theme.warn
+                idle: Theme.bright
+                onClicked: mini.removed()
             }
-            Text {
+            IconButton {
                 visible: mini.renamable
                 anchors.right: closeX.left
                 anchors.rightMargin: 10
                 anchors.verticalCenter: closeX.verticalCenter
                 text: "\uf040"
-                font.family: Theme.sans
                 font.pixelSize: 10
                 opacity: hov.hovered ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: Theme.fast } }
-                color: penArea.containsMouse ? Theme.accent : Theme.bright
-                MouseArea {
-                    id: penArea
-                    anchors.fill: parent
-                    anchors.margins: -5
-                    hoverEnabled: true
-                    onClicked: {
-                        mini.editing = true
-                        field.text = mini.label
-                        field.selectAll()
-                        field.forceActiveFocus()
-                    }
+                idle: Theme.bright
+                onClicked: {
+                    mini.editing = true
+                    field.text = mini.label
+                    field.selectAll()
+                    field.forceActiveFocus()
                 }
             }
         }
 
-        Text {
+        Label {
             visible: !mini.editing
             width: mini.cw
             elide: Text.ElideRight
             text: mini.label
-            font.family: Theme.sans
             font.pixelSize: 10
             color: Theme.dim
         }
@@ -162,12 +147,18 @@ ShellRoot {
                 anchors.fill: parent
                 anchors.margins: -3
                 z: -1
-                radius: 4
+                radius: Math.min(Theme.rounding, 4)
                 color: "transparent"
                 border.width: 1
                 border.color: Theme.alpha(Theme.accent, 0.6)
             }
         }
+    }
+
+    component Heading: Label {
+        font.pixelSize: 15
+        font.bold: true
+        color: Theme.bright
     }
 
     // qt drags stay inside one surface but the pointer keeps reporting to the pressed one,
@@ -275,37 +266,12 @@ ShellRoot {
                 }
             }
 
-            // blurred wallpaper, never fully 0 (see the home screen)
-            Item {
+            Backdrop {
                 id: backdrop
                 anchors.fill: parent
-                opacity: Math.max(0.001, Math.min(1, root.t * 2.5))
-                Image {
-                    id: wall
-                    anchors.fill: parent
-                    source: ex.active && ex.wallpaper !== "" ? "file://" + ex.wallpaper : ""
-                    sourceSize.width: ov.width
-                    sourceSize.height: ov.height
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    visible: false
-                }
-                MultiEffect {
-                    anchors.fill: parent
-                    visible: ex.active
-                    source: wall
-                    scale: 1 + 0.035 * root.t
-                    blurEnabled: true
-                    blurMax: 64
-                    blur: 1
-                    brightness: -0.1
-                    saturation: 0.12
-                }
-                Rectangle {
-                    anchors.fill: parent
-                    color: "#000000"
-                    opacity: 0.22 * root.t
-                }
+                visible: ex.active
+                t: root.t
+                source: ex.active && ex.wallpaper !== "" ? "file://" + ex.wallpaper : ""
             }
 
             MouseArea {
@@ -329,7 +295,7 @@ ShellRoot {
                 anchors.fill: parent
                 visible: root.t > 0
 
-                Text {
+                Label {
                     id: hint
                     readonly property real p: root.seg(0.02)
                     opacity: p
@@ -338,7 +304,6 @@ ShellRoot {
                     anchors.bottom: grid.top
                     anchors.bottomMargin: 26
                     text: "1-9 to jump  ·  Esc to close"
-                    font.family: Theme.sans
                     font.pixelSize: 11
                     color: Theme.dim
                 }
@@ -370,11 +335,8 @@ ShellRoot {
                             Item {
                                 width: ov.tileW
                                 height: 18
-                                Text {
+                                Heading {
                                     text: cell.isNew ? "New" : cell.wsId
-                                    font.family: Theme.sans
-                                    font.pixelSize: 15
-                                    font.bold: true
                                     color: cell.wsId === ov.activeId ? Theme.accent : Theme.bright
                                 }
                                 Workspaces.Actions {
@@ -423,13 +385,7 @@ ShellRoot {
                         Item {
                             width: ov.tileW * 0.6
                             height: 18
-                            Text {
-                                text: "Special"
-                                font.family: Theme.sans
-                                font.pixelSize: 15
-                                font.bold: true
-                                color: Theme.bright
-                            }
+                            Heading { text: "Special" }
                             Workspaces.Actions {
                                 visible: ov.magicUsed
                                 anchors.right: parent.right
@@ -461,18 +417,12 @@ ShellRoot {
                         opacity: ov.pads.length > 0 ? 1 : 0
                         Behavior on opacity { NumberAnimation { duration: Theme.move } }
                         spacing: 10
-                        Text {
-                            text: "Scratchpads"
-                            font.family: Theme.sans
-                            font.pixelSize: 15
-                            font.bold: true
-                            color: Theme.bright
-                        }
+                        Heading { text: "Scratchpads" }
                         Flow {
                             width: 272
                             spacing: 12
-                            add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-                            move: Transition { NumberAnimation { properties: "x,y"; duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                            add: Transition { Settle { property: "opacity"; from: 0; to: 1; duration: Theme.move } }
+                            move: Transition { Settle { properties: "x,y"; duration: Theme.move } }
                             Repeater {
                                 model: ScriptModel { values: ov.pads }
                                 Mini {
@@ -499,18 +449,12 @@ ShellRoot {
                         opacity: ex.saved.length > 0 ? 1 : 0
                         Behavior on opacity { NumberAnimation { duration: Theme.move } }
                         spacing: 10
-                        Text {
-                            text: "Saved"
-                            font.family: Theme.sans
-                            font.pixelSize: 15
-                            font.bold: true
-                            color: Theme.bright
-                        }
+                        Heading { text: "Saved" }
                         Flow {
                             width: 312
                             spacing: 12
-                            add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-                            move: Transition { NumberAnimation { properties: "x,y"; duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                            add: Transition { Settle { property: "opacity"; from: 0; to: 1; duration: Theme.move } }
+                            move: Transition { Settle { properties: "x,y"; duration: Theme.move } }
                             Repeater {
                                 // keys survive renames so the card slides to its new spot instead of popping in
                                 model: ScriptModel { values: ex.saved.map(e => e.key) }
@@ -542,29 +486,12 @@ ShellRoot {
                                         asynchronous: true
                                         opacity: 0.6
                                     }
-                                    Repeater {
-                                        model: entry.ws.windows
-                                        Rectangle {
-                                            required property var modelData
-                                            x: modelData.x * entry.k
-                                            y: modelData.y * entry.k
-                                            width: modelData.w * entry.k
-                                            height: modelData.h * entry.k
-                                            radius: 3
-                                            color: Theme.alpha(Theme.bg, 0.85)
-                                            border.width: 1
-                                            border.color: Theme.alpha(Theme.fg, 0.12)
-                                            Text {
-                                                anchors.centerIn: parent
-                                                width: parent.width - 6
-                                                horizontalAlignment: Text.AlignHCenter
-                                                elide: Text.ElideRight
-                                                text: modelData.app
-                                                font.family: Theme.sans
-                                                font.pixelSize: 8
-                                                color: Theme.dim
-                                            }
-                                        }
+                                    Workspaces.Layout {
+                                        anchors.fill: parent
+                                        windows: entry.ws.windows
+                                        k: entry.k
+                                        fill: Theme.alpha(Theme.bg, 0.85)
+                                        edge: Theme.alpha(Theme.fg, 0.12)
                                     }
                                 }
                             }

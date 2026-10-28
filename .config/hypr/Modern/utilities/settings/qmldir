@@ -3,8 +3,7 @@ Segmented 1.0 Segmented.qml
 Dropdown 1.0 Dropdown.qml
 Picker 1.0 Picker.qml
 RoundedImage 1.0 RoundedImage.qml
-Wheel 1.0 Wheel.qml
-ColorWheel 1.0 ColorWheel.qml
+Themes 1.0 Themes.qml
 CurvePlot 1.0 CurvePlot.qml
 SettingSlider 1.0 SettingSlider.qml
 SettingToggle 1.0 SettingToggle.qml

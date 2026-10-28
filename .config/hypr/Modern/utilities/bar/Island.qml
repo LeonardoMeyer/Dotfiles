@@ -20,6 +20,8 @@ Item {
         { id: "weather", glyph: ctx.weather.ready ? ctx.weather.glyph(ctx.weather.code, ctx.weather.night) : "󰖕" }
     ]
     readonly property string current: pill.tab !== "" ? pill.tab : "media"
+    // keeps the menu up while an app waits on me to pick a share
+    readonly property bool holdOpen: captureTab.sharing && current === "capture"
     onCurrentChanged: if (current === "weather") ctx.weather.refresh(false)
 
     implicitHeight: 196
@@ -28,23 +30,26 @@ Item {
         anchors.fill: parent
 
         Item {
-            id: stage
-            readonly property real rest: parent.width - 50
-            width: Math.min(440, rest)
+            x: 50
+            width: parent.width - 50
             height: parent.height
-            x: 50 + (rest - width) / 2
 
+            // tabs keep the 440 they were laid out for, centred. media takes the whole width
             component Fade: Item {
                 property bool on: false
-                anchors.fill: parent
+                property real maxW: 440
+                width: Math.min(maxW, parent.width)
+                height: parent.height
+                x: (parent.width - width) / 2
                 opacity: on ? 1 : 0
                 visible: opacity > 0
                 transform: Translate { y: (1 - opacity) * 6 }
-                Behavior on opacity { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                Behavior on opacity { Settle { duration: Theme.move } }
             }
 
             Fade {
                 on: page.current === "media"
+                maxW: Infinity
                 MediaTab {
                     anchors.fill: parent
                     active: page.pill.open && parent.visible
@@ -76,12 +81,22 @@ Item {
             Fade {
                 on: page.current === "capture"
                 CaptureTab {
+                    id: captureTab
                     anchors.fill: parent
                     active: page.pill.open && parent.visible
+                    open: page.pill.open
                     onCapture: (kind, mode) => {
                         page.pill.close()
-                        page.ctx.run("sleep 0.35; '" + Quickshell.shellDir + "/bar/capture.sh' " + kind + " " + mode)
+                        page.ctx.run("sleep 0.35; '" + Quickshell.shellDir + "/bar/" + (kind === "share" ? "share.sh' pick " : "capture.sh' " + kind + " ") + mode)
                     }
+                    onCancelShare: page.ctx.run("'" + Quickshell.shellDir + "/bar/share.sh' cancel")
+                    onCast: (tv, mode) => {
+                        page.pill.close()
+                        Quickshell.execDetached(["sh", "-c", 'sleep 0.35; exec "$0" start "$1" "$2" "$3" "$4"',
+                            Quickshell.shellDir + "/bar/cast.py", tv.kind, tv.target, tv.name, mode])
+                    }
+                    onStopCast: Quickshell.execDetached([Quickshell.shellDir + "/bar/cast.py", "stop"])
+                    onMore: { page.pill.close(); page.ctx.run("gnome-network-displays") }
                     onStop: page.ctx.run("'" + Quickshell.shellDir + "/bar/capture.sh' stop")
                 }
             }
@@ -112,19 +127,16 @@ Item {
                     color: on ? Theme.alpha(Theme.accent, 0.26) : Theme.alpha(Theme.fg, tabArea.containsMouse ? 0.1 : 0.04)
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
 
-                    Text {
+                    Label {
                         anchors.centerIn: parent
                         text: tab.modelData.glyph
-                        font.family: Theme.sans
                         font.pixelSize: 14
                         color: tab.on ? Theme.accent : tabArea.containsMouse ? Theme.bright : Theme.fg
                     }
 
-                    MouseArea {
+                    Hover {
                         id: tabArea
                         anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: if (containsMouse) page.pill.tab = tab.modelData.id
                         onClicked: page.pill.tab = tab.modelData.id
                     }
@@ -194,8 +206,8 @@ Item {
 
             ClippingRectangle {
                 id: art
-                width: 118
-                height: 118
+                width: parent.height
+                height: width
                 radius: Math.min(Theme.rounding, 16)
                 color: Theme.alpha(Theme.fg, 0.1)
                 scale: artArea.containsMouse ? 1.03 : 1
@@ -204,8 +216,8 @@ Item {
                 Image {
                     anchors.fill: parent
                     source: page.player ? page.player.trackArtUrl : ""
-                    sourceSize.width: 256
-                    sourceSize.height: 256
+                    sourceSize.width: 512
+                    sourceSize.height: 512
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                 }
@@ -215,10 +227,9 @@ Item {
                     color: Theme.alpha(Theme.bg, 0.45)
                     opacity: artArea.containsMouse ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: Theme.fast } }
-                    Text {
+                    Label {
                         anchors.centerIn: parent
                         text: "󰏌"
-                        font.family: Theme.sans
                         font.pixelSize: 20
                         color: Theme.bright
                     }
@@ -230,7 +241,7 @@ Item {
             Item {
                 id: info
                 anchors.left: art.right
-                anchors.leftMargin: 16
+                anchors.leftMargin: 20
                 anchors.right: parent.right
                 height: parent.height
 
@@ -245,17 +256,15 @@ Item {
                         id: chipRow
                         anchors.centerIn: parent
                         spacing: 6
-                        Text {
+                        Label {
                             anchors.verticalCenter: parent.verticalCenter
                             text: Theme.isSpotify(page.player) ? "" : "󰝚"
-                            font.family: Theme.sans
                             font.pixelSize: 11
                             color: Theme.accent
                         }
-                        Text {
+                        Label {
                             anchors.verticalCenter: parent.verticalCenter
                             text: (page.player ? page.player.identity : "") + (page.playerCount > 1 ? "  " : "")
-                            font.family: Theme.sans
                             font.pixelSize: 10
                             color: Theme.fg
                         }
@@ -275,29 +284,26 @@ Item {
                     width: parent.width
                     spacing: 2
 
-                    Text {
+                    Label {
                         width: parent.width
                         text: page.player ? (page.player.trackTitle || "Unknown title") : ""
                         elide: Text.ElideRight
-                        font.family: Theme.sans
                         font.pixelSize: 17
                         font.bold: true
                         color: Theme.bright
                     }
-                    Text {
+                    Label {
                         width: parent.width
                         text: page.player ? (page.player.trackArtist || "") : ""
                         elide: Text.ElideRight
-                        font.family: Theme.sans
                         font.pixelSize: 12
                         color: Theme.fg
                     }
-                    Text {
+                    Label {
                         width: parent.width
                         visible: text !== ""
                         text: page.player ? (page.player.trackAlbum || "") : ""
                         elide: Text.ElideRight
-                        font.family: Theme.sans
                         font.pixelSize: 11
                         color: Theme.dim
                     }
@@ -312,21 +318,19 @@ Item {
                     visible: !!page.player && page.player.lengthSupported && page.player.length > 0
                     readonly property real frac: visible ? Math.max(0, Math.min(1, page.player.position / page.player.length)) : 0
 
-                    Text {
+                    Label {
                         id: elapsed
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         text: page.player ? page.mmss(page.player.position) : ""
-                        font.family: Theme.sans
                         font.pixelSize: 10
                         color: Theme.dim
                     }
-                    Text {
+                    Label {
                         id: total
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         text: page.player ? page.mmss(page.player.length) : ""
-                        font.family: Theme.sans
                         font.pixelSize: 10
                         color: Theme.dim
                     }
@@ -351,10 +355,9 @@ Item {
                 radius: Math.min(Theme.rounding, 8)
                 color: Theme.alpha(Theme.fg, popArea.containsMouse ? 0.14 : 0.06)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
-                Text {
+                Label {
                     anchors.centerIn: parent
                     text: "󰏌"
-                    font.family: Theme.sans
                     font.pixelSize: 13
                     color: popArea.containsMouse ? Theme.accent : Theme.fg
                 }
@@ -362,7 +365,6 @@ Item {
             }
 
             Row {
-                id: transport
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: info.horizontalCenter
                 spacing: 22
@@ -393,13 +395,11 @@ Item {
                         height: 14
                         color: Theme.bg
                         m: page.playing ? 1 : 0
-                        Behavior on m { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                        Behavior on m { Settle { duration: Theme.move } }
                     }
-                    MouseArea {
+                    Hover {
                         id: playArea
                         anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
                         onClicked: if (page.player && page.player.canTogglePlaying) page.player.togglePlaying()
                     }
                 }
@@ -429,17 +429,15 @@ Item {
         anchors.centerIn: parent
         spacing: 10
 
-        Text {
+        Label {
             anchors.horizontalCenter: parent.horizontalCenter
             text: n.glyph
-            font.family: Theme.sans
             font.pixelSize: 38
             color: Theme.alpha(Theme.fg, 0.35)
         }
-        Text {
+        Label {
             anchors.horizontalCenter: parent.horizontalCenter
             text: n.text
-            font.family: Theme.sans
             font.pixelSize: 14
             color: Theme.dim
         }
@@ -461,12 +459,10 @@ Item {
         font.pixelSize: 15
         color: !ok ? Theme.alpha(Theme.fg, 0.2) : on ? Theme.accent : bArea.containsMouse ? Theme.bright : Theme.fg
         Behavior on color { ColorAnimation { duration: Theme.fast } }
-        MouseArea {
+        Hover {
             id: bArea
             anchors.fill: parent
             anchors.margins: -8
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
             onClicked: if (b.ok) b.pressed()
         }
     }
@@ -512,18 +508,16 @@ Item {
             Column {
                 anchors.centerIn: parent
                 spacing: 2
-                Text {
+                Label {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: page.timer.format(page.timer.remaining)
-                    font.family: Theme.sans
                     font.pixelSize: 30
                     font.bold: true
                     color: Theme.bright
                 }
-                Text {
+                Label {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: page.timer.running ? "Focusing" : page.timer.active ? "Paused" : "Ready"
-                    font.family: Theme.sans
                     font.pixelSize: 11
                     color: page.timer.running ? Theme.accent : Theme.dim
                 }
@@ -537,10 +531,9 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 14
 
-            Text {
+            Label {
                 x: 2
                 text: "START A SESSION"
-                font.family: Theme.sans
                 font.pixelSize: 10
                 font.letterSpacing: 1.6
                 color: Theme.dim
@@ -563,18 +556,15 @@ Item {
                         color: current && page.timer.active ? Theme.alpha(Theme.accent, 0.3)
                             : Theme.alpha(Theme.fg, presetArea.containsMouse ? 0.12 : 0.055)
                         Behavior on color { ColorAnimation { duration: Theme.fast } }
-                        Text {
+                        Label {
                             anchors.centerIn: parent
                             text: parent.modelData + " min"
-                            font.family: Theme.sans
                             font.pixelSize: 12
                             color: parent.current && page.timer.active ? Theme.bright : Theme.fg
                         }
-                        MouseArea {
+                        Hover {
                             id: presetArea
                             anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
                             onClicked: page.timer.start(parent.modelData)
                         }
                     }
@@ -608,12 +598,9 @@ Item {
         signal pick()
         signal copy(string color)
 
-        FileView {
+        Watched {
             id: history
             path: Quickshell.env("HOME") + "/.cache/colorpicker/colors"
-            watchChanges: true
-            printErrors: false
-            onFileChanged: reload()
         }
         readonly property var colors: history.text().split("\n").map(s => s.trim()).filter(s => /^#[0-9a-fA-F]{6}$/.test(s))
         readonly property string last: colors.length > 0 ? colors[0] : ""
@@ -643,11 +630,10 @@ Item {
                 border.width: 1
                 border.color: Theme.alpha(Theme.fg, 0.1)
 
-                Text {
+                Label {
                     anchors.centerIn: parent
                     visible: page.last === ""
                     text: "󰈊"
-                    font.family: Theme.sans
                     font.pixelSize: 26
                     color: Theme.dim
                 }
@@ -663,17 +649,15 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 6
 
-                Text {
+                Label {
                     text: page.last !== "" ? page.last.toUpperCase() : "No colors yet"
-                    font.family: Theme.sans
                     font.pixelSize: 22
                     font.bold: page.last !== ""
                     color: Theme.bright
                 }
-                Text {
+                Label {
                     text: page.copied !== "" ? "Copied " + page.copied.toUpperCase()
                         : page.last !== "" ? "RGB  " + page.rgb(page.last) : "Pick one from anywhere on screen"
-                    font.family: Theme.sans
                     font.pixelSize: 11
                     color: page.copied !== "" ? Theme.accent : Theme.dim
                 }
@@ -703,7 +687,7 @@ Item {
                             border.width: 1
                             border.color: Theme.alpha(Theme.fg, swatchArea.containsMouse ? 0.5 : 0.1)
                             scale: swatchArea.containsMouse ? 1.12 : 1
-                            Behavior on scale { NumberAnimation { duration: Theme.fast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                            Behavior on scale { Settle { duration: Theme.fast } }
                             MouseArea { id: swatchArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.copyColor(parent.modelData) }
                         }
                     }
@@ -717,24 +701,67 @@ Item {
         id: page
 
         property bool active: false
+        property bool open: false
         property string kind: "shot"
         property int elapsed: 0
         signal capture(string kind, string mode)
         signal stop()
+        signal cancelShare()
+        signal cast(var tv, string mode)
+        signal stopCast()
+        signal more()
 
-        FileView {
+        property var tvs: []
+        property var tv: null
+        property bool scanned: false
+        onKindChanged: { tv = null; if (kind !== "cast") { tvs = []; scanned = false } }
+        Process {
+            id: scanner
+            command: [Quickshell.shellDir + "/bar/cast.py", "scan"]
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    try { page.tvs = JSON.parse(text) } catch (e) {}
+                    page.scanned = true
+                }
+            }
+        }
+        Timer {
+            running: page.kind === "cast" && !page.tv && page.active && !page.casting
+            interval: 6000
+            repeat: true
+            triggeredOnStart: true
+            onTriggered: if (!scanner.running) scanner.running = true
+        }
+
+        Watched {
+            id: castFile
+            path: Quickshell.env("XDG_RUNTIME_DIR") + "/cast-state"
+        }
+        readonly property var castState: { try { return JSON.parse(castFile.text()) } catch (e) { return null } }
+        readonly property bool casting: !!castState
+        readonly property int castStarted: casting ? castState.started : 0
+
+        // share.sh writes this when an app wants my screen
+        Watched {
+            id: shareReq
+            path: Quickshell.env("XDG_RUNTIME_DIR") + "/share-request"
+        }
+        readonly property bool sharing: shareReq.text() !== ""
+        property bool picked: false
+        onSharingChanged: { picked = false; kind = sharing ? "share" : kind === "share" ? "shot" : kind }
+        onOpenChanged: if (!open && sharing && !picked) cancelShare()
+
+        Watched {
             id: state
             path: Quickshell.env("XDG_RUNTIME_DIR") + "/capture-rec"
-            watchChanges: true
-            printErrors: false
-            onFileChanged: reload()
         }
         readonly property int started: parseInt(state.text()) || 0
         readonly property bool recording: started > 0
 
-        function tick() { elapsed = Math.max(0, Math.floor(Date.now() / 1000) - started) }
-        onStartedChanged: tick()
-        Timer { running: page.recording && page.active; interval: 1000; repeat: true; triggeredOnStart: true; onTriggered: page.tick() }
+        readonly property int since: recording ? started : castStarted
+        function tick() { elapsed = Math.max(0, Math.floor(Date.now() / 1000) - since) }
+        onSinceChanged: tick()
+        Timer { running: page.since > 0 && page.active; interval: 1000; repeat: true; triggeredOnStart: true; onTriggered: page.tick() }
 
         function clock(s) {
             const p = n => String(n).padStart(2, "0")
@@ -745,26 +772,122 @@ Item {
             width: parent.width
             anchors.centerIn: parent
             spacing: 14
-            visible: !page.recording
+            visible: !page.recording && !page.casting
 
             Row {
+                visible: !page.tv
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 6
 
                 Repeater {
-                    model: [{ id: "shot", label: "󰄀  Photo" }, { id: "rec", label: "󰻃  Video" }]
+                    model: [{ id: "shot", label: "󰄀  Photo" }, { id: "rec", label: "󰻃  Video" }, { id: "cast", label: "󰄘  Cast" }]
+                        .concat(page.sharing ? [{ id: "share", label: "󰹑  Share" }] : [])
 
                     Button {
                         required property var modelData
                         primary: page.kind === modelData.id
                         label: modelData.label
-                        onPressed: page.kind = modelData.id
+                        // hitting cast again stops looking for tvs
+                        onPressed: page.kind = modelData.id === "cast" && page.kind === "cast" ? "shot" : modelData.id
+                    }
+                }
+            }
+
+            Item {
+                visible: !!page.tv
+                width: parent.width
+                height: 32
+
+                Button {
+                    id: backBtn
+                    label: "\uf053"
+                    onPressed: page.tv = null
+                }
+                Label {
+                    anchors.left: backBtn.right
+                    anchors.leftMargin: 10
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: page.tv ? "󰄘  " + page.tv.name : ""
+                    elide: Text.ElideRight
+                    font.pixelSize: 14
+                    color: Theme.bright
+                }
+            }
+
+            ClippingRectangle {
+                visible: page.kind === "cast" && !page.tv
+                width: parent.width
+                height: 108
+                radius: Math.min(Theme.rounding, 12)
+                color: Theme.alpha(Theme.fg, 0.055)
+
+                Flickable {
+                    anchors.fill: parent
+                    contentHeight: tvList.implicitHeight
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    Column {
+                        id: tvList
+                        width: parent.width
+
+                        Repeater {
+                            // miracast needs wifi direct, not dealing with that. gnome-network-displays can
+                            model: page.tvs.concat([{ kind: "more", name: "Miracast" }])
+
+                            Rectangle {
+                                id: tvRow
+                                required property var modelData
+                                width: tvList.width
+                                height: 34
+                                color: Theme.alpha(Theme.fg, tvArea.containsMouse ? 0.1 : 0)
+                                Behavior on color { ColorAnimation { duration: Theme.fast } }
+
+                                Label {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 16
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 16
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: (tvRow.modelData.kind === "cast" ? "󰄘" : tvRow.modelData.kind === "dlna" ? "󰔂" : "󰖩") + "   " + tvRow.modelData.name
+                                    elide: Text.ElideRight
+                                    font.pixelSize: 12
+                                    color: tvArea.containsMouse ? Theme.bright : tvRow.modelData.kind === "more" ? Theme.dim : Theme.fg
+                                }
+
+                                Hover {
+                                    id: tvArea
+                                    anchors.fill: parent
+                                    onClicked: tvRow.modelData.kind === "more" ? page.more() : page.tv = tvRow.modelData
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Label {
+                    id: searching
+                    visible: page.tvs.length === 0
+                    anchors.right: parent.right
+                    anchors.rightMargin: 14
+                    anchors.top: parent.top
+                    anchors.topMargin: 13
+                    text: scanner.running || !page.scanned ? "Searching…" : "No TVs"
+                    font.pixelSize: 11
+                    color: Theme.dim
+                    SequentialAnimation on opacity {
+                        running: scanner.running && page.active
+                        loops: Animation.Infinite
+                        onRunningChanged: if (!running) searching.opacity = 1
+                        NumberAnimation { to: 0.35; duration: 700; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1; duration: 700; easing.type: Easing.InOutSine }
                     }
                 }
             }
 
             Row {
                 id: tiles
+                visible: page.kind !== "cast" || !!page.tv
                 width: parent.width
                 spacing: 8
 
@@ -776,7 +899,7 @@ Item {
                         required property var modelData
                         width: (tiles.width - tiles.spacing * 2) / 3
                         height: 72
-                        radius: 12
+                        radius: Math.min(Theme.rounding, 12)
                         color: Theme.alpha(Theme.fg, tileArea.containsMouse ? 0.12 : 0.055)
                         scale: tileArea.pressed ? 0.95 : 1
                         Behavior on color { ColorAnimation { duration: Theme.fast } }
@@ -785,28 +908,28 @@ Item {
                         Column {
                             anchors.centerIn: parent
                             spacing: 5
-                            Text {
+                            Label {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: tile.modelData.glyph
-                                font.family: Theme.sans
                                 font.pixelSize: 20
                                 color: tileArea.containsMouse ? Theme.accent : Theme.fg
                             }
-                            Text {
+                            Label {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: tile.modelData.label
-                                font.family: Theme.sans
                                 font.pixelSize: 10
                                 color: Theme.dim
                             }
                         }
 
-                        MouseArea {
+                        Hover {
                             id: tileArea
                             anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: page.capture(page.kind, tile.modelData.id)
+                            onClicked: {
+                                if (page.kind === "cast") { page.cast(page.tv, tile.modelData.id); page.tv = null; return }
+                                if (page.kind === "share") page.picked = true
+                                page.capture(page.kind, tile.modelData.id)
+                            }
                         }
                     }
                 }
@@ -816,13 +939,22 @@ Item {
         Column {
             anchors.centerIn: parent
             spacing: 10
-            visible: page.recording
+            visible: page.recording || page.casting
+
+            Label {
+                visible: !page.recording
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "󰄘  " + (page.castState ? page.castState.name : "")
+                font.pixelSize: 13
+                color: Theme.fg
+            }
 
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 10
 
                 Rectangle {
+                    visible: page.recording
                     anchors.verticalCenter: parent.verticalCenter
                     width: 10
                     height: 10
@@ -835,10 +967,9 @@ Item {
                         NumberAnimation { to: 1; duration: 700 }
                     }
                 }
-                Text {
-                    text: page.clock(page.elapsed)
-                    font.family: Theme.sans
-                    font.pixelSize: 28
+                Label {
+                    text: page.since > 0 ? page.clock(page.elapsed) : "Connecting…"
+                    font.pixelSize: page.since > 0 ? 28 : 18
                     font.bold: true
                     color: Theme.bright
                 }
@@ -848,7 +979,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 primary: true
                 label: "󰓛  Stop"
-                onPressed: page.stop()
+                onPressed: page.recording ? page.stop() : page.stopCast()
             }
         }
     }
@@ -866,34 +997,30 @@ Item {
 
             Row {
                 spacing: 10
-                Text {
+                Label {
                     anchors.verticalCenter: parent.verticalCenter
                     text: wt.weather.ready ? wt.weather.glyph(wt.weather.code, wt.weather.night) : "󰖕"
-                    font.family: Theme.sans
                     font.pixelSize: 38
                     color: Theme.accent
                 }
-                Text {
+                Label {
                     anchors.verticalCenter: parent.verticalCenter
                     text: wt.weather.ready ? wt.weather.temp + "°" : "--"
-                    font.family: Theme.sans
                     font.pixelSize: 34
                     font.bold: true
                     color: Theme.bright
                 }
             }
-            Text {
+            Label {
                 width: parent.width
                 text: wt.weather.ready ? wt.weather.desc : wt.weather.failed ? "Weather unavailable" : "Loading weather..."
                 elide: Text.ElideRight
-                font.family: Theme.sans
                 font.pixelSize: 13
                 color: Theme.fg
             }
-            Text {
+            Label {
                 visible: wt.weather.ready
                 text: "Feels " + wt.weather.feels + "°  ·  H " + wt.weather.high + "°  L " + wt.weather.low + "°"
-                font.family: Theme.sans
                 font.pixelSize: 10
                 color: Theme.dim
             }
@@ -903,12 +1030,11 @@ Item {
                 Text { text: "󰖎 " + wt.weather.humidity + "%"; font.family: Theme.sans; font.pixelSize: 10; color: Theme.dim }
                 Text { text: "󰖝 " + wt.weather.wind + " mph"; font.family: Theme.sans; font.pixelSize: 10; color: Theme.dim }
             }
-            Text {
+            Label {
                 width: parent.width
                 visible: wt.weather.ready
                 text: wt.weather.area
                 elide: Text.ElideRight
-                font.family: Theme.sans
                 font.pixelSize: 10
                 color: Theme.alpha(Theme.fg, 0.35)
             }
@@ -930,7 +1056,6 @@ Item {
             function py(t) { return 100 - (hi > lo ? (t - lo) / (hi - lo) : 0.5) * 50 }
 
             Canvas {
-                id: curve
                 anchors.fill: parent
                 property var points: graph.hours.map((h, i) => [graph.px(i), graph.py(h.temp)])
                 onPointsChanged: requestPaint()
@@ -974,11 +1099,10 @@ Item {
                     width: 40
                     height: graph.height
 
-                    Text {
+                    Label {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: 2
                         text: wt.weather.glyph(modelData.code, modelData.night)
-                        font.family: Theme.sans
                         font.pixelSize: 14
                         color: Theme.fg
                     }
@@ -990,19 +1114,17 @@ Item {
                         radius: 3
                         color: index === 0 ? Theme.bright : Theme.accent
                     }
-                    Text {
+                    Label {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: graph.py(modelData.temp) - 20
                         text: modelData.temp + "°"
-                        font.family: Theme.sans
                         font.pixelSize: 10
                         color: index === 0 ? Theme.bright : Theme.fg
                     }
-                    Text {
+                    Label {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: 128
                         text: index === 0 ? "Now" : modelData.label
-                        font.family: Theme.sans
                         font.pixelSize: 10
                         color: Theme.dim
                     }

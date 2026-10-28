@@ -35,7 +35,6 @@ Item {
     width: height + (fullWidth - height) * open
 
     Rectangle {
-        id: shape
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
         height: parent.height
@@ -46,12 +45,10 @@ Item {
         Behavior on color { ColorAnimation { duration: Theme.fast } }
     }
 
-    Text {
-        id: glyph
+    Label {
         x: (pill.height - width) / 2
         anchors.verticalCenter: parent.verticalCenter
         text: ""
-        font.family: Theme.sans
         font.pixelSize: Math.round(pill.height * 0.4)
         rotation: -8 * pill.wobble
         scale: area.pressed ? 0.9 : 1
@@ -97,26 +94,23 @@ Item {
             transform: Translate { x: -14 * (1 - pill.stage(0.35)) }
         }
 
-        Text {
+        Label {
             id: hintText
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             width: Math.min(implicitWidth, field.width * 0.45)
             elide: Text.ElideRight
             text: pill.hint !== "" ? "↵  " + pill.hint : ""
-            font.family: Theme.sans
             font.pixelSize: 11
             color: Theme.dim
             opacity: pill.stage(0.6)
         }
     }
 
-    MouseArea {
+    Hover {
         id: area
         anchors.fill: parent
         enabled: !pill.expanded
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
         onClicked: pill.clicked()
     }
 }

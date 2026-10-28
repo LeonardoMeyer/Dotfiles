@@ -1,7 +1,7 @@
 {
     "left": ["user", "workspaces"],
     "center": ["media", "date", "timer", "clock"],
-    "right": ["tray", "|", "updates", "network", "audio", "battery", "|", "power"],
+    "right": ["tray", "|", "updates", "network", "audio", "|", "power"],
     "strip": false,
     "background": true,
     "height": 30,

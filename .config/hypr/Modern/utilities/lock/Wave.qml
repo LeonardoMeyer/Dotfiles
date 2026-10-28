@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../common"
 
 // same visualizer as the bar
 Row {
@@ -15,7 +16,7 @@ Row {
 
     Process {
         running: wave.playing
-        command: ["cava", "-p", Quickshell.shellPath("cava.conf")]
+        command: ["cava", "-p", Quickshell.shellPath("lock/cava.conf")]
         stdout: SplitParser {
             onRead: line => {
                 const parts = line.trim().split(";")
@@ -41,7 +42,7 @@ Row {
             // even pixel heights so it doesn't flicker
             height: Math.max(4, Math.round((3 + level * 12) * wave.u / 2) * 2)
             radius: width / 2
-            color: Lock.along(Lock.spectrum, index / (wave.bars - 1))
+            color: Theme.along(Theme.spectrum, index / (wave.bars - 1))
             opacity: wave.playing ? 0.35 + 0.65 * level : 0.45
 
             Behavior on height { NumberAnimation { duration: 100; easing.type: Easing.OutQuad } }

@@ -1,7 +1,24 @@
 {
   "Modern/desktop": {
+    "bar": {
+      "kind": "waybar"
+    },
     "wallpaper": {
-      "path": "/home/$USER/wallpapers/library/nature/nat-41.jpg"
+      "path": "/home/$USER/wallpapers/library/sunset/sun-17.jpg"
+    },
+    "waybar": {
+      "style": "default"
+    }
+  },
+  "Modern/laptop": {
+    "bar": {
+      "kind": "waybar"
+    },
+    "wallpaper": {
+      "path": "/home/$USER/wallpapers/library/sunset/sun-17.jpg"
+    },
+    "waybar": {
+      "style": "default"
     }
   }
 }

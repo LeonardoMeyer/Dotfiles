@@ -11,19 +11,13 @@ ShellRoot {
 
     readonly property string hypr: Quickshell.env("HOME") + "/.config/hypr"
 
-    FileView {
+    Watched {
         id: kindFile
         path: shell.hypr + "/.active-bar"
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
     }
-    FileView {
+    Watched {
         id: ownStyle
         path: Quickshell.shellDir + "/style.json"
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
     }
     readonly property bool standalone: ownStyle.text().trim() !== ""
     readonly property bool chosen: standalone || kindFile.text().trim() === "quickshell"
@@ -47,18 +41,15 @@ ShellRoot {
         Scope {
             id: root
 
-            FileView { id: profileFile; path: shell.hypr + "/.active-profile"; watchChanges: true; printErrors: false; onFileChanged: reload() }
-            FileView { id: nameFile; path: shell.hypr + "/.quickshell-bar"; watchChanges: true; printErrors: false; onFileChanged: reload() }
-            FileView {
+            Watched { id: profileFile; path: shell.hypr + "/.active-profile" }
+            Watched { id: nameFile; path: shell.hypr + "/.quickshell-bar" }
+            Watched {
                 id: lookFile
                 path: shell.standalone ? ownStyle.path : shell.hypr + "/" + profileFile.text().trim().split("/")[0] + "/quickshellbar/" + (nameFile.text().trim() || "default") + "/config.json"
-                watchChanges: true
-                printErrors: false
-                onFileChanged: reload()
             }
             readonly property var look: {
                 const d = { left: ["user", "workspaces"], center: ["media", "date", "timer", "clock"],
-                    right: ["tray", "|", "updates", "network", "audio", "battery", "|", "power"],
+                    right: ["tray", "|", "updates", "network", "audio", "|", "power"],
                     strip: false, background: true, attached: false, height: 30, gap: 6, shape: "round" }
                 try { return Object.assign(d, JSON.parse(lookFile.text())) } catch (e) { return d }
             }
@@ -71,9 +62,7 @@ ShellRoot {
                 : look.shape === "capsule" ? pillH / 2 : Math.min(Theme.rounding, pillH / 2)
             readonly property int reserve: pillH + edge * (attached ? 1 : 2)
 
-            function run(cmd) {
-                Quickshell.execDetached(["sh", "-c", cmd])
-            }
+            function run(cmd) { Theme.run(cmd) }
 
             function pickColor() {
                 run("sleep 0.3; p=~/.config/waybar/scripts/colorpicker.sh; [ -x \"$p\" ] || p='" + Quickshell.shellDir + "/colorpicker.sh'; \"$p\"")
@@ -143,14 +132,7 @@ ShellRoot {
 
             readonly property var players: Theme.players
             property string pinned: ""
-            readonly property var player: {
-                const ps = players
-                if (!ps || ps.length === 0) return null
-                return ps.find(p => p.dbusName === pinned)
-                    ?? ps.find(p => Theme.isSpotify(p))
-                    ?? ps.find(p => p.isPlaying)
-                    ?? ps[0]
-            }
+            readonly property var player: Theme.pickPlayer(pinned)
             readonly property bool playing: !!player && player.isPlaying
             // hold media a few seconds or track changes flicker
             property bool hasMedia: false
@@ -168,12 +150,9 @@ ShellRoot {
                 pinned = ps[(ps.indexOf(player) + 1) % ps.length].dbusName
             }
 
-            FileView {
+            Watched {
                 id: musicFile
                 path: Quickshell.env("XDG_RUNTIME_DIR") + "/music-player.json"
-                watchChanges: true
-                printErrors: false
-                onFileChanged: reload()
             }
             readonly property var music: {
                 try { return JSON.parse(musicFile.text()) } catch (e) { return { open: false } }

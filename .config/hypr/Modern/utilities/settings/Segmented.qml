@@ -44,23 +44,20 @@ Item {
             width: seg.cell
             height: seg.height
 
-            Text {
+            Label {
                 anchors.centerIn: parent
                 width: parent.width - 8
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 text: modelData.l
-                font.family: Theme.sans
                 font.pixelSize: 12
                 color: seg.index === index || area.containsMouse ? Theme.bright : Theme.fg
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
             }
 
-            MouseArea {
+            Hover {
                 id: area
                 anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
                 onClicked: seg.picked(modelData.v)
             }
         }

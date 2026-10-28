@@ -63,12 +63,10 @@ Item {
                     color: Theme.alpha(Theme.fg, 0.07)
                 }
 
-                MouseArea {
+                Hover {
                     id: rowArea
                     anchors.fill: parent
-                    hoverEnabled: true
                     enabled: entry.usable && !entry.current
-                    cursorShape: Qt.PointingHandCursor
                     onClicked: Store.savedRun("apply", entry.modelData.id)
                 }
 
@@ -84,7 +82,7 @@ Item {
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
                 }
 
-                Text {
+                Label {
                     id: label
                     anchors.left: dot.right
                     anchors.leftMargin: 10
@@ -92,13 +90,12 @@ Item {
                     width: Math.min(implicitWidth, tag.x - x - kind.implicitWidth - 18)
                     text: entry.modelData.name
                     elide: Text.ElideRight
-                    font.family: Theme.sans
                     font.pixelSize: 13
                     color: entry.current || entry.hot ? Theme.bright : Theme.fg
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
                 }
 
-                Text {
+                Label {
                     id: kind
                     anchors.left: label.right
                     anchors.leftMargin: 8
@@ -106,18 +103,16 @@ Item {
                     text: entry.modelData.kind === "default" ? "no overrides"
                         : entry.modelData.kind === "variant" ? (entry.modelData.exists ? "variant tweaks" : "no tweaks yet")
                         : ""
-                    font.family: Theme.sans
                     font.pixelSize: 10
                     color: Theme.dim
                 }
 
-                Text {
+                Label {
                     id: tag
                     anchors.right: bin.left
                     anchors.rightMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
                     text: entry.current ? "Applied" : rowArea.containsMouse ? "Apply" : ""
-                    font.family: Theme.sans
                     font.pixelSize: 11
                     color: entry.current ? Theme.accent : Theme.dim
                 }
@@ -136,20 +131,17 @@ Item {
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
                     Behavior on width { NumberAnimation { duration: Theme.fast; easing.type: Easing.OutCubic } }
 
-                    Text {
+                    Label {
                         id: binText
                         anchors.centerIn: parent
                         text: bin.primed ? "Delete?" : ""
-                        font.family: Theme.sans
                         font.pixelSize: bin.primed ? 11 : 13
                         color: bin.primed || binArea.containsMouse ? Theme.bright : Theme.dim
                     }
 
-                    MouseArea {
+                    Hover {
                         id: binArea
                         anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
                         onClicked: if (control.arm("del:" + entry.modelData.id)) {
                             control.armed = ""
                             Store.savedRun("delete", entry.modelData.id)
@@ -174,7 +166,6 @@ Item {
             height: 52
 
             Rectangle {
-                id: field
                 anchors.left: parent.left
                 anchors.leftMargin: Theme.pad - 4
                 anchors.right: saveBtn.left
@@ -226,33 +217,29 @@ Item {
                 color: Theme.alpha(Theme.accent, saveArea.containsMouse && control.draft ? 0.45 : 0.3)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
 
-                Text {
+                Label {
                     id: saveText
                     anchors.centerIn: parent
                     text: control.exists ? "Overwrite" : "Save"
-                    font.family: Theme.sans
                     font.pixelSize: 12
                     color: Theme.bright
                 }
 
-                MouseArea {
+                Hover {
                     id: saveArea
                     anchors.fill: parent
-                    hoverEnabled: true
                     enabled: !!control.draft
-                    cursorShape: Qt.PointingHandCursor
                     onClicked: control.submit()
                 }
             }
         }
 
-        Text {
+        Label {
             x: Theme.pad
             width: parent.width - Theme.pad * 2
             height: implicitHeight + 10
             wrapMode: Text.WordWrap
             text: "" 
-            font.family: Theme.sans
             font.pixelSize: 11
             color: Theme.dim
         }
@@ -270,19 +257,16 @@ Item {
                 color: parent.primed ? Theme.alpha("#e5566d", 0.45) : Theme.alpha(Theme.fg, wipeArea.containsMouse ? 0.14 : 0.07)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
 
-                Text {
+                Label {
                     anchors.centerIn: parent
                     text: parent.parent.primed ? "Click again to delete everything" : "Delete all saved profiles and tweaks"
-                    font.family: Theme.sans
                     font.pixelSize: 12
                     color: parent.parent.primed || wipeArea.containsMouse ? Theme.bright : Theme.fg
                 }
 
-                MouseArea {
+                Hover {
                     id: wipeArea
                     anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
                     onClicked: if (control.arm("wipe")) {
                         control.armed = ""
                         Store.savedRun("wipe")
@@ -290,10 +274,5 @@ Item {
                 }
             }
         }
-    }
-
-    function variantName() {
-        const v = Store.active.variant || "the variant"
-        return v.charAt(0).toUpperCase() + v.slice(1)
     }
 }

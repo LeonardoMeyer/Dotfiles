@@ -105,7 +105,7 @@ Item {
                     border.color: Theme.alpha(Theme.accent, 0.55 * row.ease)
                 }
 
-                Text {
+                Label {
                     id: name
                     anchors.left: parent.left
                     anchors.leftMargin: 14
@@ -113,7 +113,6 @@ Item {
                     width: Math.min(implicitWidth, parent.width * 0.55)
                     elide: Text.ElideRight
                     text: row.e ? row.e.n : ""
-                    font.family: Theme.sans
                     font.pixelSize: 15
                     color: Qt.rgba(
                         Theme.fg.r + (Theme.bright.r - Theme.fg.r) * row.ease,
@@ -121,7 +120,7 @@ Item {
                         Theme.fg.b + (Theme.bright.b - Theme.fg.b) * row.ease, 1)
                 }
 
-                Text {
+                Label {
                     anchors.left: name.right
                     anchors.leftMargin: 12
                     anchors.right: parent.right
@@ -130,7 +129,6 @@ Item {
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideLeft
                     text: !row.e ? "" : row.e.k === "alias" ? "= " + row.e.d : row.e.k === "function" ? "function" : row.e.d
-                    font.family: Theme.sans
                     font.pixelSize: 11
                     color: Theme.dim
                     opacity: 0.55 + 0.45 * row.ease

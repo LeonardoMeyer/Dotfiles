@@ -9,26 +9,31 @@ Rectangle {
 
     width: 38
     height: 22
-    radius: 11
+    radius: Math.min(Theme.rounding, height / 2)
     color: checked ? Theme.alpha(Theme.accent, 0.85) : Theme.alpha(Theme.fg, hot ? 0.24 : 0.16)
-    Behavior on color { ColorAnimation { duration: Theme.ms(180) } }
+    Behavior on color { ColorAnimation { duration: Theme.ms(240) } }
+
+    // front edge leads and the back one catches up, so it stretches and plants in one motion
+    readonly property real lead: Theme.ms(240)
+    readonly property real trail: Theme.ms(360)
+    property real l: checked ? width - 19 : 3
+    property real r: checked ? width - 3 : 19
+    Behavior on l { Settle { duration: sw.checked ? sw.trail : sw.lead } }
+    Behavior on r { Settle { duration: sw.checked ? sw.lead : sw.trail } }
 
     Rectangle {
         y: 3
-        x: sw.checked ? parent.width - width - 3 : 3
-        width: 16
+        x: sw.l
+        width: sw.r - sw.l
         height: 16
-        radius: 8
+        radius: Math.max(0, sw.radius - 3)
         color: sw.checked ? Theme.bg : Theme.fg
-        Behavior on x { NumberAnimation { duration: Theme.ms(180); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-        Behavior on color { ColorAnimation { duration: Theme.ms(180) } }
+        Behavior on color { ColorAnimation { duration: sw.lead } }
     }
 
-    MouseArea {
+    Hover {
         id: area
         anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
         onClicked: sw.toggled()
     }
 }

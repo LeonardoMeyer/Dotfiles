@@ -139,8 +139,18 @@ Singleton {
         Hyprland.dispatch(root.lua ? lua : classic)
     }
 
+    function run(cmd) {
+        Quickshell.execDetached(["sh", "-c", cmd])
+    }
+
     // skip playerctld, it keeps the last track after players stop
     readonly property var players: Mpris.players.values.filter(p => !(p.dbusName || "").includes("playerctld"))
+
+    // pinned one, then spotify cause that's what i use, then whatever's playing, then whatever
+    function pickPlayer(pinned) {
+        const ps = players
+        return ps.find(p => pinned && p.dbusName === pinned) ?? ps.find(isSpotify) ?? ps.find(p => p.isPlaying) ?? ps[0] ?? null
+    }
 
     function isSpotify(x) {
         return !!x && [x.identity, x.dbusName, x.id, x.title, x.tooltipTitle].some(s => (s || "").toLowerCase().includes("spotify"))
@@ -156,9 +166,14 @@ Singleton {
         cursorQuery.running = true
     }
     function screenAt(x, y) {
-        return Quickshell.screens.find(s => x >= s.x && x < s.x + s.width && y >= s.y && y < s.y + s.height)
-            ?? Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
-            ?? Quickshell.screens[0]
+        return Quickshell.screens.find(s => x >= s.x && x < s.x + s.width && y >= s.y && y < s.y + s.height) ?? focusedScreen()
+    }
+    function focusedScreen() {
+        return Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+    }
+    // ui scale for the popups, i tuned everything at 1080p
+    function scaleFor(s) {
+        return s ? Math.max(0.8, Math.min(1.35, Math.min(s.width / 1920, s.height / 1080))) : 1
     }
     property var located: []
     function found(c) {
@@ -180,16 +195,13 @@ Singleton {
         onExited: code => { if (code !== 0) root.found(null) }
     }
 
-    FileView {
-        id: walFile
+    // keeps the last good palette, wal rewrites the file in pieces and a half-written read used to flash the defaults
+    Watched {
         path: Quickshell.env("HOME") + "/.cache/wal/colors.json"
-        watchChanges: true
-        onFileChanged: reload()
+        onLoaded: { try { root.saved = JSON.parse(text()) } catch (e) {} }
     }
 
-    readonly property var saved: {
-        try { return JSON.parse(walFile.text()) } catch (e) { return null }
-    }
+    property var saved: null
     // wallpaper picker preview palette, null when not previewing
     property var preview: null
     readonly property var wal: preview ? {

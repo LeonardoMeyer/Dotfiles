@@ -143,7 +143,6 @@ Item {
                     clip: true
 
                     Rectangle {
-                        id: mock
                         readonly property real prog: control.p
                         readonly property string style: control.windowStyle
                         readonly property real startScale: style.indexOf("popin") === 0 ? (parseFloat(style.split(" ")[1]) || 90) / 100 : 1
@@ -214,11 +213,10 @@ Item {
                     border.color: Theme.alpha(Theme.accent, 0.8)
                     Behavior on color { ColorAnimation { duration: Theme.fast } }
 
-                    Text {
+                    Label {
                         x: 10
                         anchors.verticalCenter: parent.verticalCenter
                         text: field.modelData
-                        font.family: Theme.sans
                         font.pixelSize: 10
                         color: Theme.dim
                     }
@@ -257,7 +255,7 @@ Item {
             width: parent.width
             height: 34
 
-            Text {
+            Label {
                 anchors.left: parent.left
                 anchors.right: dice.left
                 anchors.rightMargin: 12
@@ -266,7 +264,6 @@ Item {
                 maximumLineCount: 2
                 wrapMode: Text.WordWrap
                 text: control.css + "\n" + (control.custom ? "opens windows in ~" + control.realMs + " ms" : "")
-                font.family: Theme.sans
                 font.pixelSize: 11
                 color: Theme.fg
             }
@@ -281,19 +278,16 @@ Item {
                 color: Theme.alpha(Theme.accent, diceArea.containsMouse ? 0.62 : 0.45)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
 
-                Text {
+                Label {
                     anchors.centerIn: parent
                     text: "\uf074   Randomize"
-                    font.family: Theme.sans
                     font.pixelSize: 12
                     color: Theme.bright
                 }
 
-                MouseArea {
+                Hover {
                     id: diceArea
                     anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
                     onClicked: control.randomize()
                 }
             }
@@ -307,22 +301,19 @@ Item {
                 color: Theme.alpha(Theme.fg, copyArea.containsMouse ? 0.16 : 0.08)
                 Behavior on color { ColorAnimation { duration: Theme.fast } }
 
-                Text {
+                Label {
                     id: copyLabel
                     anchors.centerIn: parent
                     text: "Copy line"
-                    font.family: Theme.sans
                     font.pixelSize: 12
                     color: Theme.fg
                 }
 
                 Timer { id: copied; interval: 1200; onTriggered: copyLabel.text = "Copy line" }
 
-                MouseArea {
+                Hover {
                     id: copyArea
                     anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         Quickshell.execDetached(["wl-copy", control.hyprLine])
                         copyLabel.text = "Copied"

@@ -94,11 +94,9 @@ ShellRoot {
     Behavior on pos { id: posBehavior; NumberAnimation { duration: Theme.ms(380); easing.type: Easing.OutCubic } }
 
     // sync read, async made opening jump. i think
-    FileView {
+    Watched {
         id: curFile
         path: root.home + "/.cache/wallpaper-picker/current"
-        watchChanges: true
-        onFileChanged: reload()
     }
     readonly property string applied: curFile.text().trim()
     readonly property string landing: pendingPath !== "" ? pendingPath : applied
@@ -380,7 +378,7 @@ ShellRoot {
     }
 
     component Tint: ColorAnimation { duration: Theme.ms(300); easing.type: Easing.InOutSine }
-    component Label: Text {
+    component CenterText: Text {
         anchors.centerIn: parent
         font.family: Theme.sans
         font.pixelSize: Math.round(14 * root.u)
@@ -475,7 +473,7 @@ ShellRoot {
                         opacity: chip.shown
                         scale: 0.6 + 0.4 * chip.shown
                         Pill { visible: row.drawn; radius: row.radius; fill: Theme.alpha(Theme.bg, 0.6); edge: Theme.alpha(Theme.fg, 0.07) }
-                        Label { id: label; visible: row.drawn; text: chip.modelData; color: "#ffffff" }
+                        CenterText { id: label; visible: row.drawn; text: chip.modelData; color: "#ffffff" }
                         MouseArea {
                             anchors.fill: parent
                             enabled: chip.present
@@ -516,7 +514,7 @@ ShellRoot {
                             width: chip ? chip.full : 0
                             height: row.h
                             opacity: chip ? chip.shown : 0
-                            Label {
+                            CenterText {
                                 id: dark
                                 text: parent.modelData
                                 color: Theme.bg
@@ -556,7 +554,6 @@ ShellRoot {
 
     // separate layer so hyprglass can blur the chips, this is what i think works
     PanelWindow {
-        id: tabGlass
         visible: root.shown && Theme.glass && root.t > 0
         screen: win.screen
         anchors { bottom: true; left: true; right: true }
@@ -755,13 +752,12 @@ ShellRoot {
                                     Behavior on border.color { ColorAnimation { duration: Theme.ms(250) } }
                                 }
 
-                                Text {
+                                Label {
                                     visible: !!root.favs[card.modelData.path]
                                     anchors.top: parent.top
                                     anchors.right: parent.right
                                     anchors.margins: 14
                                     text: ""
-                                    font.family: Theme.sans
                                     font.pixelSize: 18
                                     color: Theme.accent
                                     style: Text.Raised
@@ -786,13 +782,12 @@ ShellRoot {
                 opacity: Math.max(0.001, root.seg(0.22))
                 transform: Translate { y: (1 - root.seg(0.22)) * 40 }
 
-                Text {
+                Label {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: root.current ? root.current.name.replace(/[_-]/g, " ") : ""
                     elide: Text.ElideRight
                     width: Math.min(implicitWidth, 700)
                     horizontalAlignment: Text.AlignHCenter
-                    font.family: Theme.sans
                     font.pixelSize: 18
                     color: "#ffffff"
                 }

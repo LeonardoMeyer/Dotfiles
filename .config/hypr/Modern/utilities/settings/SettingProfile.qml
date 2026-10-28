@@ -44,14 +44,13 @@ Item {
             onPicked: v => { if (v !== Store.active.variant) Store.applyProfile(Store.active.style, v) }
         }
 
-        Text {
+        Label {
             x: Theme.pad
             width: parent.width - Theme.pad * 2
             height: implicitHeight + 14
             verticalAlignment: Text.AlignTop
             wrapMode: Text.WordWrap
             text: ""
-            font.family: Theme.sans
             font.pixelSize: 11
             color: Theme.dim
         }

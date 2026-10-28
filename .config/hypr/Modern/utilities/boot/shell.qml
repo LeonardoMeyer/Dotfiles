@@ -10,8 +10,6 @@ ShellRoot {
     readonly property string home: Quickshell.env("HOME")
     readonly property string sans: "CodeNewRoman Nerd Font Propo"
     readonly property color accent: wal ? wal.colors.color9 : "#8fd3ff"
-    readonly property color accent2: wal ? wal.colors.color13 : "#c99cff"
-    readonly property color paper: wal ? wal.colors.color7 : "#c7c6c2"
     readonly property color dim: wal ? wal.colors.color8 : "#716e5d"
     readonly property color bright: wal ? wal.colors.color15 : "#ffffff"
     readonly property color ink: wal ? wal.special.background : "#101418"
@@ -150,7 +148,6 @@ ShellRoot {
     }
 
     Timer {
-        id: launch
         interval: root.blackMs
         running: true
         onTriggered: {
@@ -445,7 +442,6 @@ ShellRoot {
             }
 
             Item {
-                id: lowerTerminal
                 anchors.left: parent.left
                 anchors.right: rightTerminal.left
                 anchors.bottom: parent.bottom
@@ -456,7 +452,6 @@ ShellRoot {
                 opacity: root.closeOpacity * root.phase(0.18, 0.32)
 
                 Item {
-                    id: lowerCode
                     anchors.fill: parent
                     anchors.margins: 22
 

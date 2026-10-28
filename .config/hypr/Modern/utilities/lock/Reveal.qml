@@ -1,4 +1,5 @@
 import QtQuick
+import "../common"
 
 Item {
     id: r
@@ -10,12 +11,10 @@ Item {
 
     readonly property real p: Lock.seg(delay)
     property real shown: on ? 1 : 0
-    Behavior on shown { NumberAnimation { duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: Lock.settle } }
+    Behavior on shown { Settle { duration: Theme.ms(420) } }
 
     implicitWidth: body.childrenRect.width
     implicitHeight: body.childrenRect.height * shown
-    width: implicitWidth
-    height: implicitHeight
     opacity: p * shown * (1 - Lock.out)
     visible: opacity > 0.001
     scale: (0.96 + 0.04 * p) * (1 - 0.03 * Lock.out)

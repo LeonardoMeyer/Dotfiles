@@ -9,7 +9,6 @@ import "../common"
 ShellRoot {
     id: root
 
-    readonly property string sans: "CodeNewRoman Nerd Font Propo"
     readonly property string home: Quickshell.env("HOME")
 
     property bool active: false
@@ -149,7 +148,6 @@ ShellRoot {
     }
 
     PanelWindow {
-        id: win
         visible: root.active
         screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
         anchors.bottom: true
@@ -180,7 +178,7 @@ ShellRoot {
                 color: Qt.rgba(root.bg.r, root.bg.g, root.bg.b, 0.45)
             }
 
-            Text {
+            Label {
                 id: icon
                 anchors.left: parent.left
                 anchors.leftMargin: 16
@@ -188,7 +186,6 @@ ShellRoot {
                 width: 22
                 horizontalAlignment: Text.AlignHCenter
                 text: root.glyph
-                font.family: root.sans
                 font.pixelSize: 18
                 color: root.off ? root.dim : root.accent
                 rotation: root.wiggle
@@ -196,7 +193,7 @@ ShellRoot {
                 Behavior on color { ColorAnimation { duration: Theme.ms(120) } }
             }
 
-            Text {
+            Label {
                 id: readout
                 visible: root.stage(0.55) > 0
                 anchors.right: parent.right
@@ -205,7 +202,6 @@ ShellRoot {
                 width: 44
                 horizontalAlignment: Text.AlignRight
                 text: root.readout
-                font.family: root.sans
                 font.pixelSize: 14
                 color: root.readoutLit ? root.fg : root.dim
                 opacity: root.stage(0.55)
@@ -214,7 +210,6 @@ ShellRoot {
             }
 
             Rectangle {
-                id: meter
                 visible: root.hasBar && root.stage(0.5) > 0
                 anchors.left: icon.right
                 anchors.leftMargin: 14
@@ -246,7 +241,7 @@ ShellRoot {
                 }
             }
 
-            Text {
+            Label {
                 visible: !root.hasBar && root.stage(0.5) > 0
                 anchors.left: icon.right
                 anchors.leftMargin: 14
@@ -255,7 +250,6 @@ ShellRoot {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.title
                 elide: Text.ElideRight
-                font.family: root.sans
                 font.pixelSize: 15
                 color: root.fg
                 opacity: root.stage(0.5)

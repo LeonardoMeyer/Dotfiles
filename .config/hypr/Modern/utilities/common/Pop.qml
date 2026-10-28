@@ -9,5 +9,5 @@ SequentialAnimation {
     property string last
     onLabelChanged: { if (last !== "" && label !== "") restart(); last = label }
     NumberAnimation { target: pop.target; property: "scale"; to: 1.06; duration: Theme.fast; easing.type: Easing.OutCubic }
-    NumberAnimation { target: pop.target; property: "scale"; to: 1; duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
+    Settle { target: pop.target; property: "scale"; to: 1; duration: Theme.move }
 }

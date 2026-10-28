@@ -117,8 +117,8 @@ Flickable {
             scale: 0.92 + 0.08 * present
             transform: Translate { y: 10 * (1 - tile.rise) }
 
-            Behavior on x { id: moveX; NumberAnimation { duration: Theme.ms(420); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-            Behavior on y { id: moveY; NumberAnimation { duration: Theme.ms(420); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+            Behavior on x { id: moveX; Settle { duration: Theme.ms(420) } }
+            Behavior on y { id: moveY; Settle { duration: Theme.ms(420) } }
 
             function jumpTo(nx, ny) {
                 moveX.enabled = false
@@ -152,21 +152,18 @@ Flickable {
             }
 
             // fallback: first letter of the app name
-            Text {
+            Label {
                 anchors.centerIn: parent
                 visible: !icon.visible
                 text: tile.modelData.name.charAt(0).toUpperCase()
-                font.family: Theme.sans
                 font.pixelSize: Math.round(grid.cell * 0.46)
                 color: Theme.accent
             }
 
-            MouseArea {
+            Hover {
                 id: hit
                 anchors.fill: parent
                 enabled: tile.slot >= 0
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
                 onEntered: if (grid.mouseMoved) grid.hover(tile.slot)
                 onPositionChanged: if (grid.mouseMoved && grid.selected !== tile.slot) grid.hover(tile.slot)
                 onClicked: grid.launch(tile.modelData)
@@ -182,20 +179,18 @@ Flickable {
         visible: opacity > 0.01
         Behavior on opacity { NumberAnimation { duration: Theme.ms(240) } }
 
-        Text {
+        Label {
             anchors.horizontalCenter: parent.horizontalCenter
             text: ""
-            font.family: Theme.sans
             font.pixelSize: 26
             color: Theme.alpha(Theme.fg, 0.25)
         }
-        Text {
+        Label {
             anchors.horizontalCenter: parent.horizontalCenter
             width: grid.width - 40
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideMiddle
             text: grid.emptyText
-            font.family: Theme.sans
             font.pixelSize: 13
             color: Theme.dim
         }

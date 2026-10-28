@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
@@ -21,11 +20,7 @@ ShellRoot {
     property var targetScreen: null
 
 
-    readonly property real u: {
-        const s = win.screen
-        if (!s) return 1
-        return Math.max(0.8, Math.min(1.35, Math.min(s.width / 1920, s.height / 1080)))
-    }
+    readonly property real u: Theme.scaleFor(win.screen)
     readonly property real screenH: win.screen ? win.screen.height : 1080
     readonly property real defaultSide: Math.round(380 * u)
     readonly property real minSide: Math.round(300 * u)
@@ -34,7 +29,7 @@ ShellRoot {
     property real dragSide: defaultSide
     property bool dragging: false
     readonly property real shown: Math.max(minSide, Math.min(maxSide, dragging ? dragSide : side))
-    Behavior on side { enabled: !root.dragging; NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+    Behavior on side { enabled: !root.dragging; Settle { duration: Theme.move } }
 
     // laid out for 380px and scaled
     readonly property real k: shown / 380
@@ -57,8 +52,8 @@ ShellRoot {
     property real offX: 0
     property real offY: 0
     property bool moving: false
-    Behavior on offX { enabled: !root.moving; NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
-    Behavior on offY { enabled: !root.moving; NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+    Behavior on offX { enabled: !root.moving; Settle { duration: Theme.move } }
+    Behavior on offY { enabled: !root.moving; Settle { duration: Theme.move } }
     readonly property real homeX: (win.width - shown) / 2
     readonly property real baseX: Math.max(8, Math.min(win.width - shown - 8, homeX + offX))
     readonly property real baseY: Math.max(topGap, Math.min(win.height - shown - 8, topGap + offY))
@@ -105,14 +100,7 @@ ShellRoot {
 
     readonly property var players: Theme.players
     property string pinned: ""
-    readonly property var player: {
-        const ps = players
-        if (!ps || ps.length === 0) return null
-        return ps.find(p => p.dbusName === pinned)
-            ?? ps.find(p => Theme.isSpotify(p))
-            ?? ps.find(p => p.isPlaying)
-            ?? ps[0]
-    }
+    readonly property var player: Theme.pickPlayer(pinned)
     readonly property bool spotify: Theme.isSpotify(player)
     readonly property bool playing: !!player && player.isPlaying
 
@@ -171,23 +159,19 @@ ShellRoot {
             const ui = JSON.parse(uiFile.text())
             if (typeof ui.side === "number") side = Math.round(ui.side * u)
         } catch (e) {}
-        targetScreen = focusedScreen()
+        targetScreen = Theme.focusedScreen()
         placementWrite.restart()
         Theme.refresh()
         gapsProc.running = true
     }
 
-    function focusedScreen() {
-        const mon = Hyprland.focusedMonitor
-        return Quickshell.screens.find(s => s.name === mon?.name) ?? Quickshell.screens[0]
-    }
 
     function show() {
         if (tucked) { untuck(); return }
         if (active && !leaving) return
         Theme.refresh()
         gapsProc.running = true
-        const scr = focusedScreen()
+        const scr = Theme.focusedScreen()
         if (!active && scr !== targetScreen) {
             targetScreen = scr
             resetPosition()
@@ -394,7 +378,6 @@ ShellRoot {
                         clip: true
 
                         Item {
-                            id: content
                             width: root.shown - root.pad * 2
                             height: root.shown - root.pad * 2
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -409,14 +392,13 @@ ShellRoot {
                                 transform: Translate { y: -8 * (1 - root.stage(0.5)) }
 
                                 Rectangle {
-                                    id: chip
                                     visible: !!root.player
                                     height: parent.height
                                     width: chipRow.implicitWidth + root.px(20)
                                     radius: height / 2
                                     color: Theme.alpha(Theme.fg, chipArea.containsMouse && root.players.length > 1 ? 0.12 : 0.06)
                                     Behavior on color { ColorAnimation { duration: Theme.fast } }
-                                    Behavior on width { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+                                    Behavior on width { Settle { duration: Theme.move } }
 
                                     Row {
                                         id: chipRow
@@ -439,18 +421,16 @@ ShellRoot {
                                                 NumberAnimation { to: 1; duration: 900; easing.type: Easing.InOutSine }
                                             }
                                         }
-                                        Text {
+                                        Label {
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: root.player ? (root.player.identity || "Player") : ""
-                                            font.family: Theme.sans
                                             font.pixelSize: root.px(11)
                                             color: Theme.fg
                                         }
-                                        Text {
+                                        Label {
                                             visible: root.players.length > 1
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: ""
-                                            font.family: Theme.sans
                                             font.pixelSize: root.px(9)
                                             color: Theme.dim
                                         }
@@ -486,7 +466,6 @@ ShellRoot {
 
 
                             Item {
-                                id: nowPlaying
                                 anchors.top: topRow.bottom
                                 anchors.topMargin: root.px(22)
                                 width: parent.width
@@ -535,7 +514,7 @@ ShellRoot {
                                         ScriptAction { script: { info.take(); info.shift = root.dir * 18; root.dir = 1 } }
                                         ParallelAnimation {
                                             NumberAnimation { target: infoCol; property: "opacity"; to: 1; duration: Theme.ms(300); easing.type: Easing.OutCubic }
-                                            NumberAnimation { target: info; property: "shift"; to: 0; duration: Theme.ms(340); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
+                                            Settle { target: info; property: "shift"; to: 0; duration: Theme.ms(340) }
                                         }
                                     }
 
@@ -545,29 +524,26 @@ ShellRoot {
                                         spacing: root.px(4)
                                         transform: Translate { x: info.shift }
 
-                                        Text {
+                                        Label {
                                             width: parent.width
                                             text: root.player ? info.title : "Nothing playing"
                                             elide: Text.ElideRight
-                                            font.family: Theme.sans
                                             font.pixelSize: root.px(17)
                                             color: Theme.bright
                                         }
-                                        Text {
+                                        Label {
                                             width: parent.width
                                             visible: text !== ""
                                             text: root.player ? info.artist : "Open Spotify to start"
                                             elide: Text.ElideRight
-                                            font.family: Theme.sans
                                             font.pixelSize: root.px(13)
                                             color: Theme.fg
                                         }
-                                        Text {
+                                        Label {
                                             width: parent.width
                                             visible: text !== ""
                                             text: root.player ? info.album : ""
                                             elide: Text.ElideRight
-                                            font.family: Theme.sans
                                             font.pixelSize: root.px(11)
                                             color: Theme.dim
                                         }
@@ -630,7 +606,6 @@ ShellRoot {
                             }
 
                             Seek {
-                                id: seek
                                 anchors.bottom: controls.top
                                 anchors.bottomMargin: root.px(10)
                                 width: parent.width
@@ -641,7 +616,6 @@ ShellRoot {
                     }
 
                     Item {
-                        id: grab
                         anchors.bottom: parent.bottom
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: root.px(90)
@@ -730,13 +704,12 @@ ShellRoot {
             opacity: area.containsMouse && !btn.dimmed ? 1 : 0
             scale: area.containsMouse ? 1 : 0.7
             Behavior on opacity { NumberAnimation { duration: Theme.fast } }
-            Behavior on scale { NumberAnimation { duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle } }
+            Behavior on scale { Settle { duration: Theme.move } }
         }
 
-        Text {
+        Label {
             anchors.centerIn: parent
             text: btn.glyph
-            font.family: Theme.sans
             font.pixelSize: btn.glyphSize
             color: btn.dimmed ? Theme.dim : (area.containsMouse ? Theme.bright : btn.tint)
             opacity: btn.dimmed ? 0.5 : 1
@@ -781,30 +754,26 @@ ShellRoot {
             }
         }
 
-        Text {
+        Label {
             x: root.px(8)
             anchors.verticalCenter: parent.verticalCenter
             text: root.muted || root.volume === 0 ? "\uf026" : "\uf028"
-            font.family: Theme.sans
             font.pixelSize: root.px(12)
             color: Theme.bg
         }
 
-        Text {
+        Label {
             anchors.right: parent.right
             anchors.rightMargin: root.px(9)
             anchors.verticalCenter: parent.verticalCenter
             text: root.muted ? "Muted" : Math.round(root.volume * 100) + "%"
-            font.family: Theme.sans
             font.pixelSize: root.px(10)
             color: vb.level > 0.8 ? Theme.bg : Theme.fg
         }
 
-        MouseArea {
+        Hover {
             id: volDrag
             anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
             preventStealing: true
             onPressed: mouse => root.setVolume(mouse.x / width)
             onPositionChanged: mouse => { if (pressed) root.setVolume(mouse.x / width) }
@@ -827,7 +796,6 @@ ShellRoot {
         function bump() {}
 
         Rectangle {
-            id: disc
             anchors.fill: parent
             radius: width / 2
             color: Theme.accent
@@ -844,11 +812,9 @@ ShellRoot {
             }
         }
 
-        MouseArea {
+        Hover {
             id: pbArea
             anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
             onClicked: {
                 pb.bump()
                 root.toggle()
@@ -906,13 +872,11 @@ ShellRoot {
                 Behavior on scale { NumberAnimation { duration: Theme.ms(240); easing.type: Easing.OutBack; easing.overshoot: 2 } }
             }
 
-            MouseArea {
+            Hover {
                 id: bar
                 anchors.fill: parent
                 anchors.margins: -root.px(6)
-                hoverEnabled: true
                 enabled: sk.live
-                cursorShape: Qt.PointingHandCursor
                 preventStealing: true
 
                 function fracAt(mouse) {
@@ -927,20 +891,18 @@ ShellRoot {
             }
         }
 
-        Text {
+        Label {
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             text: root.clock(sk.frac * sk.length)
-            font.family: Theme.sans
             font.pixelSize: root.px(11)
             color: sk.seeking ? Theme.bright : Theme.dim
             Behavior on color { ColorAnimation { duration: Theme.fast } }
         }
-        Text {
+        Label {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             text: sk.length > 0 ? root.clock(sk.length) : "--:--"
-            font.family: Theme.sans
             font.pixelSize: root.px(11)
             color: Theme.dim
         }
@@ -974,10 +936,9 @@ ShellRoot {
             radius: root.px(12)
             color: Theme.alpha(Theme.fg, 0.07)
 
-            Text {
+            Label {
                 anchors.centerIn: parent
                 text: ""
-                font.family: Theme.sans
                 font.pixelSize: root.px(30)
                 color: Theme.dim
             }

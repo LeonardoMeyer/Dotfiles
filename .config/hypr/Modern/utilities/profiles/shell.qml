@@ -38,7 +38,7 @@ ShellRoot {
     function wrap(x) { return n ? mod(x + n / 2) - n / 2 : 0 }
 
     onCurChanged: { settle.stop(); settle.to = cur; settle.start(); p = 1; play.restart() }
-    NumberAnimation { id: settle; target: root; property: "pos"; duration: Theme.ms(420); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
+    Settle { id: settle; target: root; property: "pos"; duration: Theme.ms(420) }
 
     function show() {
         if (active && !leaving) return
@@ -203,15 +203,13 @@ ShellRoot {
                     y: 14
                     spacing: 2
                     opacity: 1 - 0.7 * Math.min(1, Math.abs(root.pos - root.cur))
-                    Text {
+                    Label {
                         text: root.picked ? root.picked.name : ""
-                        font.family: Theme.sans
                         font.pixelSize: 15
                         color: root.picked && root.picked.id === root.live ? Theme.accent : Theme.bright
                     }
-                    Text {
+                    Label {
                         text: root.picked ? root.picked.bar : ""
-                        font.family: Theme.sans
                         font.pixelSize: 11
                         color: Theme.dim
                     }

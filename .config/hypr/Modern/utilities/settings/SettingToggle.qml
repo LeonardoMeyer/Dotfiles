@@ -13,7 +13,7 @@ Item {
     implicitHeight: 46
     opacity: ready ? 1 : 0.35
 
-    Text {
+    Label {
         anchors.left: parent.left
         anchors.leftMargin: Theme.pad
         anchors.right: knobTrack.left
@@ -21,7 +21,6 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: control.def.label
         elide: Text.ElideRight
-        font.family: Theme.sans
         font.pixelSize: 13
         color: control.hot ? Theme.bright : Theme.fg
         Behavior on color { ColorAnimation { duration: Theme.fast } }
@@ -37,12 +36,10 @@ Item {
         enabled: false
     }
 
-    MouseArea {
+    Hover {
         id: area
         anchors.fill: parent
-        hoverEnabled: true
         enabled: control.ready
-        cursorShape: Qt.PointingHandCursor
         onClicked: {
             const changes = {}
             changes[control.def.key] = !control.on

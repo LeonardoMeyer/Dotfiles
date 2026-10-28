@@ -4,3 +4,11 @@ Slider 1.0 Slider.qml
 PlayPause 1.0 PlayPause.qml
 Button 1.0 Button.qml
 Pop 1.0 Pop.qml
+Watched 1.0 Watched.qml
+Label 1.0 Label.qml
+Hover 1.0 Hover.qml
+Tile 1.0 Tile.qml
+singleton Power 1.0 Power.qml
+Settle 1.0 Settle.qml
+Backdrop 1.0 Backdrop.qml
+IconButton 1.0 IconButton.qml

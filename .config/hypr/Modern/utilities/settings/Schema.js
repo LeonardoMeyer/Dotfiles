@@ -44,7 +44,7 @@ var PAGES = [
     },
     {
         id: "colors", label: "Colors", icon: "\uf1fc",
-        wheel: true,
+        themes: true,
         sections: []
     },
     {

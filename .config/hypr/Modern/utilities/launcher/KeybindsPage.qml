@@ -11,11 +11,9 @@ Item {
     property real intro: 1
     property string query: ""
 
-    FileView {
+    Watched {
         id: source
         path: Quickshell.env("HOME") + "/.config/hypr/shortcuts.lua"
-        watchChanges: true
-        onFileChanged: reload()
     }
 
     readonly property var parsed: Binds.parse(source.text())
@@ -102,21 +100,19 @@ Item {
             width: parent.width
             spacing: 2
 
-            Text {
+            Label {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 text: page.matches ? "Search" : page.cur ? page.cur.label : ""
-                font.family: Theme.sans
                 font.pixelSize: 13
                 color: Theme.bright
             }
-            Text {
+            Label {
                 anchors.horizontalCenter: parent.horizontalCenter
                 readonly property int count: page.matches ? page.matches.length : page.cur ? page.cur.binds.length : 0
                 text: page.matches ? count + (count === 1 ? " match" : " matches") : page.cur ? count + (count === 1 ? " bind" : " binds") : ""
-                font.family: Theme.sans
                 font.pixelSize: 10
                 color: Theme.dim
             }
@@ -154,7 +150,7 @@ Item {
             ScriptAction { script: { page.shown = page.cur; list.contentY = 0; list.shift = 16 * page.dir } }
             ParallelAnimation {
                 NumberAnimation { target: rows; property: "opacity"; to: 1; duration: Theme.ms(220); easing.type: Easing.OutCubic }
-                NumberAnimation { target: list; property: "shift"; to: 0; duration: Theme.move; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.settle }
+                Settle { target: list; property: "shift"; to: 0; duration: Theme.move }
             }
         }
 
@@ -188,12 +184,11 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 4
 
-                        Text {
+                        Label {
                             visible: !!row.modelData.icon
                             anchors.verticalCenter: parent.verticalCenter
                             width: 18
                             text: row.modelData.icon || ""
-                            font.family: Theme.sans
                             font.pixelSize: 11
                             color: Theme.dim
                         }
@@ -210,11 +205,10 @@ Item {
                                 border.width: 1
                                 border.color: Theme.alpha(Theme.accent, 0.3)
 
-                                Text {
+                                Label {
                                     id: label
                                     anchors.centerIn: parent
                                     text: parent.modelData
-                                    font.family: Theme.sans
                                     font.pixelSize: 11
                                     color: Theme.bright
                                 }
@@ -222,7 +216,7 @@ Item {
                         }
                     }
 
-                    Text {
+                    Label {
                         anchors.left: chips.right
                         anchors.leftMargin: 10
                         anchors.right: parent.right
@@ -231,7 +225,6 @@ Item {
                         horizontalAlignment: Text.AlignRight
                         elide: Text.ElideRight
                         text: row.modelData.desc
-                        font.family: Theme.sans
                         font.pixelSize: 12
                         color: Theme.fg
                     }
@@ -240,11 +233,10 @@ Item {
         }
     }
 
-    Text {
+    Label {
         anchors.centerIn: list
         visible: page.cats.length === 0 || (page.matches !== null && page.matches.length === 0)
         text: page.cats.length === 0 ? "No binds found in shortcuts.lua" : "No binds match \u201c" + page.query + "\u201d"
-        font.family: Theme.sans
         font.pixelSize: 12
         color: Theme.dim
     }

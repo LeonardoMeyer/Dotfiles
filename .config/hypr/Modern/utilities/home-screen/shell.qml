@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
@@ -13,7 +12,6 @@ import "../common"
 ShellRoot {
     id: root
 
-    readonly property string sans: "CodeNewRoman Nerd Font Propo"
     readonly property string home: Quickshell.env("HOME")
     readonly property bool portrait: win.screen ? win.screen.height > win.screen.width : false
     readonly property real u: unitFor(win.screen)
@@ -38,10 +36,8 @@ ShellRoot {
     property bool wallReady: false
     property string pendingCmd: ""
     property bool startWaited: false
-    property color accent: "#8fd3ff"
-    property string bgHex: "#101418"
-    readonly property color glass: Qt.rgba(Qt.color(bgHex).r, Qt.color(bgHex).g, Qt.color(bgHex).b, 0.5)
-    readonly property color popupBg: Qt.rgba(Qt.color(bgHex).r, Qt.color(bgHex).g, Qt.color(bgHex).b, 0.86)
+    readonly property color glass: Theme.alpha(Theme.bg, 0.5)
+    readonly property color popupBg: Theme.alpha(Theme.bg, 0.86)
 
     property real cpu: 0
     property real prevTotal: 0
@@ -144,7 +140,6 @@ ShellRoot {
         wallReady = false
         startWaited = false
         walPath.running = true
-        walColors.running = true
         stats.running = true
         startTimer.restart()
         waitTimer.restart()
@@ -184,7 +179,7 @@ ShellRoot {
         onTriggered: {
             const c = root.pendingCmd
             root.pendingCmd = ""
-            if (c !== "") Quickshell.execDetached(["sh", "-c", c])
+            if (c !== "") Theme.run(c)
         }
     }
 
@@ -205,7 +200,6 @@ ShellRoot {
             return
         }
         popups = [n].concat(popups.filter(p => p !== n)).slice(0, 5)
-        walColors.running = true
     }
 
     function hidePopup(n) {
@@ -333,21 +327,6 @@ ShellRoot {
     }
 
     Process {
-        id: walColors
-        running: true
-        command: ["cat", root.home + "/.cache/wal/colors.json"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const j = JSON.parse(text)
-                    root.accent = j.colors.color9
-                    root.bgHex = j.special.background
-                } catch (e) {}
-            }
-        }
-    }
-
-    Process {
         id: stats
         command: [Quickshell.shellPath("home-screen/home-stats.sh")]
         stdout: StdioCollector { onStreamFinished: root.parseStats(text) }
@@ -396,11 +375,10 @@ ShellRoot {
             color: root.glass
         }
 
-        Text {
+        Label {
             x: 24 * root.u
             y: 18 * root.u
             text: g.title
-            font.family: root.sans
             font.pixelSize: 13 * root.u
             color: "#80ffffff"
         }
@@ -423,10 +401,9 @@ ShellRoot {
         height: size
         scale: ima.pressed ? 0.85 : (ima.containsMouse ? 1.12 : 1)
         Behavior on scale { NumberAnimation { duration: Theme.ms(180); easing.type: Easing.OutBack } }
-        Text {
+        Label {
             anchors.centerIn: parent
             text: ib.glyph
-            font.family: root.sans
             font.pixelSize: ib.size * 0.5
             color: ib.tint
         }
@@ -459,26 +436,24 @@ ShellRoot {
                     PathAngleArc { centerX: dial.width / 2; centerY: dial.height / 2; radiusX: dial.width / 2 - 5 * root.u; radiusY: dial.height / 2 - 5 * root.u; startAngle: -90; sweepAngle: 360 }
                 }
                 ShapePath {
-                    strokeColor: root.accent
+                    strokeColor: Theme.accent
                     strokeWidth: 6 * root.u
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
                     PathAngleArc { centerX: dial.width / 2; centerY: dial.height / 2; radiusX: dial.width / 2 - 5 * root.u; radiusY: dial.height / 2 - 5 * root.u; startAngle: -90; sweepAngle: 359.9 * Math.max(0.001, Math.min(1, ga.shown)) }
                 }
             }
-            Text {
+            Label {
                 anchors.centerIn: parent
                 text: ga.valueText
-                font.family: root.sans
                 font.pixelSize: 14 * root.u
                 color: "#ffffff"
             }
         }
-        Text {
+        Label {
             anchors.horizontalCenter: parent.horizontalCenter
             y: 74 * root.u
             text: ga.label
-            font.family: root.sans
             font.pixelSize: 12 * root.u
             color: "#99ffffff"
         }
@@ -500,19 +475,17 @@ ShellRoot {
             color: dma.containsMouse ? "#2effffff" : "#14ffffff"
             Behavior on color { ColorAnimation { duration: Theme.ms(150) } }
         }
-        Text {
+        Label {
             anchors.centerIn: parent
             text: db.glyph
-            font.family: root.sans
             font.pixelSize: 24 * root.u
             color: "#ffffff"
         }
-        Text {
+        Label {
             anchors.horizontalCenter: parent.horizontalCenter
             y: -26 * root.u
             text: db.label
             opacity: dma.containsMouse ? 1 : 0
-            font.family: root.sans
             font.pixelSize: 12 * root.u
             color: "#ffffff"
             Behavior on opacity { NumberAnimation { duration: Theme.ms(150) } }
@@ -536,36 +509,10 @@ ShellRoot {
             WlrLayershell.namespace: "home-screen"
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
-            Item {
+            Backdrop {
                 anchors.fill: parent
-                opacity: Math.max(0.001, Math.min(1, root.t * 2.5))
-
-                Image {
-                    id: sideImg
-                    anchors.fill: parent
-                    visible: false
-                    source: root.wallFor(side.modelData.name)
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    cache: false
-                    sourceSize.width: side.modelData.width
-                    sourceSize.height: side.modelData.height
-                }
-                MultiEffect {
-                    anchors.fill: parent
-                    source: sideImg
-                    scale: 1 + 0.035 * root.t
-                    blurEnabled: true
-                    blurMax: 64
-                    blur: 1
-                    brightness: -0.1
-                    saturation: 0.12
-                }
-                Rectangle {
-                    anchors.fill: parent
-                    color: "#000000"
-                    opacity: 0.22 * root.t
-                }
+                t: root.t
+                source: root.wallFor(side.modelData.name)
 
                 Column {
                     id: sideClock
@@ -575,18 +522,16 @@ ShellRoot {
                     transform: Translate { y: (1 - sideClock.p) * 16 * side.su }
                     spacing: 2 * side.su
 
-                    Text {
+                    Label {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatTime(clock.date, "HH:mm")
-                        font.family: root.sans
                         font.pixelSize: 110 * side.su
                         font.weight: Font.Light
                         color: "#ffffff"
                     }
-                    Text {
+                    Label {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDate(clock.date, "dddd, d MMMM")
-                        font.family: root.sans
                         font.pixelSize: 20 * side.su
                         color: "#ccffffff"
                     }
@@ -620,10 +565,10 @@ ShellRoot {
                 const k = event.key
                 const pl = root.player
                 if (k === Qt.Key_Escape) root.close()
-                else if (k === Qt.Key_L) root.run("~/.config/hypr/utilities/lock.sh")
-                else if (k === Qt.Key_E) root.run("pkill Hyprland || pkill sway || pkill niri || loginctl terminate-user $USER")
-                else if (k === Qt.Key_R) root.run("systemctl reboot || loginctl reboot")
-                else if (k === Qt.Key_S) root.run("systemctl poweroff || loginctl poweroff")
+                else if (k === Qt.Key_L) root.run(Power.cmd("lock"))
+                else if (k === Qt.Key_E) root.run(Power.cmd("logout"))
+                else if (k === Qt.Key_R) root.run(Power.cmd("reboot"))
+                else if (k === Qt.Key_S) root.run(Power.cmd("poweroff"))
                 else if (k === Qt.Key_Space && pl) pl.togglePlaying()
                 else if (k === Qt.Key_Right && pl) pl.next()
                 else if (k === Qt.Key_Left && pl) pl.previous()
@@ -636,38 +581,11 @@ ShellRoot {
                 else if (k === Qt.Key_C) root.clearAll()
             }
 
-            Item {
+            Backdrop {
                 anchors.fill: parent
-                // never 0, Qt skips the first blur and that's some bullshit
-                opacity: Math.max(0.001, Math.min(1, root.t * 2.5))
-
-                Image {
-                    id: wallImg
-                    anchors.fill: parent
-                    visible: false
-                    source: root.wallFor(win.screen ? win.screen.name : "")
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    cache: false
-                    sourceSize.width: win.screen ? win.screen.width : 1920
-                    sourceSize.height: win.screen ? win.screen.height : 1080
-                    onStatusChanged: if (status === Image.Ready) { root.wallReady = true; startTimer.restart() }
-                }
-                MultiEffect {
-                    anchors.fill: parent
-                    source: wallImg
-                    scale: 1 + 0.035 * root.t
-                    blurEnabled: true
-                    blurMax: 64
-                    blur: 1
-                    brightness: -0.1
-                    saturation: 0.12
-                }
-                Rectangle {
-                    anchors.fill: parent
-                    color: "#000000"
-                    opacity: 0.22 * root.t
-                }
+                t: root.t
+                source: root.wallFor(win.screen ? win.screen.name : "")
+                onStatusChanged: if (status === Image.Ready) { root.wallReady = true; startTimer.restart() }
             }
 
             MouseArea {
@@ -684,25 +602,22 @@ ShellRoot {
                 transform: Translate { y: (1 - clockBlock.p) * -24 * root.u }
                 spacing: 2 * root.u
 
-                Text {
+                Label {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: Qt.formatTime(clock.date, "HH:mm")
-                    font.family: root.sans
                     font.pixelSize: 128 * root.u
                     font.weight: Font.Light
                     color: "#ffffff"
                 }
-                Text {
+                Label {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: Qt.formatDate(clock.date, "dddd, d MMMM")
-                    font.family: root.sans
                     font.pixelSize: 22 * root.u
                     color: "#ccffffff"
                 }
             }
 
             Flow {
-                id: widgets
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: 330 * root.u
                 width: (root.portrait ? 728 : 1424) * root.u
@@ -717,28 +632,24 @@ ShellRoot {
                     readonly property var pl: root.player
 
                     Item {
-                        id: spotifyBtn
                         anchors.right: parent.right
                         anchors.rightMargin: -6 * root.u
                         y: -35 * root.u
                         width: 28 * root.u
                         height: 28 * root.u
-                        Text {
+                        Label {
                             anchors.centerIn: parent
                             text: "\uf1bc"
-                            font.family: root.sans
                             font.pixelSize: 20 * root.u
-                            color: root.accent
+                            color: Theme.accent
                             opacity: spotifyMa.containsMouse ? 1 : 0.75
                             scale: spotifyMa.containsMouse ? 1.15 : 1
                             Behavior on opacity { NumberAnimation { duration: Theme.ms(120) } }
                             Behavior on scale { NumberAnimation { duration: Theme.ms(120) } }
                         }
-                        MouseArea {
+                        Hover {
                             id: spotifyMa
                             anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
                             onClicked: { root.close(); Theme.openSpotify() }
                         }
                     }
@@ -747,17 +658,15 @@ ShellRoot {
                         visible: !media.pl
                         anchors.centerIn: parent
                         spacing: 8 * root.u
-                        Text {
+                        Label {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "\uf001"
-                            font.family: root.sans
                             font.pixelSize: 34 * root.u
                             color: "#55ffffff"
                         }
-                        Text {
+                        Label {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "Not playing"
-                            font.family: root.sans
                             font.pixelSize: 14 * root.u
                             color: "#80ffffff"
                         }
@@ -789,19 +698,17 @@ ShellRoot {
                             width: parent.width - x
                             anchors.verticalCenter: art.verticalCenter
                             spacing: 4 * root.u
-                            Text {
+                            Label {
                                 width: parent.width
                                 text: media.pl ? media.pl.trackTitle : ""
                                 elide: Text.ElideRight
-                                font.family: root.sans
                                 font.pixelSize: 17 * root.u
                                 color: "#ffffff"
                             }
-                            Text {
+                            Label {
                                 width: parent.width
                                 text: media.pl ? media.pl.trackArtist : ""
                                 elide: Text.ElideRight
-                                font.family: root.sans
                                 font.pixelSize: 13 * root.u
                                 color: "#99ffffff"
                             }
@@ -826,18 +733,16 @@ ShellRoot {
                                     color: "#f2ffffff"
                                 }
                             }
-                            Text {
+                            Label {
                                 y: 14 * root.u
                                 text: root.fmtTime(media.pl ? media.pl.position : 0)
-                                font.family: root.sans
                                 font.pixelSize: 11 * root.u
                                 color: "#80ffffff"
                             }
-                            Text {
+                            Label {
                                 y: 14 * root.u
                                 anchors.right: parent.right
                                 text: root.fmtTime(prog.len)
-                                font.family: root.sans
                                 font.pixelSize: 11 * root.u
                                 color: "#80ffffff"
                             }
@@ -903,7 +808,7 @@ ShellRoot {
                                 height: 26 * root.u
                                 horizontalAlignment: Text.AlignHCenter
                                 text: modelData
-                                font.family: root.sans
+                                font.family: Theme.sans
                                 font.pixelSize: 12 * root.u
                                 color: "#66ffffff"
                             }
@@ -925,12 +830,11 @@ ShellRoot {
                                     height: width
                                     radius: width / 2
                                     visible: cell.today
-                                    color: root.accent
+                                    color: Theme.accent
                                 }
-                                Text {
+                                Label {
                                     anchors.centerIn: parent
                                     text: cell.modelData > 0 ? cell.modelData : ""
-                                    font.family: root.sans
                                     font.pixelSize: 14 * root.u
                                     font.weight: cell.today ? Font.DemiBold : Font.Normal
                                     color: cell.today ? "#101418" : "#e6ffffff"
@@ -967,21 +871,19 @@ ShellRoot {
                             radius: root.rr(8)
                             color: "#12ffffff"
 
-                            Text {
+                            Label {
                                 x: 10 * root.u
                                 y: 8 * root.u
                                 text: "RAM"
-                                font.family: root.sans
                                 font.pixelSize: 10 * root.u
                                 color: "#80ffffff"
                             }
-                            Text {
+                            Label {
                                 x: 10 * root.u
                                 y: 22 * root.u
                                 width: parent.width - 20 * root.u
                                 text: ((root.memTotal - root.memAvail) / 1048576).toFixed(1) + " / " + (root.memTotal / 1048576).toFixed(0) + " GB"
                                 elide: Text.ElideRight
-                                font.family: root.sans
                                 font.pixelSize: 9 * root.u
                                 color: "#ddffffff"
                             }
@@ -996,15 +898,14 @@ ShellRoot {
                                     width: parent.width * Math.max(0, Math.min(1, 1 - root.memAvail / root.memTotal))
                                     height: parent.height
                                     radius: height / 2
-                                    color: root.accent
+                                    color: Theme.accent
                                 }
                             }
-                            Text {
+                            Label {
                                 x: 10 * root.u
                                 anchors.bottom: parent.bottom
                                 anchors.bottomMargin: 7 * root.u
                                 text: "AVAILABLE  " + (root.memAvail / 1048576).toFixed(1) + " GB"
-                                font.family: root.sans
                                 font.pixelSize: 9 * root.u
                                 color: "#70ffffff"
                             }
@@ -1016,21 +917,19 @@ ShellRoot {
                             radius: root.rr(8)
                             color: "#12ffffff"
 
-                            Text {
+                            Label {
                                 x: 10 * root.u
                                 y: 8 * root.u
                                 text: root.hasGpu ? "VRAM" : "MACHINE"
-                                font.family: root.sans
                                 font.pixelSize: 10 * root.u
                                 color: "#80ffffff"
                             }
-                            Text {
+                            Label {
                                 x: 10 * root.u
                                 y: 22 * root.u
                                 text: root.hasGpu ? root.gpuMemUsed.toFixed(1) + " / " + root.gpuMemTotal.toFixed(1) + " GB" : root.host
                                 elide: Text.ElideRight
                                 width: parent.width - 20 * root.u
-                                font.family: root.sans
                                 font.pixelSize: 9 * root.u
                                 color: "#ddffffff"
                             }
@@ -1046,21 +945,20 @@ ShellRoot {
                                     width: parent.width * Math.max(0, Math.min(1, root.gpuMemUsed / Math.max(0.1, root.gpuMemTotal)))
                                     height: parent.height
                                     radius: height / 2
-                                    color: root.accent
+                                    color: Theme.accent
                                 }
                             }
-                            Text {
+                            Label {
                                 x: 10 * root.u
                                 y: 37 * root.u
                                 width: parent.width - 20 * root.u
                                 visible: !root.hasGpu
                                 text: root.os || root.kernel
                                 elide: Text.ElideRight
-                                font.family: root.sans
                                 font.pixelSize: 10 * root.u
                                 color: "#aaffffff"
                             }
-                            Text {
+                            Label {
                                 x: 10 * root.u
                                 anchors.bottom: parent.bottom
                                 anchors.bottomMargin: 7 * root.u
@@ -1069,7 +967,6 @@ ShellRoot {
                                     : "KERNEL  " + root.kernel
                                 elide: Text.ElideRight
                                 width: parent.width - 20 * root.u
-                                font.family: root.sans
                                 font.pixelSize: 9 * root.u
                                 color: "#70ffffff"
                             }
@@ -1080,26 +977,23 @@ ShellRoot {
                         anchors.bottom: parent.bottom
                         width: parent.width
                         spacing: 6 * root.u
-                        Text {
+                        Label {
                             width: parent.width
                             text: root.cpuModel
                             elide: Text.ElideRight
-                            font.family: root.sans
                             font.pixelSize: 12 * root.u
                             color: "#ccffffff"
                         }
-                        Text {
+                        Label {
                             width: parent.width
                             text: (root.hasGpu ? root.gpuName + "  ·  " : "") + (root.memTotal / 1048576).toFixed(0) + " GB"
                             elide: Text.ElideRight
-                            font.family: root.sans
                             font.pixelSize: 12 * root.u
                             color: "#80ffffff"
                         }
-                        Text {
+                        Label {
                             width: parent.width
                             text: "Up " + root.fmtUptime(root.uptime) + (root.cpuTemp > 0 ? "  ·  " + Math.round(root.cpuTemp) + "°C" : "")
-                            font.family: root.sans
                             font.pixelSize: 12 * root.u
                             color: "#80ffffff"
                         }
@@ -1118,17 +1012,15 @@ ShellRoot {
                             title: "Volume"
                             delay: 0.24
 
-                            Text {
+                            Label {
                                 anchors.right: parent.right
                                 y: -32 * root.u
                                 text: root.muted ? "Muted" : Math.round(root.volume * 100) + "%"
-                                font.family: root.sans
                                 font.pixelSize: 13 * root.u
                                 color: "#99ffffff"
                             }
 
                             Item {
-                                id: vol
                                 anchors.bottom: parent.bottom
                                 width: parent.width
                                 height: 34 * root.u
@@ -1146,11 +1038,10 @@ ShellRoot {
                                         Behavior on width { enabled: !volDrag.pressed; NumberAnimation { duration: Theme.ms(120); easing.type: Easing.OutCubic } }
                                     }
                                 }
-                                Text {
+                                Label {
                                     x: 13 * root.u
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: root.muted || root.volume === 0 ? "\uf026" : "\uf028"
-                                    font.family: root.sans
                                     font.pixelSize: 15 * root.u
                                     color: "#101418"
                                 }
@@ -1189,7 +1080,7 @@ ShellRoot {
                             IconButton {
                                 size: 28 * root.u
                                 glyph: root.dnd ? "\uf1f6" : "\uf0f3"
-                                tint: root.dnd ? root.accent : "#ffffff"
+                                tint: root.dnd ? Theme.accent : "#ffffff"
                                 onClicked: root.dnd = !root.dnd
                             }
                             IconButton {
@@ -1204,17 +1095,15 @@ ShellRoot {
                             anchors.centerIn: parent
                             visible: root.notifCount === 0
                             spacing: 8 * root.u
-                            Text {
+                            Label {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: root.dnd ? "\uf1f6" : "\uf0f3"
-                                font.family: root.sans
                                 font.pixelSize: 34 * root.u
                                 color: "#55ffffff"
                             }
-                            Text {
+                            Label {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: root.dnd ? "Do Not Disturb" : "All clear"
-                                font.family: root.sans
                                 font.pixelSize: 14 * root.u
                                 color: "#80ffffff"
                             }
@@ -1280,10 +1169,10 @@ ShellRoot {
                     parent: dock
                     anchors.centerIn: parent
                     spacing: 16 * root.u
-                    DockButton { glyph: "\uf023"; label: "Lock  L"; cmd: "~/.config/hypr/utilities/lock.sh" }
-                    DockButton { glyph: "\uf08b"; label: "Log Out  E"; cmd: "pkill Hyprland || pkill sway || pkill niri || loginctl terminate-user $USER" }
-                    DockButton { glyph: "\uf021"; label: "Restart  R"; cmd: "systemctl reboot || loginctl reboot" }
-                    DockButton { glyph: "\uf011"; label: "Shut Down  S"; cmd: "systemctl poweroff || loginctl poweroff" }
+                    DockButton { glyph: "\uf023"; label: "Lock  L"; cmd: Power.cmd("lock") }
+                    DockButton { glyph: "\uf08b"; label: "Log Out  E"; cmd: Power.cmd("logout") }
+                    DockButton { glyph: "\uf021"; label: "Restart  R"; cmd: Power.cmd("reboot") }
+                    DockButton { glyph: "\uf011"; label: "Shut Down  S"; cmd: Power.cmd("poweroff") }
                 }
             }
         }

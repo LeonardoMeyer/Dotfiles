@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "Schema.js" as Schema
+import "../common"
 
 // changes show right away and get batched to hypr-settings.py
 Singleton {
@@ -28,8 +29,8 @@ Singleton {
     property var pywalPalette: []
     property var saved: ({ entries: [], active: "default" })
     property var pending: ({})
-    // newest wheel gets the up/down keys
-    property var wheels: []
+    // the colors page, so the window can drive it from the keyboard
+    property var picker: null
     property string lastSnapshot: ""
     property bool refreshAfter: false
 
@@ -137,6 +138,13 @@ Singleton {
         id: savedProc
         onExited: { root.lastSnapshot = ""; root.refresh() }
     }
+
+    // a profile or wallpaper change elsewhere makes the pywal colors (and everything else) stale,
+    // so reload when any of these move. wal writes a bunch of files at once hence the wait
+    Watched { path: Quickshell.env("HOME") + "/.config/hypr/.active-profile"; onLoaded: staleTimer.restart() }
+    Watched { path: Quickshell.env("HOME") + "/.cache/wallpaper-picker/current"; onLoaded: staleTimer.restart() }
+    Watched { path: Quickshell.env("HOME") + "/.cache/wal/colors.json"; onLoaded: staleTimer.restart() }
+    Timer { id: staleTimer; interval: 300; onTriggered: root.refresh() }
 
     Process {
         id: stateProc
