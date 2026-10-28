@@ -1,5 +1,12 @@
 [
   {
+    "id": "hex.estudos",
+    "dir": "plugins/estudos",
+    "barWidget": "BarWidget.qml",
+    "service": "",
+    "settings": {}
+  },
+  {
     "id": "hex.sistema",
     "dir": "plugins/sistema",
     "barWidget": "BarWidget.qml",

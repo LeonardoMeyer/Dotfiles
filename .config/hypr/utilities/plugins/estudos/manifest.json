@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "hex.estudos",
+  "name": "Estudos",
+  "version": "0.1.0",
+  "author": "Hex",
+  "license": "MIT",
+  "description": "Contribuições e commits recentes do GitHub; entregas e aulas da FIAP.",
+  "kinds": ["bar-widget"],
+  "entryPoints": { "barWidget": "BarWidget.qml" }
+}

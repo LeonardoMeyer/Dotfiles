@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""hex-estudos: dados do plugin Estudos.
+
+  hex-estudos github     contribuições e commits recentes (JSON), via `gh`
+                         também salvo em ~/.cache/hex-estudos/github.json
+
+Usa o login que o `gh` já tem (gh auth login); nenhum token é guardado aqui.
+"""
+
+import json
+import os
+import subprocess
+import sys
+
+HOME = os.path.expanduser("~")
+CACHE = os.path.join(HOME, ".cache", "hex-estudos")
+
+QUERY = """
+query($login: String!) {
+  user(login: $login) {
+    login
+    contributionsCollection {
+      contributionCalendar {
+        totalContributions
+        weeks { contributionDays { date contributionCount contributionLevel } }
+      }
+    }
+    repositories(first: 6, orderBy: {field: PUSHED_AT, direction: DESC},
+                 ownerAffiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]) {
+      nodes {
+        nameWithOwner url pushedAt isPrivate
+        defaultBranchRef { target { ... on Commit {
+          history(first: 5) { nodes {
+            messageHeadline committedDate url
+            author { user { login } }
+          } }
+        } } }
+      }
+    }
+  }
+}
+"""
+
+
+def gh(args):
+    p = subprocess.run(["gh"] + args, capture_output=True, text=True, timeout=30)
+    if p.returncode != 0:
+        raise RuntimeError((p.stderr or "gh falhou").strip().splitlines()[-1])
+    return p.stdout
+
+
+def github():
+    login = gh(["api", "user", "--jq", ".login"]).strip()
+    data = json.loads(gh(["api", "graphql", "-f", "query=" + QUERY, "-F", "login=" + login]))
+    user = data["data"]["user"]
+
+    weeks = user["contributionsCollection"]["contributionCalendar"]["weeks"]
+    days = [d for w in weeks for d in w["contributionDays"]]
+    # mapa: as últimas 17 semanas inteiras, para cada coluna começar no domingo
+    recent = [d for w in weeks[-17:] for d in w["contributionDays"]]
+    levels = {"NONE": 0, "FIRST_QUARTILE": 1, "SECOND_QUARTILE": 2, "THIRD_QUARTILE": 3, "FOURTH_QUARTILE": 4}
+    cal = [{"date": d["date"], "count": d["contributionCount"], "level": levels.get(d["contributionLevel"], 0)} for d in days]
+
+    # sequência atual: dias seguidos com contribuição até hoje (ou até ontem)
+    streak = 0
+    for i, d in enumerate(reversed(cal)):
+        if d["count"] > 0:
+            streak += 1
+        elif i == 0:
+            continue  # hoje ainda sem commit não quebra a sequência
+        else:
+            break
+
+    commits = []
+    for repo in user["repositories"]["nodes"]:
+        ref = repo.get("defaultBranchRef") or {}
+        hist = ((ref.get("target") or {}).get("history") or {}).get("nodes") or []
+        for c in hist:
+            author = ((c.get("author") or {}).get("user") or {}).get("login")
+            if author and author.lower() == login.lower():
+                commits.append({
+                    "repo": repo["nameWithOwner"].split("/")[-1],
+                    "message": c["messageHeadline"],
+                    "date": c["committedDate"],
+                    "url": c["url"],
+                })
+    commits.sort(key=lambda c: c["date"], reverse=True)
+
+    return {
+        "login": login,
+        "total": user["contributionsCollection"]["contributionCalendar"]["totalContributions"],
+        "today": cal[-1]["count"] if cal else 0,
+        "week": sum(d["count"] for d in cal[-7:]),
+        "streak": streak,
+        "calendar": [{"date": d["date"], "count": d["contributionCount"], "level": levels.get(d["contributionLevel"], 0)} for d in recent],
+        "commits": commits[:8],
+    }
+
+
+def main():
+    if len(sys.argv) < 2 or sys.argv[1] != "github":
+        print(__doc__, file=sys.stderr)
+        sys.exit(2)
+    os.makedirs(CACHE, exist_ok=True)
+    try:
+        out = github()
+    except FileNotFoundError:
+        out = {"error": "o gh (GitHub CLI) não está instalado"}
+    except (RuntimeError, KeyError, ValueError, subprocess.TimeoutExpired) as e:
+        out = {"error": "GitHub: " + str(e) + " (rode 'gh auth login' se for login)"}
+    data = json.dumps(out)
+    tmp = os.path.join(CACHE, "github.json.tmp")
+    with open(tmp, "w") as f:
+        f.write(data)
+    os.replace(tmp, os.path.join(CACHE, "github.json"))
+    print(data)
+
+
+if __name__ == "__main__":
+    main()
