@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "hex.diario",
+  "name": "Diário",
+  "version": "0.1.0",
+  "author": "Hex",
+  "license": "MIT",
+  "description": "O jornal de ontem: commits, Claude Code, foco, sistema, clima, notícias de Bitcoin, tecnologia e cyber, e eventos de tecnologia em SP.",
+  "kinds": ["bar-widget"],
+  "entryPoints": { "barWidget": "BarWidget.qml" }
+}

@@ -1,0 +1,627 @@
+#!/usr/bin/env python3
+"""hex-diario: o jornal de ontem feito com o que aconteceu no seu PC.
+
+  hex-diario build [AAAA-MM-DD]   monta a edição (padrão: ontem)
+  hex-diario latest               resumo da última edição (JSON, para o widget)
+
+Fontes (todas locais, menos o clima e o GitHub):
+  commits      repositórios git na sua home + busca de commits do GitHub (gh)
+  agentes      sessões do Claude Code em ~/.claude/projects
+  foco         blocos do Locked In (~/.local/state/locked-in/history.jsonl)
+  sistema      /var/log/pacman.log e o scan do plugin Sistema
+  clima        Open-Meteo (nome, cidade, lat e lon em ~/.config/hex-diario.json)
+  notícias     RSS de Bitcoin, tecnologia e cyber + cotação do BTC (CoinGecko)
+  eventos      agenda de São Paulo no Luma (luma.com/saopaulo), só os de tecnologia
+
+As fontes de notícia podem ser trocadas em ~/.config/hex-diario.json ("feeds").
+
+As edições ficam em ~/.local/share/hex-diario/ e nada sai do PC além das
+consultas de clima e do GitHub.
+"""
+
+import concurrent.futures as cf
+import datetime as dt
+import email.utils
+import glob
+import html
+import json
+import os
+import pwd
+import re
+import subprocess
+import sys
+import urllib.parse
+import urllib.request
+import xml.etree.ElementTree as ET
+
+HOME = os.path.expanduser("~")
+OUT = os.path.join(HOME, ".local", "share", "hex-diario")
+CACHE = os.path.join(HOME, ".cache", "hex-diario")
+CONFIG = os.path.join(HOME, ".config", "hex-diario.json")
+
+MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
+         "agosto", "setembro", "outubro", "novembro", "dezembro"]
+DIAS = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+WMO = {0: ("céu limpo", "☀"), 1: ("quase limpo", "🌤"), 2: ("parcialmente nublado", "⛅"), 3: ("nublado", "☁"),
+       45: ("neblina", "🌫"), 48: ("neblina", "🌫"), 51: ("garoa", "🌦"), 53: ("garoa", "🌦"), 55: ("garoa forte", "🌧"),
+       61: ("chuva fraca", "🌦"), 63: ("chuva", "🌧"), 65: ("chuva forte", "🌧"), 80: ("pancadas", "🌦"),
+       81: ("pancadas", "🌧"), 82: ("temporal", "⛈"), 95: ("trovoadas", "⛈"), 96: ("trovoadas", "⛈"), 99: ("trovoadas", "⛈")}
+DICAS = [
+    ("SUPER + ESC", "esconde e traz de volta o Spotify"),
+    ("SUPER + TAB", "visão geral de todas as áreas de trabalho"),
+    ("ALT + S", "painel de configurações do elifouts"),
+    ("ALT + W", "seletor de wallpaper (as cores do sistema mudam junto)"),
+    ("SUPER + V", "solta a janela e centraliza flutuando"),
+    ("SUPER + S", "área de trabalho escondida (magic)"),
+    ("CTRL + Print", "print de uma área"),
+    ("SUPER + SHIFT + P", "troca o perfil visual"),
+    ("SUPER + J", "alterna a divisão das janelas"),
+    ("ALT + TAB", "tela inicial do elifouts"),
+]
+
+
+def run(cmd, timeout=20, cwd=None):
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd)
+        return p.stdout if p.returncode == 0 else ""
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
+FEEDS = {
+    "bitcoin": ["https://livecoins.com.br/feed/", "https://cointelegraph.com/rss"],
+    "tecnologia": ["https://tecnoblog.net/feed/", "https://canaltech.com.br/rss/"],
+    "cyber": ["https://feeds.feedburner.com/TheHackersNews", "https://krebsonsecurity.com/feed/",
+              "https://www.securityweek.com/feed/"],
+}
+EVENTOS_URL = "https://luma.com/saopaulo"
+TECH = re.compile(r"\b(tech|tecnolog|dev|developer|program|software|hackathon|ia\b|ai\b|intelig[êe]ncia artificial|"
+                  r"llm|gpt|openai|claude|data|dados|cloud|nuvem|seguran[çc]a|security|cyber|ciber|hacker|bitcoin|"
+                  r"blockchain|crypto|cripto|startup|product|produto|platform|devops|python|java|react|web|api|"
+                  r"meetup|summit|conference|confer[êe]ncia)", re.I)
+NOMES = {"krebsonsecurity": "Krebs on Security", "securityweek": "SecurityWeek", "feedburner": "The Hacker News", "bleepingcomputer": "BleepingComputer", "cisoadvisor": "CISO Advisor",
+         "tecnoblog": "Tecnoblog", "canaltech": "Canaltech", "cointelegraph": "Cointelegraph", "livecoins": "Livecoins"}
+UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) hex-diario/0.2"}
+
+
+def config():
+    cfg = {"cidade": "São Paulo", "lat": -23.55, "lon": -46.63, "feeds": FEEDS, "eventos": EVENTOS_URL}
+    try:
+        with open(CONFIG) as f:
+            cfg.update(json.load(f))
+    except (OSError, ValueError):
+        pass
+    return cfg
+
+
+def first_name():
+    try:
+        gecos = pwd.getpwuid(os.getuid()).pw_gecos.split(",")[0].strip()
+        if gecos:
+            return gecos.split()[0]
+    except KeyError:
+        pass
+    return os.environ.get("USER", "você")
+
+
+def day_bounds(day):
+    start = dt.datetime.combine(day, dt.time.min).astimezone()
+    return start, start + dt.timedelta(days=1)
+
+
+def in_day(ts, start, end):
+    return start <= ts < end
+
+
+# ------------------------------------------------------------ commits
+
+def find_repos():
+    """Repositórios git até 3 níveis abaixo da home (sem pastas ocultas e node_modules)."""
+    repos = []
+    skip = {"node_modules", "venv", ".venv", "target", "build", "dist"}
+    base_depth = HOME.rstrip("/").count("/")
+    for root, dirs, _files in os.walk(HOME):
+        if ".git" in dirs:
+            repos.append(root)
+            dirs[:] = []
+            continue
+        depth = root.count("/") - base_depth
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in skip] if depth < 3 else []
+    return repos
+
+
+def local_commits(repos, start, end):
+    authors = {a.strip() for a in (run(["git", "config", "--global", "user.email"]), run(["git", "config", "--global", "user.name"])) if a.strip()}
+    out = []
+    for repo in repos:
+        log = run(["git", "log", "--all", "--no-merges", "--since=" + start.isoformat(), "--until=" + end.isoformat(),
+                   "--format=%H%x1f%an%x1f%ae%x1f%s"], cwd=repo, timeout=10)
+        for line in log.splitlines():
+            sha, an, ae, subject = (line.split("\x1f") + ["", "", "", ""])[:4]
+            if authors and an not in authors and ae not in authors:
+                continue
+            out.append({"sha": sha, "repo": os.path.basename(repo), "message": subject})
+    return out
+
+
+def github_commits(day):
+    login = run(["gh", "api", "user", "--jq", ".login"]).strip()
+    if not login:
+        return []
+    raw = run(["gh", "api", "-X", "GET", "search/commits", "-f", "q=author:%s author-date:%s" % (login, day.isoformat()), "-f", "per_page=60"], timeout=30)
+    try:
+        items = json.loads(raw).get("items", [])
+    except ValueError:
+        return []
+    return [{"sha": i["sha"], "repo": i["repository"]["name"], "message": i["commit"]["message"].splitlines()[0]} for i in items]
+
+
+def dirty_repos(repos):
+    out = []
+    for repo in repos:
+        n = len([l for l in run(["git", "status", "--porcelain"], cwd=repo, timeout=5).splitlines() if l.strip()])
+        if n:
+            out.append({"repo": os.path.basename(repo), "files": n})
+    return sorted(out, key=lambda r: -r["files"])[:6]
+
+
+# ------------------------------------------------------------ agentes
+
+def claude_sessions(start, end):
+    projects = {}
+    for path in glob.glob(os.path.join(HOME, ".claude", "projects", "*", "*.jsonl")):
+        try:
+            if dt.datetime.fromtimestamp(os.path.getmtime(path)).astimezone() < start:
+                continue
+            with open(path, errors="replace") as f:
+                for line in f:
+                    try:
+                        e = json.loads(line)
+                    except ValueError:
+                        continue
+                    if e.get("type") != "user" or not e.get("timestamp"):
+                        continue
+                    content = (e.get("message") or {}).get("content")
+                    # resultados de ferramenta também chegam como "user"; só conta o que você digitou
+                    if isinstance(content, list) and not any(isinstance(c, dict) and c.get("type") == "text" for c in content):
+                        continue
+                    ts = dt.datetime.fromisoformat(e["timestamp"].replace("Z", "+00:00")).astimezone()
+                    if not in_day(ts, start, end):
+                        continue
+                    name = os.path.basename(e.get("cwd") or "") or "?"
+                    projects[name] = projects.get(name, 0) + 1
+        except OSError:
+            continue
+    return sorted(({"project": k, "prompts": v} for k, v in projects.items()), key=lambda p: -p["prompts"])
+
+
+# ------------------------------------------------------------ foco
+
+def focus(start, end):
+    path = os.path.join(os.environ.get("XDG_STATE_HOME", os.path.join(HOME, ".local", "state")), "locked-in", "history.jsonl")
+    blocks, minutes, projects = 0, 0, {}
+    try:
+        with open(path) as f:
+            for line in f:
+                try:
+                    e = json.loads(line)
+                except ValueError:
+                    continue
+                if e.get("kind") != "focus" or not isinstance(e.get("start"), (int, float)):
+                    continue
+                ts = dt.datetime.fromtimestamp(e["start"] / 1000).astimezone()
+                if not in_day(ts, start, end):
+                    continue
+                m = round((e.get("ms") or max(0, e.get("end", 0) - e["start"])) / 60000)
+                minutes += m
+                blocks += 1 if e.get("completed") else 0
+                p = e.get("project") or "sem projeto"
+                projects[p] = projects.get(p, 0) + m
+    except OSError:
+        pass
+    return {"blocks": blocks, "minutes": minutes, "projects": sorted(projects.items(), key=lambda x: -x[1])[:4]}
+
+
+# ------------------------------------------------------------ sistema
+
+def pacman_day(day):
+    counts = {"installed": [], "upgraded": [], "removed": []}
+    prefix = "[" + day.isoformat()
+    try:
+        with open("/var/log/pacman.log", errors="replace") as f:
+            for line in f:
+                if not line.startswith(prefix):
+                    continue
+                m = re.search(r"\[ALPM\] (installed|upgraded|removed) (\S+)", line)
+                if m:
+                    counts[m.group(1)].append(m.group(2))
+    except OSError:
+        pass
+    return counts
+
+
+def sistema_scan():
+    try:
+        with open(os.path.join(HOME, ".cache", "hex-sistema", "scan.json")) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+# ------------------------------------------------------------ notícias
+
+def fetch(url, timeout=12):
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read(3_000_000)
+
+
+def strip_html(text):
+    text = re.sub(r"<[^>]+>", " ", text or "")
+    return re.sub(r"\s+", " ", html.unescape(text)).strip()
+
+
+def parse_feed(raw, source):
+    """RSS 2.0 ou Atom -> [{title, url, date, summary, source}]"""
+    items = []
+    root = ET.fromstring(raw)
+    ns = {"a": "http://www.w3.org/2005/Atom"}
+    for it in root.iter("item"):
+        when = None
+        d = it.findtext("pubDate") or it.findtext("{http://purl.org/dc/elements/1.1/}date")
+        if d:
+            try:
+                when = email.utils.parsedate_to_datetime(d)
+            except (TypeError, ValueError):
+                try:
+                    when = dt.datetime.fromisoformat(d.replace("Z", "+00:00"))
+                except ValueError:
+                    when = None
+        items.append({"title": strip_html(it.findtext("title")), "url": (it.findtext("link") or "").strip(),
+                      "date": when, "summary": strip_html(it.findtext("description"))[:220], "source": source})
+    for it in root.findall("a:entry", ns):
+        link = it.find("a:link", ns)
+        d = it.findtext("a:published", namespaces=ns) or it.findtext("a:updated", namespaces=ns)
+        try:
+            when = dt.datetime.fromisoformat(d.replace("Z", "+00:00")) if d else None
+        except ValueError:
+            when = None
+        items.append({"title": strip_html(it.findtext("a:title", namespaces=ns)), "url": link.get("href") if link is not None else "",
+                      "date": when, "summary": strip_html(it.findtext("a:summary", namespaces=ns))[:220], "source": source})
+    return [i for i in items if i["title"] and i["url"]]
+
+
+def news_section(urls, since, limit=6):
+    """Junta os feeds de uma seção, só o que saiu desde `since`, mais novos primeiro."""
+    def one(url):
+        try:
+            host = re.sub(r"^www\.|^br\.|^feeds\.", "", urllib.parse.urlparse(url).hostname or url)
+            key = host.split(".")[0]
+            return parse_feed(fetch(url), NOMES.get(key, key.capitalize()))
+        except Exception:
+            return []
+    with cf.ThreadPoolExecutor(max_workers=6) as ex:
+        items = [i for lst in ex.map(one, urls) for i in lst]
+    seen, out = set(), []
+    for i in sorted(items, key=lambda x: x["date"] or dt.datetime.min.replace(tzinfo=dt.timezone.utc), reverse=True):
+        key = i["title"].lower()[:60]
+        if key in seen or (i["date"] and i["date"] < since):
+            continue
+        seen.add(key)
+        out.append({"title": i["title"], "url": i["url"], "summary": i["summary"], "source": i["source"],
+                    "time": i["date"].astimezone().strftime("%d/%m %H:%M") if i["date"] else ""})
+        if len(out) >= limit:
+            break
+    return out
+
+
+def bitcoin_price():
+    try:
+        d = json.loads(fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=brl,usd&include_24hr_change=true"))["bitcoin"]
+        return {"brl": d["brl"], "usd": d["usd"], "change": round(d.get("brl_24h_change") or 0, 2)}
+    except Exception:
+        return None
+
+
+def walk(o):
+    if isinstance(o, dict):
+        yield o
+        for v in o.values():
+            yield from walk(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from walk(v)
+
+
+def events(url, days=14, limit=8):
+    """Eventos de tecnologia em SP. Lê os dados que a página do Luma já traz embutidos."""
+    try:
+        page = fetch(url).decode("utf-8", "replace")
+    except Exception:
+        return []
+    m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', page, re.S)
+    if not m:
+        return []
+    try:
+        data = json.loads(m.group(1))
+    except ValueError:
+        return []
+    now = dt.datetime.now().astimezone()
+    out, seen = [], set()
+    for o in walk(data):
+        ev = o.get("event") if isinstance(o.get("event"), dict) else o
+        name, start = ev.get("name"), ev.get("start_at")
+        if not (isinstance(name, str) and isinstance(start, str)):
+            continue
+        try:
+            when = dt.datetime.fromisoformat(start.replace("Z", "+00:00")).astimezone()
+        except ValueError:
+            continue
+        if not (now - dt.timedelta(hours=6) <= when <= now + dt.timedelta(days=days)) or name in seen:
+            continue
+        if not TECH.search(name + " " + str(ev.get("description_short") or "")):
+            continue
+        seen.add(name)
+        slug = ev.get("url") or ""
+        geo = ev.get("geo_address_info") or {}
+        out.append({"title": name, "url": slug if slug.startswith("http") else "https://luma.com/" + slug.lstrip("/"),
+                    "when": "%s, %s" % (DIAS[when.weekday()].split("-")[0], when.strftime("%d/%m %H:%M")),
+                    "where": geo.get("city_state") or geo.get("address") or "", "iso": when.isoformat()})
+    return sorted(out, key=lambda e: e["iso"])[:limit]
+
+
+# ------------------------------------------------------------ clima
+
+def weather(cfg, day):
+    url = ("https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s"
+           "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,sunrise,sunset"
+           "&past_days=1&forecast_days=2&timezone=auto" % (cfg["lat"], cfg["lon"]))
+    try:
+        with urllib.request.urlopen(url, timeout=15) as r:
+            d = json.load(r)["daily"]
+    except Exception:
+        return None
+    days = {}
+    for i, date in enumerate(d["time"]):
+        code = d["weather_code"][i]
+        desc, icon = WMO.get(code, ("tempo variado", "🌡"))
+        days[date] = {"min": round(d["temperature_2m_min"][i]), "max": round(d["temperature_2m_max"][i]),
+                      "rain": d["precipitation_sum"][i], "desc": desc, "icon": icon,
+                      "sunrise": d["sunrise"][i][-5:], "sunset": d["sunset"][i][-5:]}
+    return {"ontem": days.get(day.isoformat()), "hoje": days.get((day + dt.timedelta(days=1)).isoformat()),
+            "amanha": days.get((day + dt.timedelta(days=2)).isoformat())}
+
+
+# ------------------------------------------------------------ tema
+
+def theme():
+    t = {"bg": "#101418", "fg": "#e6e6e6", "accent": "#8fd3ff", "dim": "#9aa4ad", "wall": ""}
+    try:
+        with open(os.path.join(HOME, ".cache", "wal", "colors.json")) as f:
+            w = json.load(f)
+        t.update(bg=w["special"]["background"], fg=w["colors"]["color15"], accent=w["colors"]["color9"], dim=w["colors"]["color8"])
+    except (OSError, ValueError, KeyError):
+        pass
+    for p in (os.path.join(HOME, "wallpapers", "pywallpaper.jpg"),):
+        if os.path.exists(p):
+            t["wall"] = "file://" + p
+    return t
+
+
+# ------------------------------------------------------------ montagem
+
+def stories(c):
+    """As matérias do dia, da mais importante para a menos."""
+    s = []
+    commits, agents, foco, pac = c["commits"], c["agents"], c["focus"], c["pacman"]
+    if commits:
+        repos = {}
+        for cm in commits:
+            repos[cm["repo"]] = repos.get(cm["repo"], 0) + 1
+        top = max(repos, key=repos.get)
+        s.append({"title": "%d commit%s em %s" % (len(commits), "s" if len(commits) > 1 else "",
+                                                  top if len(repos) == 1 else "%d repositórios" % len(repos)),
+                  "kicker": "Código", "body": "O mais movimentado foi %s, com %d." % (top, repos[top])})
+    if agents:
+        total = sum(a["prompts"] for a in agents)
+        s.append({"title": "%d pedido%s ao Claude Code" % (total, "s" if total > 1 else ""), "kicker": "Agentes",
+                  "body": "Mais trabalho em %s (%d)." % (agents[0]["project"], agents[0]["prompts"])})
+    if foco["minutes"]:
+        h, m = divmod(foco["minutes"], 60)
+        s.append({"title": "%s de foco" % ("%dh%02d" % (h, m) if h else "%d min" % m), "kicker": "Foco",
+                  "body": "%d bloco%s completo%s no Locked In." % (foco["blocks"], "s" if foco["blocks"] != 1 else "", "s" if foco["blocks"] != 1 else "")})
+    n_pkg = sum(len(v) for v in pac.values())
+    if n_pkg:
+        s.append({"title": "%d pacotes mexidos no sistema" % n_pkg, "kicker": "Sistema",
+                  "body": "%d atualizados, %d instalados, %d removidos." % (len(pac["upgraded"]), len(pac["installed"]), len(pac["removed"]))})
+    if not s:
+        s.append({"title": "Um dia calmo", "kicker": "Geral", "body": "Nenhum commit, sessão ou bloco de foco registrado ontem."})
+    return s
+
+
+def render(c):
+    e = html.escape
+    t = c["theme"]
+    day = dt.date.fromisoformat(c["date"])
+    hoje = day + dt.timedelta(days=1)
+    w = c["weather"] or {}
+    st = c["stories"]
+
+    def li(items):
+        return "".join("<li>%s</li>" % i for i in items) or "<li class=dim>nada registrado</li>"
+
+    commits_html = li("<b>%s</b> %s" % (e(cm["repo"]), e(cm["message"])) for cm in c["commits"][:14])
+    agents_html = li("<b>%s</b> %d pedido%s" % (e(a["project"]), a["prompts"], "s" if a["prompts"] > 1 else "") for a in c["agents"][:8])
+    focus_html = li("<b>%s</b> %d min" % (e(p), m) for p, m in c["focus"]["projects"])
+    pac = c["pacman"]
+    pac_html = li(["%d atualizados" % len(pac["upgraded"]), "%d instalados%s" % (len(pac["installed"]), (": " + e(", ".join(pac["installed"][:6]))) if pac["installed"] else ""),
+                   "%d removidos" % len(pac["removed"])]) if sum(len(v) for v in pac.values()) else li([])
+    upd = (c["scan"].get("updates") or {})
+    pend = sum((upd.get(k) or 0) for k in ("repo", "aur", "flatpak"))
+    loose = li("<b>%s</b> %d arquivo%s sem commit" % (e(r["repo"]), r["files"], "s" if r["files"] > 1 else "") for r in c["dirty"])
+    tip = DICAS[day.toordinal() % len(DICAS)]
+
+    def wx(label, d):
+        if not d:
+            return ""
+        rain = (" · %.0f mm" % d["rain"]) if d["rain"] else ""
+        return "<div class=wx><span class=wxi>%s</span><div><b>%s</b> %s, %d° / %d°%s<br><span class=dim>sol %s – %s</span></div></div>" % (
+            d["icon"], label, d["desc"], d["max"], d["min"], rain, d["sunrise"], d["sunset"])
+
+    def news(items):
+        if not items:
+            return "<p class=dim>Sem notícias (fonte fora do ar ou sem internet).</p>"
+        return "".join(
+            "<div class=news><a href='%s'>%s</a><div class=meta>%s · %s</div><p>%s</p></div>" % (
+                e(n["url"]), e(n["title"]), e(n["source"]), e(n["time"]), e(n["summary"][:160] + ("…" if len(n["summary"]) > 160 else "")))
+            for n in items[:5])
+
+    btc = c.get("btc")
+    btc_html = ""
+    if btc:
+        arrow = "▲" if btc["change"] >= 0 else "▼"
+        btc_html = ("<div class=btc><span class=kicker>Bitcoin agora</span><div class=price>R$ %s</div>"
+                    "<div class='%s'>%s %s%% em 24h</div><div class=dim>US$ %s</div></div>") % (
+            "{:,.0f}".format(btc["brl"]).replace(",", "."), "up" if btc["change"] >= 0 else "down", arrow,
+            ("%.2f" % abs(btc["change"])).replace(".", ","), "{:,.0f}".format(btc["usd"]).replace(",", "."))
+
+    ev = c.get("events") or []
+    events_html = "".join(
+        "<li><a href='%s'>%s</a><div class=meta>%s%s</div></li>" % (
+            e(x["url"]), e(x["title"]), e(x["when"]), (" · " + e(x["where"])) if x["where"] else "") for x in ev
+    ) or "<li class=dim>Nenhum evento de tecnologia encontrado para as próximas 2 semanas.</li>"
+    nw = c.get("news") or {}
+
+    lead = st[0]
+    rest = "".join("<article><span class=kicker>%s</span><h3>%s</h3><p>%s</p></article>" % (e(s["kicker"]), e(s["title"]), e(s["body"])) for s in st[1:4])
+    ear = w.get("hoje")
+    ear_html = ("%s %d°" % (ear["icon"], ear["max"])) if ear else ""
+
+    return """<!doctype html><html lang=pt-BR><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Diário de %(nome)s · %(data_curta)s</title>
+<style>
+:root{--bg:%(bg)s;--fg:%(fg)s;--accent:%(accent)s;--dim:%(dim)s}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--fg);font:16px/1.55 Georgia,"DejaVu Serif",serif;
+ background:var(--bg) url("%(wall)s") center/cover fixed}
+.sheet{max-width:980px;margin:40px auto;padding:36px 44px;background:color-mix(in srgb,var(--bg) 88%%,transparent);
+ backdrop-filter:blur(18px);border:1px solid color-mix(in srgb,var(--fg) 15%%,transparent);border-radius:14px}
+header{text-align:center;border-bottom:3px double color-mix(in srgb,var(--fg) 40%%,transparent);padding-bottom:12px}
+.top{display:flex;justify-content:space-between;font:12px/1 "CodeNewRoman Nerd Font Propo",monospace;color:var(--dim);
+ text-transform:uppercase;letter-spacing:.12em}
+h1{font-size:clamp(34px,6vw,64px);margin:14px 0 4px;letter-spacing:-.01em}
+h1 em{color:var(--accent);font-style:italic}
+.sub{color:var(--dim);font-style:italic}
+.lead{display:grid;grid-template-columns:2fr 1fr;gap:28px;margin:26px 0;border-bottom:1px solid color-mix(in srgb,var(--fg) 15%%,transparent);padding-bottom:22px}
+.lead h2{font-size:38px;line-height:1.1;margin:6px 0 10px}
+.kicker{font:11px/1 "CodeNewRoman Nerd Font Propo",monospace;color:var(--accent);text-transform:uppercase;letter-spacing:.14em}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+article h3{font-size:21px;margin:6px 0}
+section{margin-top:26px}
+section h4{font:12px/1 "CodeNewRoman Nerd Font Propo",monospace;text-transform:uppercase;letter-spacing:.14em;color:var(--dim);
+ border-top:1px solid color-mix(in srgb,var(--fg) 15%%,transparent);padding-top:12px}
+ul{margin:8px 0;padding-left:18px}li{margin:3px 0}
+.dim{color:var(--dim)}
+.wx{display:flex;gap:12px;align-items:center;margin:8px 0}.wxi{font-size:30px}
+footer{margin-top:30px;text-align:center;color:var(--dim);font-size:13px}
+a{color:var(--fg);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 50%%,transparent)}
+a:hover{color:var(--accent)}
+.news{margin:10px 0 14px}.news a{font-weight:bold;font-size:17px;line-height:1.3}
+.news p{margin:4px 0 0;font-size:14px;color:color-mix(in srgb,var(--fg) 80%%,transparent)}
+.meta{font:11px "CodeNewRoman Nerd Font Propo",monospace;color:var(--dim);margin-top:3px}
+.btc{margin-top:16px;padding-top:12px;border-top:1px solid color-mix(in srgb,var(--fg) 15%%,transparent)}
+.price{font-size:30px;font-weight:bold;margin:4px 0}.up{color:#6fcf8e}.down{color:#e07a7a}
+.events li{margin:8px 0}.events a{font-weight:bold}
+kbd{font:12px "CodeNewRoman Nerd Font Propo",monospace;border:1px solid var(--dim);border-radius:4px;padding:1px 6px}
+@media(max-width:760px){.sheet{margin:0;border-radius:0;padding:22px}.lead,.cols{grid-template-columns:1fr}}
+@media print{body{background:#fff;color:#000}.sheet{backdrop-filter:none;border:0;background:#fff}}
+</style></head><body><div class=sheet>
+<header><div class=top><span>Edição nº %(n)d</span><span>%(ear)s</span><span>%(cidade)s</span></div>
+<h1>O Diário de <em>%(nome)s</em></h1>
+<div class=sub>%(data_longa)s · o que aconteceu no seu PC</div></header>
+<div class=lead><div><span class=kicker>%(lead_kicker)s</span><h2>%(lead_title)s</h2><p>%(lead_body)s</p></div>
+<div>%(wx_ontem)s%(wx_hoje)s%(wx_amanha)s%(btc)s</div></div>
+<div class=cols>%(rest)s</div>
+<div class=cols>
+<section><h4>Commits de ontem</h4><ul>%(commits)s</ul></section>
+<section><h4>Claude Code</h4><ul>%(agents)s</ul><h4>Foco</h4><ul>%(focus)s</ul></section>
+<section><h4>Sistema</h4><ul>%(pac)s</ul><p class=dim>%(pend)s</p><h4>Pontas soltas</h4><ul>%(loose)s</ul></section>
+</div>
+<div class=cols>
+<section><h4>Bitcoin</h4>%(n_btc)s</section>
+<section><h4>Tecnologia</h4>%(n_tec)s</section>
+<section><h4>Cyber</h4>%(n_cyber)s</section>
+</div>
+<section><h4>Eventos de tecnologia em São Paulo</h4><ul class=events>%(events)s</ul></section>
+<footer>Atalho do dia: <kbd>%(tip_k)s</kbd> %(tip_d)s · gerado %(gerado)s</footer>
+</div></body></html>""" % {
+        "bg": t["bg"], "fg": t["fg"], "accent": t["accent"], "dim": t["dim"], "wall": t["wall"],
+        "nome": e(c["name"]), "n": c["edition"], "ear": ear_html, "cidade": e(c["city"]),
+        "data_curta": day.strftime("%d/%m/%Y"),
+        "data_longa": "%s, %d de %s de %d" % (DIAS[day.weekday()].capitalize(), day.day, MESES[day.month - 1], day.year),
+        "lead_kicker": e(lead["kicker"]), "lead_title": e(lead["title"]), "lead_body": e(lead["body"]),
+        "wx_ontem": wx("Ontem", w.get("ontem")), "wx_hoje": wx("Hoje", w.get("hoje")), "wx_amanha": wx("Amanhã", w.get("amanha")),
+        "rest": rest, "commits": commits_html, "agents": agents_html, "focus": focus_html, "pac": pac_html,
+        "pend": ("%d atualizações esperando hoje." % pend) if pend else "Sistema em dia.",
+        "loose": loose, "tip_k": e(tip[0]), "tip_d": e(tip[1]),
+        "btc": btc_html, "events": events_html,
+        "n_btc": news(nw.get("bitcoin")), "n_tec": news(nw.get("tecnologia")), "n_cyber": news(nw.get("cyber")),
+        "gerado": dt.datetime.now().strftime("%d/%m %H:%M"),
+    }
+
+
+def build(day):
+    os.makedirs(OUT, exist_ok=True)
+    os.makedirs(CACHE, exist_ok=True)
+    start, end = day_bounds(day)
+    cfg = config()
+    repos = find_repos()
+    seen, commits = set(), []
+    for cm in local_commits(repos, start, end) + github_commits(day):
+        if cm["sha"] not in seen:
+            seen.add(cm["sha"])
+            commits.append(cm)
+    c = {
+        "date": day.isoformat(), "name": cfg.get("nome") or first_name(), "city": cfg["cidade"],
+        "commits": commits, "agents": claude_sessions(start, end), "focus": focus(start, end),
+        "pacman": pacman_day(day), "scan": sistema_scan(), "dirty": dirty_repos(repos),
+        "weather": weather(cfg, day), "theme": theme(),
+        "news": {k: news_section(v, start - dt.timedelta(hours=12)) for k, v in cfg["feeds"].items()},
+        "btc": bitcoin_price(), "events": events(cfg["eventos"]),
+        "edition": len(glob.glob(os.path.join(OUT, "????-??-??.html"))) + (0 if os.path.exists(os.path.join(OUT, day.isoformat() + ".html")) else 1),
+    }
+    c["stories"] = stories(c)
+    path = os.path.join(OUT, day.isoformat() + ".html")
+    with open(path + ".tmp", "w") as f:
+        f.write(render(c))
+    os.replace(path + ".tmp", path)
+
+    w = c["weather"] or {}
+    summary = {"date": day.isoformat(), "path": path, "edition": c["edition"], "stories": c["stories"][:3],
+               "today": w.get("hoje"), "city": c["city"], "built": int(dt.datetime.now().timestamp()),
+               "btc": c["btc"], "events": c["events"][:3],
+               "headlines": {k: v[:2] for k, v in c["news"].items()}}
+    with open(os.path.join(CACHE, "latest.json.tmp"), "w") as f:
+        json.dump(summary, f)
+    os.replace(os.path.join(CACHE, "latest.json.tmp"), os.path.join(CACHE, "latest.json"))
+    return summary
+
+
+def main(a):
+    if a and a[0] == "build":
+        day = dt.date.fromisoformat(a[1]) if len(a) > 1 else dt.date.today() - dt.timedelta(days=1)
+        print(json.dumps(build(day)))
+    elif a and a[0] == "latest":
+        try:
+            with open(os.path.join(CACHE, "latest.json")) as f:
+                print(f.read())
+        except OSError:
+            print("{}")
+    else:
+        print(__doc__, file=sys.stderr)
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
