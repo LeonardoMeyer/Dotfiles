@@ -1,0 +1,162 @@
+# sports, French. one word or phrase a line
+descente en rappel
+aérobic
+aïkido
+tir à l’arc
+athlétisme
+autocross
+badminton
+ballet
+ski nautique pieds nus
+base jump
+baseball
+basket
+beach-volley
+biathlon
+bobsleigh
+bodyboard
+escalade de bloc
+bowling
+boxe
+breakdance
+saut à l’élastique
+canoë
+capoeira
+spéléologie
+pom-pom girls
+échecs
+escalade
+cricket
+croquet
+cross-country
+crossfit
+curling
+cyclisme
+cyclo-cross
+fléchettes
+décathlon
+lancer du disque
+plongeon
+ballon chasseur
+descente
+course d’accélération
+équitation
+course en montagne
+escrime
+hockey sur gazon
+patinage artistique
+pêche
+pêche à la mouche
+football
+footgolf
+formule un
+frisbee
+vol à voile
+kart
+golf
+gymnastique
+lancer du marteau
+handball
+heptathlon
+saut en hauteur
+randonnée
+hockey
+balade à cheval
+haies
+hurling
+escalade sur glace
+hockey sur glace
+patin à glace
+lancer du javelot
+jet-ski
+jiu-jitsu
+jogging
+judo
+karaté
+karting
+kayak
+kendo
+kick-boxing
+kitesurf
+kung-fu
+crosse
+laser game
+saut en longueur
+luge
+marathon
+arts martiaux
+minigolf
+motocross
+sport automobile
+vtt
+alpinisme
+boxe thaï
+netball
+marche nordique
+course d’orientation
+paddle
+padel
+paintball
+parapente
+parkour
+pentathlon
+pickleball
+pilates
+saut à la perche
+polo
+force athlétique
+racquetball
+rafting
+rallye
+relais
+gymnastique rythmique
+varappe
+roller derby
+patin à roulettes
+rounders
+aviron
+rugby
+course à pied
+voile
+plongée sous-marine
+tir sportif
+lancer du poids
+saut d’obstacles
+skateboard
+patinage
+skeleton
+saut à ski
+ski
+parachutisme
+slalom
+luge de loisir
+snooker
+plongée avec tuba
+snowboard
+softball
+patinage de vitesse
+vélo d’appartement
+sprint
+squash
+sumo
+surf
+natation
+natation synchronisée
+tennis de table
+taekwondo
+tennis
+trampoline
+triathlon
+tir à la corde
+ultimate
+volley-ball
+wakeboard
+marche
+water-polo
+ski nautique
+haltérophilie
+rafting en eaux vives
+planche à voile
+lutte
+yoga
+zumba

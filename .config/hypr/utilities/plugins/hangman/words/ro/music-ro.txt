@@ -1,0 +1,195 @@
+# music, Romanian. one word or phrase a line
+acordeon
+acustic
+album
+alto
+amplificator
+imn național
+arie
+arpegiu
+negativ
+cimpoi
+baladă
+formație
+chioșc de muzică
+banjo
+bariton
+bas
+fagot
+baghetă
+ritm de bază
+beatbox
+blues
+bongo
+goarnă
+cadență
+calypso
+cantată
+colind
+castaniete
+violoncel
+muzică de cameră
+cântare
+cor
+acord
+refren
+orgă de biserică
+clarinet
+cheie muzicală
+coda
+compozitor
+concert
+concert instrumental
+dirijor
+cornet
+muzică country
+crescendo
+pătrime
+taler
+didgeridoo
+disco
+contrabas
+tobă
+set de tobe
+baterist
+bețe de tobă
+duet
+chitară electrică
+bis
+ansamblu
+eufoniu
+falset
+fanfară
+festival
+scripcă
+flamenco
+flaut
+folk
+corn francez
+fugă
+funk
+glockenspiel
+gong
+gospel
+pian cu coadă
+groove
+chitară
+chitarist
+muzicuță
+armonie
+harpă
+clavecin
+căști
+hip hop
+muzică house
+imn
+improvizație
+interval
+sesiune de jam
+jazz
+jingle
+karaoke
+kazoo
+tonalitate
+orgă electronică
+libret
+buclă
+cântec de leagăn
+lăută
+textier
+versuri
+maestru
+major
+mandolină
+maracas
+marș
+mariachi
+potpuriu
+melodie
+metal
+metronom
+microfon
+minor
+menuet
+motown
+cutie muzicală
+musical
+muzician
+notă
+oboi
+octavă
+operă
+orchestră
+orgă
+uvertură
+pian
+piculină
+înălțime
+listă de redare
+polcă
+muzică pop
+punk
+cvartet
+optime
+radio
+ragtime
+rap
+rapper
+disc
+flaut drept
+reggae
+remix
+recviem
+rapsodie
+ritm
+riff
+rock
+rock and roll
+rumba
+salsa
+samba
+saxofon
+gamă
+serenadă
+partitură
+cântăreț
+sitar
+ska
+solo
+sonată
+cântec
+soprană
+soul
+coloană sonoră
+boxă
+portativ
+scenă
+tobă de oțel
+cvartet de coarde
+swing
+simfonie
+sintetizator
+tamburină
+tango
+techno
+tempo
+tenor
+timpane
+acute
+tril
+trombon
+trompetă
+tubă
+melodioară
+ukulele
+strofă
+vibrato
+vinil
+violă
+vioară
+vocalist
+voce
+vals
+fluier
+xilofon
+iodlare

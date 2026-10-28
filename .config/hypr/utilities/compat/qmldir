@@ -1,0 +1,3 @@
+module qs.compat
+singleton PluginHost 1.0 PluginHost.qml
+PluginSlot 1.0 PluginSlot.qml

@@ -1,0 +1,3 @@
+#!/bin/bash
+# Hex: substituto simples do helper do Omarchy (abre um kitty flutuante)
+exec kitty --class floating-term -e bash -c "$*; echo; read -rp 'Enter para fechar'"

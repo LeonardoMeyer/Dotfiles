@@ -1,0 +1,145 @@
+# space, French. one word or phrase a line
+extraterrestre
+andromède
+aphélie
+apollo
+astéroïde
+ceinture d’astéroïdes
+astrolabe
+astronaute
+astronomie
+astrophysique
+atmosphère
+aurore polaire
+axe
+azimut
+grande ourse
+étoile double
+trou noir
+blazar
+naine brune
+callisto
+capsule
+céleste
+cérès
+charon
+chromosphère
+comète
+constellation
+couronne solaire
+rayon cosmique
+cosmonaute
+cosmos
+compte à rebours
+cratère
+matière noire
+espace lointain
+amarrage
+planète naine
+éclipse
+équinoxe
+europe
+horizon des événements
+exoplanète
+exosphère
+galaxie
+ganymède
+pesanteur
+assistance gravitationnelle
+halley
+héliosphère
+casque
+horizon
+hubble
+interstellaire
+io
+moteur ionique
+jupiter
+ceinture de kuiper
+module d’atterrissage
+lancement
+pas de tir
+vitesse lumière
+année-lumière
+lunaire
+éclipse de lune
+module lunaire
+magnétar
+mer lunaire
+mars
+mercure
+météore
+pluie de météores
+météorite
+voie lactée
+centre de contrôle
+lune
+alunissage
+roche lunaire
+clair de lune
+nébuleuse
+neptune
+étoile à neutrons
+étoile polaire
+nova
+observatoire
+nuage d’oort
+orbite
+orbiteur
+orion
+charge utile
+périhélie
+phobos
+planétarium
+pluton
+sonde
+protoétoile
+pulsar
+quasar
+radar
+naine rouge
+géante rouge
+fusée
+propulseur
+astromobile
+satellite
+saturne
+anneaux de saturne
+étoile filante
+navette
+sirius
+éruption solaire
+panneau solaire
+vent solaire
+solstice
+débris spatiaux
+sonde spatiale
+navette spatiale
+station spatiale
+engin spatial
+vaisseau spatial
+combinaison spatiale
+sortie extravéhiculaire
+spectrographe
+amas d’étoiles
+lumière des étoiles
+vaisseau stellaire
+stratosphère
+soleil
+lever de soleil
+tache solaire
+supernova
+télescope
+propulseurs
+titan
+triton
+ombre
+univers
+uranus
+vénus
+vortex
+naine blanche
+trou de ver
+zénith
+apesanteur
+zodiaque

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.qempexe.hangman",
+  "name": "Hangman",
+  "version": "1.1.0",
+  "author": "qempexe",
+  "license": "MIT",
+  "description": "Hangman in the bar: fifteen word lists in English, French, Dutch, Romanian, Spanish and German (menus too), or your own, four drawings (gallows, balloons, snowman, hearts), hints, stats and streaks, keyboard or mouse, and colors that follow your Omarchy theme.",
+  "kinds": [
+    "service",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "qml/Service.qml",
+    "barWidget": "qml/BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Hangman",
+    "category": "Games",
+    "description": "Hangman with stats, hints and four drawings",
+    "aliases": [
+      "hangman",
+      "words",
+      "game",
+      "guess"
+    ],
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {},
+    "schema": []
+  }
+}

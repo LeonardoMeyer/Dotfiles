@@ -1,0 +1,194 @@
+# music, French. one word or phrase a line
+accordéon
+acoustique
+album
+alto
+amplificateur
+hymne national
+aria
+arpège
+piste d’accompagnement
+cornemuse
+ballade
+groupe
+kiosque à musique
+banjo
+baryton
+basse
+basson
+baguette de chef
+rythme
+beatbox
+blues
+bongo
+clairon
+cadence
+calypso
+cantate
+chant de noël
+castagnettes
+violoncelle
+musique de chambre
+chant grégorien
+chœur
+accord
+refrain
+orgue d’église
+clarinette
+clé
+coda
+compositeur
+concert
+concerto
+chef d’orchestre
+cornet à pistons
+country
+crescendo
+noire
+cymbale
+didgeridoo
+disco
+contrebasse
+tambour
+batterie
+batteur
+baguette
+duo
+guitare électrique
+rappel
+ensemble
+euphonium
+fausset
+fanfare
+festival
+violon folk
+flamenco
+flûte
+folk
+cor d’harmonie
+fugue
+funk
+glockenspiel
+gong
+gospel
+piano à queue
+groove
+guitare
+guitariste
+harmonica
+harmonie
+harpe
+clavecin
+casque
+hip-hop
+house
+hymne
+improvisation
+intervalle
+bœuf
+jazz
+jingle
+karaoké
+mirliton
+tonalité
+clavier
+livret
+boucle
+berceuse
+luth
+parolier
+paroles
+maestro
+majeur
+mandoline
+maracas
+marche
+mariachi
+pot-pourri
+mélodie
+métal
+métronome
+micro
+mineur
+menuet
+motown
+boîte à musique
+comédie musicale
+musicien
+note
+hautbois
+octave
+opéra
+orchestre
+orgue
+ouverture
+piano
+piccolo
+hauteur
+playlist
+polka
+pop
+punk
+quatuor
+croche
+radio
+ragtime
+rap
+rappeur
+disque
+flûte à bec
+reggae
+remix
+requiem
+rhapsodie
+riff
+rock
+rock and roll
+rumba
+salsa
+samba
+saxophone
+gamme
+sérénade
+partition
+chanteur
+sitar
+ska
+solo
+sonate
+chanson
+soprano
+soul
+bande originale
+enceinte
+portée
+scène
+steel drum
+quatuor à cordes
+swing
+symphonie
+synthétiseur
+tambourin
+tango
+techno
+tempo
+ténor
+timbales
+aigu
+trille
+trombone
+trompette
+tuba
+air
+ukulélé
+couplet
+vibrato
+vinyle
+alto à cordes
+violon
+vocaliste
+voix
+valse
+sifflet
+xylophone
+tyrolienne

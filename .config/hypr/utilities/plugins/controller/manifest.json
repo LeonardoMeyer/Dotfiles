@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "avb7.omarchy-controller",
+  "name": "omarchy-controller",
+  "version": "0.1.0",
+  "author": "Aditya Bhatnagar",
+  "license": "MIT",
+  "homepage": "https://github.com/avb7/omarchy-controller",
+  "description": "Console-style game controller support in the bar: see every connected PlayStation, Xbox, Switch or generic pad with player number and battery, pair new ones over Bluetooth with per-brand instructions, and open a live controller map that lights up as you press buttons and shows what each one does in games.",
+  "kinds": ["bar-widget"],
+  "entryPoints": { "barWidget": "Panel.qml" },
+  "barWidget": {
+    "displayName": "Controllers",
+    "description": "Connected controllers, Bluetooth pairing and a live button map",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

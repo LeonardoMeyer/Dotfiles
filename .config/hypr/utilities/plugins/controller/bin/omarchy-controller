@@ -1,0 +1,376 @@
+#!/usr/bin/env python3
+"""omarchy-controller: helper for the avb7.omarchy-controller plugin.
+
+  omarchy-controller list          print the connected controllers as JSON
+  omarchy-controller watch         print that JSON again whenever it changes
+  omarchy-controller events NODE   stream live button and stick state for
+                                   /dev/input/NODE (e.g. event21)
+
+Read-only: it never writes to devices, never grabs a controller away from
+games, and needs no sudo or network. systemd gives the logged-in user read
+access to game controllers, so no extra group membership is needed.
+
+OMARCHY_CONTROLLER_SYSFS and OMARCHY_CONTROLLER_DEV point it at a fake /sys
+and /dev/input for tests.
+"""
+
+import fcntl
+import glob
+import json
+import os
+import re
+import select
+import signal
+import struct
+import subprocess
+import sys
+import time
+
+SYSFS = os.environ.get("OMARCHY_CONTROLLER_SYSFS", "/sys")
+DEV = os.environ.get("OMARCHY_CONTROLLER_DEV", "/dev/input")
+
+BTN_JOYSTICK = 0x120
+BTN_SOUTH = 0x130
+EV_SYN, EV_KEY, EV_ABS = 0x00, 0x01, 0x03
+
+SONY, MICROSOFT, NINTENDO, VALVE, EIGHTBITDO = 0x054C, 0x045E, 0x057E, 0x28DE, 0x2DC8
+XBOX_ADAPTERS = {0x02E6, 0x02FE, 0x02F9, 0x091E}
+
+STICK_AXES = {0x00, 0x01, 0x03, 0x04}           # ABS_X, ABS_Y, ABS_RX, ABS_RY
+TRIGGER_AXES = {0x02, 0x05, 0x09, 0x0A}         # ABS_Z, ABS_RZ, ABS_GAS, ABS_BRAKE
+HAT_AXES = {0x10, 0x11}                         # ABS_HAT0X, ABS_HAT0Y
+LEVELS = {"Full": 100, "High": 80, "Normal": 55, "Low": 20, "Critical": 5}
+
+
+def read(path, default=""):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return default
+
+
+def hexint(value):
+    try:
+        return int(value, 16)
+    except ValueError:
+        return 0
+
+
+def has_bit(words, bit):
+    """True if `bit` is set in a sysfs capability bitmap ("7fdb0000 0 0 ...")."""
+    parts = words.split()
+    index = len(parts) - 1 - bit // 64
+    if index < 0:
+        return False
+    return (hexint(parts[index]) >> (bit % 64)) & 1 == 1
+
+
+def classify(vendor, product, name):
+    """(kind, brand, friendly name). kind picks the controller map."""
+    n = name.lower()
+    if vendor == SONY or "dualsense" in n:
+        if product == 0x0DF2 or "edge" in n:
+            return "dualsense", "playstation", "DualSense Edge"
+        if product == 0x0CE6 or "dualsense" in n:
+            return "dualsense", "playstation", "DualSense"
+        if product in (0x05C4, 0x09CC, 0x0BA0):
+            return "dualshock4", "playstation", "DualShock 4"
+        return "dualshock4", "playstation", name or "PlayStation controller"
+    if vendor == MICROSOFT or "xbox" in n or "x-box" in n:
+        return "xbox", "xbox", name or "Xbox controller"
+    if vendor == NINTENDO or "nintendo" in n or "pro controller" in n:
+        if product in (0x2006, 0x2007) or ("joy-con" in n and "combined" not in n):
+            return "generic", "nintendo", name or "Joy-Con"
+        return "switch-pro", "nintendo", "Switch Pro Controller" if product == 0x2009 else (name or "Nintendo controller")
+    if vendor == EIGHTBITDO or "8bitdo" in n:
+        return "generic", "8bitdo", name or "8BitDo controller"
+    if vendor == VALVE or "steam" in n:
+        return "generic", "steam", name or "Steam controller"
+    return "generic", "other", name or "Gamepad"
+
+
+def battery(input_dir):
+    """Battery from the kernel's power_supply next to the controller's HID device."""
+    hid = os.path.realpath(os.path.join(input_dir, "device"))
+    for base in (hid, os.path.dirname(hid)):
+        for supply in sorted(glob.glob(os.path.join(base, "power_supply", "*"))):
+            status = read(os.path.join(supply, "status"))
+            capacity = read(os.path.join(supply, "capacity"))
+            if capacity.isdigit():
+                percent = int(capacity)
+            elif read(os.path.join(supply, "capacity_level")) in LEVELS:
+                percent = LEVELS[read(os.path.join(supply, "capacity_level"))]
+            else:
+                continue
+            return {"percent": max(0, min(100, percent)), "charging": status in ("Charging", "Full")}
+    return None
+
+
+def controllers():
+    found = []
+    for input_dir in glob.glob(os.path.join(SYSFS, "class", "input", "input*")):
+        real = os.path.realpath(input_dir)
+        # Steam Input and joycond make copies of real pads through uinput,
+        # which live under /devices/virtual/input/; skip those. Bluetooth
+        # pads come through uhid (/devices/virtual/misc/uhid/) and are real.
+        if "/devices/virtual/input/" in real:
+            continue
+        keys = read(os.path.join(input_dir, "capabilities", "key"))
+        absolute = read(os.path.join(input_dir, "capabilities", "abs"))
+        if not (has_bit(keys, BTN_SOUTH) or (has_bit(keys, BTN_JOYSTICK) and has_bit(absolute, 0))):
+            continue
+        events = sorted(os.path.basename(p) for p in glob.glob(os.path.join(input_dir, "event*")))
+        if not events:
+            continue
+        name = read(os.path.join(input_dir, "name"))
+        vendor = hexint(read(os.path.join(input_dir, "id", "vendor"), "0"))
+        product = hexint(read(os.path.join(input_dir, "id", "product"), "0"))
+        bus = hexint(read(os.path.join(input_dir, "id", "bustype"), "0"))
+        uniq = read(os.path.join(input_dir, "uniq")).upper()
+        kind, brand, label = classify(vendor, product, name)
+        node = events[0]
+        found.append({
+            "node": node,
+            "order": int(re.sub(r"\D", "", os.path.basename(input_dir)) or 0),
+            "name": label,
+            "deviceName": name,
+            "kind": kind,
+            "brand": brand,
+            "vendor": "%04x" % vendor,
+            "product": "%04x" % product,
+            "connection": {0x03: "usb", 0x05: "bluetooth"}.get(bus, "other"),
+            "address": uniq if re.match(r"^([0-9A-F]{2}:){5}[0-9A-F]{2}$", uniq) else "",
+            "battery": battery(input_dir),
+            "readable": os.access(os.path.join(DEV, node), os.R_OK),
+        })
+    found.sort(key=lambda c: c["order"])
+    for player, c in enumerate(found, 1):
+        c["player"] = player
+        del c["order"]
+    return found
+
+
+def module_loaded(name):
+    return os.path.isdir(os.path.join(SYSFS, "module", name))
+
+
+def xbox_adapter_present():
+    for vendor_file in glob.glob(os.path.join(SYSFS, "bus", "usb", "devices", "*", "idVendor")):
+        if hexint(read(vendor_file)) == MICROSOFT:
+            product = hexint(read(os.path.join(os.path.dirname(vendor_file), "idProduct")))
+            if product in XBOX_ADAPTERS:
+                return True
+    return False
+
+
+def hints(found):
+    out = []
+    if any(c["kind"] == "xbox" and c["connection"] == "bluetooth" for c in found) and not module_loaded("hid_xpadneo"):
+        out.append({
+            "id": "xpadneo",
+            "text": "Xbox controllers over Bluetooth work best with the xpadneo driver (correct buttons, rumble, battery).",
+            "action": "omarchy-install-gaming-xbox-controllers",
+            "actionLabel": "Install",
+        })
+    if xbox_adapter_present() and not (module_loaded("xone_dongle") or module_loaded("xone_wireless")):
+        out.append({
+            "id": "xone",
+            "text": "The Xbox Wireless Adapter needs the xone driver (AUR package xone-dkms). Bluetooth works without it.",
+            "action": "",
+            "actionLabel": "",
+        })
+    return out
+
+
+def snapshot():
+    found = controllers()
+    return {"controllers": found, "hints": hints(found)}
+
+
+def emit(obj):
+    sys.stdout.write(json.dumps(obj, sort_keys=True) + "\n")
+    sys.stdout.flush()
+
+
+# ------------------------------------------------------------------ watch
+
+def watch():
+    monitor = None
+    last = None
+
+    def stop(*_):
+        if monitor and monitor.poll() is None:
+            monitor.terminate()
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGHUP, stop)
+
+    def publish():
+        nonlocal last
+        out = json.dumps(snapshot(), sort_keys=True)
+        if out != last:
+            sys.stdout.write(out + "\n")
+            sys.stdout.flush()
+            last = out
+
+    try:
+        monitor = subprocess.Popen(
+            ["udevadm", "monitor", "--udev", "--subsystem-match=input",
+             "--subsystem-match=power_supply", "--subsystem-match=hid"],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
+    except OSError:
+        monitor = None
+
+    try:
+        publish()
+        due = None                       # debounce: udev sends a burst per plug
+        poll_at = time.monotonic() + 20  # batteries change without udev events
+        while True:
+            now = time.monotonic()
+            waits = [poll_at - now] + ([due - now] if due else [])
+            timeout = max(0.0, min(waits))
+            if monitor and monitor.poll() is None:
+                ready, _, _ = select.select([monitor.stdout], [], [], timeout)
+                if ready:
+                    if monitor.stdout.readline():
+                        due = time.monotonic() + 0.4
+                    else:
+                        monitor = None
+            else:
+                time.sleep(min(timeout, 3.0))
+                due = time.monotonic()
+            now = time.monotonic()
+            if due and now >= due:
+                publish()
+                due = None
+            if now >= poll_at:
+                publish()
+                poll_at = now + 20
+    except BrokenPipeError:
+        stop()
+
+
+# ----------------------------------------------------------------- events
+
+EVENT = struct.Struct("llHHi")       # struct input_event on 64-bit Linux
+ABSINFO = struct.Struct("iiiiii")    # value, minimum, maximum, fuzz, flat, resolution
+
+
+def eviocgabs(axis):
+    return (2 << 30) | (ABSINFO.size << 16) | (ord("E") << 8) | (0x40 + axis)
+
+
+def axis_ranges(fd):
+    ranges = {}
+    for axis in sorted(STICK_AXES | TRIGGER_AXES | HAT_AXES):
+        try:
+            data = fcntl.ioctl(fd, eviocgabs(axis), bytes(ABSINFO.size))
+            _, low, high, _, _, _ = ABSINFO.unpack(data)
+            if high > low:
+                ranges[axis] = (low, high)
+        except OSError:
+            pass
+    return ranges
+
+
+def normalize(axis, value, ranges):
+    if axis in HAT_AXES:
+        return max(-1, min(1, value))
+    low, high = ranges.get(axis, (0, 255))
+    span = float(high - low) or 1.0
+    if axis in TRIGGER_AXES:
+        return round(max(0.0, min(1.0, (value - low) / span)), 2)
+    return round(max(-1.0, min(1.0, 2.0 * (value - low) / span - 1.0)), 2)
+
+
+def events(node):
+    if not re.match(r"^event[0-9]{1,4}$", node or ""):
+        emit({"error": "bad-node"})
+        return 2
+    path = os.path.join(DEV, node)
+    try:
+        fd = os.open(path, os.O_RDONLY)
+    except PermissionError:
+        emit({"error": "permission"})
+        return 1
+    except OSError:
+        emit({"error": "gone"})
+        return 1
+
+    ranges = axis_ranges(fd)
+    emit({"ready": True})
+    # Changes since the last line out. Buttons go out at once; stick-only
+    # frames at most ~30 times a second, and a held-back frame is sent as soon
+    # as that window passes, so a stick that stops moving still shows where it
+    # stopped.
+    keys, axes = {}, {}
+    synced = False
+    last_flush = 0.0
+    buffered = b""
+
+    def flush():
+        nonlocal keys, axes, synced, last_flush
+        out = {}
+        if keys:
+            out["k"] = keys
+        if axes:
+            out["a"] = axes
+        if out:
+            emit(out)
+        keys, axes, synced = {}, {}, False
+        last_flush = time.monotonic()
+
+    try:
+        while True:
+            timeout = None
+            if synced:
+                timeout = max(0.0, 0.033 - (time.monotonic() - last_flush))
+            ready, _, _ = select.select([fd], [], [], timeout)
+            if not ready:
+                flush()
+                continue
+            try:
+                chunk = os.read(fd, EVENT.size * 64)
+            except OSError:
+                emit({"error": "gone"})
+                return 1
+            if not chunk:
+                flush()
+                return 0                      # end of a test file
+            buffered += chunk
+            while len(buffered) >= EVENT.size:
+                _, _, etype, code, value = EVENT.unpack_from(buffered)
+                buffered = buffered[EVENT.size:]
+                if etype == EV_KEY and value in (0, 1):
+                    keys[str(code)] = value
+                elif etype == EV_ABS:
+                    axes[str(code)] = normalize(code, value, ranges)
+                elif etype == EV_SYN and code == 0 and (keys or axes):
+                    synced = True
+                    if keys or time.monotonic() - last_flush >= 0.033:
+                        flush()
+    except BrokenPipeError:
+        return 0
+    finally:
+        os.close(fd)
+
+
+def main(argv):
+    command = argv[1] if len(argv) > 1 else ""
+    if command == "list":
+        emit(snapshot())
+        return 0
+    if command == "watch":
+        watch()
+        return 0
+    if command == "events":
+        return events(argv[2] if len(argv) > 2 else "")
+    sys.stderr.write(__doc__)
+    return 0 if command == "" else 2
+
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    sys.exit(main(sys.argv))

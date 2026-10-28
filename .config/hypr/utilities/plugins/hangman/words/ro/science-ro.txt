@@ -1,0 +1,189 @@
+# science, Romanian. one word or phrase a line
+absorbție
+accelerație
+acid
+algoritm
+aliaj
+amplitudine
+anatomie
+anod
+anticorp
+antimaterie
+asteroid
+astronomie
+atmosferă
+atom
+bacterie
+bacteriofag
+baterie
+pahar berzelius
+big bang
+biologie
+biom
+gaură neagră
+botanică
+flotabilitate
+calcul diferențial
+calorie
+capilar
+carbon
+dioxid de carbon
+catalizator
+catod
+celulă
+centrifugă
+chimie
+clorofilă
+cromatografie
+cromozom
+circuit
+climă
+clonare
+coeficient
+combustie
+compus
+condensare
+conducție
+conductor
+convecție
+cortex
+cristal
+curent electric
+decibel
+densitate
+difuzie
+dinozaur
+ecosistem
+electrod
+electron
+element
+embrion
+energie
+entropie
+enzimă
+epidemie
+ecuație
+echilibru
+eroziune
+evaporare
+evoluție
+experiment
+fermentație
+fisiune
+formulă
+fosilă
+frecare
+fung
+fuziune
+galaxie
+rază gamma
+genă
+genetică
+geologie
+geometrie
+glucoză
+gravitație
+habitat
+timp de înjumătățire
+heliu
+ereditate
+hormon
+hidraulică
+hidrogen
+ipoteză
+imunitate
+inerție
+infraroșu
+insulină
+ion
+izotop
+energie cinetică
+laborator
+laser
+lentilă
+pârghie
+litiu
+magnet
+magnetism
+masă
+materie
+meioză
+membrană
+metabolism
+microb
+microscop
+mineral
+mitoză
+moleculă
+impuls
+mutație
+nanotehnologie
+selecție naturală
+nebuloasă
+neuron
+neutron
+azot
+nucleotid
+nucleu
+optică
+orbită
+organism
+osmoză
+oxigen
+ozon
+parazit
+particulă
+pendul
+tabelul periodic
+foton
+fotosinteză
+fizică
+pipetă
+plasmă
+polen
+polimer
+energie potențială
+prismă
+proteină
+proton
+scripete
+cuantă
+radar
+radiație
+reacție
+refracție
+ribozom
+robot
+sediment
+semiconductor
+schelet
+sodiu
+sistem solar
+soluție
+specie
+spectru
+viteza luminii
+electricitate statică
+simbioză
+taxonomie
+placă tectonică
+telescop
+temperatură
+eprubetă
+teorie
+termodinamică
+termometru
+țesut
+titrare
+ultraviolet
+vaccin
+vid
+viteză
+vertebrat
+virus
+vâscozitate
+tensiune
+undă
+lungime de undă
+drojdie
+zoologie

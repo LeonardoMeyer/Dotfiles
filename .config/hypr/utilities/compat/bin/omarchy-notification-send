@@ -1,0 +1,3 @@
+#!/bin/bash
+# Hex: substituto do helper do Omarchy; repassa para o notify-send
+exec notify-send "$@"

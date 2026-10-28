@@ -3,7 +3,23 @@ local saved = require("settings")
 local boot = saved.boot or defaults.boot
 local cursor = saved.cursor or defaults.cursor
 
+-- Hex: helpers dos plugins do Omarchy no PATH (compat/bin)
+local home = os.getenv("HOME")
+local path = os.getenv("PATH") or "/usr/local/bin:/usr/bin"
+local compat = home .. "/.config/hypr/utilities/compat/bin"
+if not path:find(compat, 1, true) then
+    hl.env("PATH", compat .. ":" .. home .. "/.local/bin:" .. path)
+end
+
+-- Hex: se a tela de bloqueio cair, deixa outro bloqueador assumir
+-- (sem isso o Hyprland fica na tela vermelha de "lock crashed")
+hl.config({ misc = { allow_session_lock_restore = true } })
+
 hl.on("hyprland.start", function()
+    -- Hex: autologin + bloqueio. A primeira coisa da sessão é a tela de
+    -- bloqueio do elifouts; se ela falhar (sai com erro), o hyprlock assume,
+    -- para a sessão nunca ficar aberta sem senha.
+    hl.exec_cmd([[sh -c '~/.config/hypr/utilities/lock.sh || hyprlock']])
     if boot.enabled ~= false then
         hl.exec_cmd("BOOT_BLACK_MS=" .. (boot.black_ms or defaults.boot.black_ms) .. " qs -p ~/.config/hypr/utilities/boot --daemonize")
     end

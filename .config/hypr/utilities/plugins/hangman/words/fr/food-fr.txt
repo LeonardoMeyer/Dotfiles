@@ -1,0 +1,268 @@
+# food, French. one word or phrase a line
+amande
+anchois
+pomme
+tarte aux pommes
+abricot
+artichaut
+cœur d’artichaut
+asperge
+aubergine
+avocat
+bacon
+bagel
+baguette
+baklava
+banane
+cake à la banane
+orge
+basilic
+haricot
+ragoût de bœuf
+betterave
+biscuit
+mûre
+myrtille
+pain
+brioche
+brocoli
+brownie
+bruschetta
+burrito
+beurre
+babeurre
+chou
+gâteau
+calzone
+cantaloup
+cappuccino
+caramel
+carotte
+noix de cajou
+chou-fleur
+céleri
+céréales
+ceviche
+cheddar
+fromage
+gâteau au fromage
+cerise
+châtaigne
+poulet
+soupe au poulet
+pois chiche
+piment
+chips
+chocolat
+chorizo
+chutney
+ciabatta
+cannelle
+soupe de palourdes
+clémentine
+club sandwich
+crumble aux fruits
+noix de coco
+café
+salade de chou
+cookie
+coriandre
+maïs
+corn flakes
+barbe à papa
+couscous
+crabe
+cracker
+canneberge
+crème
+crêpe
+croissant
+crumble
+concombre
+cupcake
+curry
+crème anglaise
+datte
+boulette
+éclair
+œuf
+enchilada
+expresso
+falafel
+fenouil
+figue
+poisson-frites
+barre aux flocons d’avoine
+focaccia
+frites
+frittata
+caramel mou
+ail
+gaspacho
+pain d’épices
+gnocchis
+goulasch
+granola
+raisin
+pamplemousse
+sauce au jus
+guacamole
+gombo
+jambon
+hamburger
+noisette
+miel
+raifort
+chocolat chaud
+hot-dog
+houmous
+glace
+confiture
+jambalaya
+gelée
+chou kale
+kebab
+ketchup
+kimchi
+kiwi
+chou-rave
+côtelette d’agneau
+lasagnes
+poireau
+citron
+crème au citron
+limonade
+lentille
+laitue
+réglisse
+citron vert
+homard
+macaronis
+mangue
+sirop d’érable
+margarine
+marmelade
+guimauve
+mayonnaise
+melon
+meringue
+lait
+menthe
+mozzarella
+muesli
+muffin
+champignon
+moutarde
+nachos
+nectarine
+nouilles
+nougat
+muscade
+flocons d’avoine
+gombo vert
+olive
+omelette
+oignon
+orange
+jus d’orange
+origan
+paella
+pancake
+papaye
+paprika
+parmesan
+persil
+panais
+pâtes
+pâtisserie
+pavlova
+pêche
+cacahuète
+beurre de cacahuète
+poire
+petits pois
+noix de pécan
+poivre
+pepperoni
+pesto
+cornichon
+tourte
+ananas
+pistache
+pita
+pizza
+prune
+polenta
+grenade
+pop-corn
+porridge
+pomme de terre
+bretzel
+pruneau
+pudding
+citrouille
+quiche
+quinoa
+radis
+raisin sec
+ramen
+framboise
+raviolis
+rhubarbe
+riz
+riz au lait
+ricotta
+risotto
+pain de seigle
+salade
+salami
+saumon
+samoussa
+sandwich
+choucroute
+saucisse
+scone
+œufs brouillés
+sablé
+crevette
+smoothie
+sorbet
+soufflé
+soupe
+pain au levain
+spaghettis
+épinards
+rouleau de printemps
+ragoût
+fraise
+strudel
+sucre
+sushi
+patate douce
+sirop
+taboulé
+taco
+mandarine
+tapas
+thé
+teriyaki
+tiramisu
+pain grillé
+caramel dur
+tofu
+tomate
+tortilla
+diplomate
+truffe
+thon
+navet
+vanille
+vinaigre
+gaufre
+noix
+wasabi
+pastèque
+wonton
+igname
+yaourt
+courgette

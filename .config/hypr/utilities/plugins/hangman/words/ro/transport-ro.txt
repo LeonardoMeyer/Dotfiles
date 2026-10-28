@@ -1,0 +1,173 @@
+# transport, Romanian. one word or phrase a line
+avion
+aeroport
+dirijabil
+ambulanță
+ancoră
+pilot automat
+osie
+barjă
+cuirasat
+bicicletă
+biplan
+dirijabil mic
+barcă
+bob
+frână
+buldozer
+bară de protecție
+autobuz
+stație de autobuz
+taxi
+telecabină
+autorulotă
+barcă de canal
+canoe
+mașină
+rulotă
+marfă
+trăsură
+catamaran
+telescaun
+elicopter mic
+autocar
+autogară
+carlingă
+controlor
+decapotabilă
+macara
+trecere de pietoni
+intersecție
+croazieră
+navă de croazieră
+biciclist
+bord
+dubă de livrări
+motorină
+excavator
+șalupă
+doc
+autobuz etajat
+permis de conducere
+autobasculantă
+mașină electrică
+motor
+scară rulantă
+eșapament
+tren expres
+feribot
+bac
+mașină de pompieri
+autospecială de pompieri
+motostivuitor
+transport de marfă
+tren de marfă
+funicular
+garaj
+cutie de viteze
+planor
+kart
+mașinuță de golf
+gondolă
+telegondolă
+ghidon
+hatchback
+far
+elicopter
+șosea
+claxon
+balon cu aer cald
+hovercraft
+hidroglisor
+spărgător de gheață
+jeep
+avion cu reacție
+jet ski
+nod rutier
+caiac
+barcă de salvare
+limuzină
+locomotivă
+camion greu
+metrou
+microbuz
+monovolum
+monorai
+moped
+motocicletă
+barcă cu motor
+autostradă
+bicicletă de munte
+autobuz de noapte
+petrolier
+pasaj superior
+vapor cu zbaturi
+parașută
+pasager
+pedală
+hidrobicicletă
+benzină
+camionetă
+pilot
+peron
+mașină de poliție
+plută
+șină
+cale ferată
+ricșă
+drum
+rachetă
+barcă cu vâsle
+pistă
+barcă cu pânze
+planor sportiv
+autobuz școlar
+scuter
+hidroavion
+centură de siguranță
+sedan
+navă
+ataș
+skateboard
+snowmobil
+sanie
+tren de noapte
+sanie trasă
+motosanie
+navă spațială
+șalupă rapidă
+barcă de viteză
+gară
+tren cu aburi
+vapor
+volan
+tramvai urban
+submarin
+metrou subteran
+tandem
+cisternă
+drum cu taxă
+ghișeu de taxare
+autoplatformă
+tractor
+trafic
+semafor
+remorcă
+tren
+tramvai
+tricicletă
+cărucior
+camion
+remorcher
+tunel
+anvelopă
+metrou londonez
+monociclu
+dubă
+velodrom
+vagon
+navă de război
+roată
+parbriz
+iaht
+zepelin

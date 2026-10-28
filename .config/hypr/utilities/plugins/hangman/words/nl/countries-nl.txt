@@ -1,0 +1,207 @@
+# countries, Dutch. one word or phrase a line
+afghanistan
+albanië
+algerije
+andorra
+angola
+antigua
+antigua en barbuda
+argentinië
+armenië
+australië
+oostenrijk
+azerbeidzjan
+bahama-eilanden
+bahrein
+bangladesh
+barbados
+belarus
+belgië
+belize
+benin
+bhutan
+bolivia
+bosnië en herzegovina
+botswana
+brazilië
+brunei
+bulgarije
+burkina faso
+burundi
+cambodja
+kameroen
+canada
+kaapverdië
+centraal-afrikaanse republiek
+tsjaad
+chili
+china
+colombia
+comoren
+congo
+costa rica
+kroatië
+cuba
+cyprus
+tsjechië
+denemarken
+djibouti
+dominica
+dominicaanse republiek
+oost-timor
+ecuador
+egypte
+el salvador
+engeland
+equatoriaal-guinea
+eritrea
+estland
+eswatini
+ethiopië
+faeröer
+fiji
+finland
+frankrijk
+frans-guyana
+gabon
+gambia
+georgië
+duitsland
+ghana
+gibraltar
+griekenland
+groenland
+grenada
+guatemala
+guinee
+guyana
+haïti
+honduras
+hongkong
+hongarije
+ijsland
+india
+indonesië
+iran
+irak
+ierland
+israël
+italië
+ivoorkust
+jamaica
+japan
+jordanië
+kazachstan
+kenia
+kiribati
+kosovo
+koeweit
+kirgizië
+laos
+letland
+libanon
+lesotho
+liberia
+libië
+liechtenstein
+litouwen
+luxemburg
+macau
+madagaskar
+malawi
+maleisië
+maldiven
+mali
+malta
+marshalleilanden
+mauritanië
+mauritius
+mexico
+micronesië
+moldavië
+monaco
+mongolië
+montenegro
+marokko
+mozambique
+myanmar
+namibië
+nauru
+nepal
+nederland
+nieuw-caledonië
+nieuw-zeeland
+nicaragua
+niger
+nigeria
+noord-korea
+noord-macedonië
+noord-ierland
+noorwegen
+oman
+pakistan
+palau
+panama
+papoea-nieuw-guinea
+paraguay
+peru
+filipijnen
+polen
+portugal
+puerto rico
+qatar
+roemenië
+rusland
+rwanda
+saint kitts en nevis
+saint lucia
+samoa
+san marino
+saoedi-arabië
+schotland
+senegal
+servië
+seychellen
+sierra leone
+singapore
+slowakije
+slovenië
+salomonseilanden
+somalië
+zuid-afrika
+zuid-korea
+zuid-soedan
+spanje
+sri lanka
+soedan
+suriname
+zweden
+zwitserland
+syrië
+taiwan
+tadzjikistan
+tanzania
+thailand
+togo
+tonga
+trinidad en tobago
+tunesië
+turkije
+turkmenistan
+tuvalu
+oeganda
+oekraïne
+verenigde arabische emiraten
+verenigd koninkrijk
+verenigde staten
+uruguay
+oezbekistan
+vanuatu
+vaticaanstad
+venezuela
+vietnam
+wales
+westelijke sahara
+jemen
+zambia
+zimbabwe

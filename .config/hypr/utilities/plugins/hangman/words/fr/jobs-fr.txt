@@ -1,0 +1,200 @@
+# jobs, French. one word or phrase a line
+comptable
+acrobate
+acteur
+agent
+ambassadeur
+analyste
+anthropologue
+archéologue
+architecte
+archiviste
+artiste
+astronaute
+astronome
+athlète
+commissaire-priseur
+auditeur
+auteur
+baby-sitter
+boulanger
+banquier
+barbier
+barista
+barman
+apiculteur
+biologiste
+forgeron
+garde du corps
+teneur de livres
+botaniste
+brasseur
+maçon
+courtier
+constructeur
+chauffeur de bus
+boucher
+capitaine
+aide-soignant
+charpentier
+cartographe
+caissier
+traiteur
+chauffeur
+chef cuisinier
+chimiste
+chorégraphe
+agent d’entretien
+clown
+entraîneur
+garde-côte
+commentateur
+compositeur
+consultant
+cuisinier
+conseiller
+coursier
+critique
+croupier
+conservateur
+danseur
+analyste de données
+décorateur
+dentiste
+designer
+détective
+diététicien
+diplomate
+directeur
+répartiteur
+plongeur
+médecin
+conducteur
+écologue
+économiste
+rédacteur
+électricien
+ingénieur
+entrepreneur
+agent immobilier
+agriculteur
+ouvrier agricole
+pompier
+pêcheur
+steward
+fleuriste
+forestier
+concepteur de jeux
+garde-chasse
+jardinier
+géologue
+vitrier
+graphiste
+garde
+guide
+coiffeur
+styliste capillaire
+historien
+gouvernante
+chasseur
+illustrateur
+inspecteur
+interprète
+investisseur
+concierge
+bijoutier
+journaliste
+juge
+jongleur
+propriétaire
+avocat
+maître de conférences
+bibliothécaire
+maître-nageur
+linguiste
+serrurier
+bûcheron
+magicien
+manager
+tailleur de pierre
+mathématicien
+maire
+mécanicien
+marchand
+météorologue
+sage-femme
+meunier
+mineur
+ministre
+mannequin
+musicien
+nounou
+navigateur
+infirmier
+nutritionniste
+océanographe
+opticien
+orthodontiste
+peintre
+ambulancier
+pasteur
+pharmacien
+philosophe
+photographe
+physicien
+pianiste
+pilote
+plombier
+poète
+policier
+homme politique
+facteur
+potier
+prêtre
+producteur
+professeur
+programmeur
+psychologue
+éditeur
+radiologue
+garde forestier
+réceptionniste
+arbitre
+reporter
+chercheur
+couvreur
+marin
+vendeur
+scientifique
+sculpteur
+secrétaire
+berger
+chanteur
+soldat
+sommelier
+ingénieur du son
+cascadeur
+chirurgien
+géomètre
+tailleur
+chauffeur de taxi
+enseignant
+technicien
+thérapeute
+carreleur
+trader
+traducteur
+précepteur
+tapissier
+placeur
+véto
+vétérinaire
+serveur
+tisserand
+développeur web
+soudeur
+laveur de vitres
+écrivain
+youtubeur
+soigneur
+zoologiste

@@ -1,0 +1,146 @@
+# body, English. one word or phrase a line
+abdomen
+achilles heel
+adams apple
+adenoid
+ankle
+appendix
+arm
+armpit
+artery
+back
+backbone
+beard
+belly
+belly button
+biceps
+big toe
+bladder
+blood
+bloodstream
+bone
+bone marrow
+brain
+breath
+brow
+buttock
+calf
+canine tooth
+cartilage
+cerebellum
+cheek
+cheekbone
+chest
+chin
+chromosome
+clavicle
+collarbone
+cornea
+cuticle
+diaphragm
+dimple
+eardrum
+earlobe
+elbow
+esophagus
+eyebrow
+eyelash
+eyelid
+face
+finger
+fingernail
+fingerprint
+fist
+foot
+forehead
+freckle
+funny bone
+gallbladder
+gland
+gullet
+gum
+hair
+hamstring
+hand
+head
+heart
+heel
+hip
+hip bone
+intestine
+iris
+jaw
+joint
+kidney
+knee
+kneecap
+knuckle
+larynx
+leg
+ligament
+limb
+lip
+liver
+lower back
+lung
+molar
+mole
+mouth
+muscle
+nail
+nape
+navel
+neck
+nerve
+nervous system
+nose
+nostril
+palm
+pancreas
+pelvis
+pore
+prostate
+pulse
+pupil
+quadriceps
+retina
+rib
+ribcage
+saliva
+scalp
+shin
+shoulder
+sinus
+skeleton
+skin
+skull
+sole
+spine
+spleen
+sternum
+stomach
+sweat
+temple
+tendon
+thigh
+throat
+thumb
+tissue
+toe
+toenail
+tongue
+tonsil
+tooth
+torso
+trachea
+triceps
+tummy
+uvula
+vein
+vertebra
+vocal cords
+waist
+windpipe
+wisdom tooth
+womb
+wrist

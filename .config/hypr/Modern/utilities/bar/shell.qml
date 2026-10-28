@@ -49,7 +49,7 @@ ShellRoot {
             }
             readonly property var look: {
                 const d = { left: ["user", "workspaces"], center: ["media", "date", "timer", "clock"],
-                    right: ["tray", "|", "updates", "network", "audio", "|", "power"],
+                    right: ["tray", "|", "plugins", "updates", "network", "audio", "|", "power"],
                     strip: false, background: true, attached: false, height: 30, gap: 6, shape: "round" }
                 try { return Object.assign(d, JSON.parse(lookFile.text())) } catch (e) { return d }
             }

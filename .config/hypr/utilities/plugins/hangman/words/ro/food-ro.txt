@@ -1,0 +1,268 @@
+# food, Romanian. one word or phrase a line
+migdală
+anșoa
+măr
+plăcintă cu mere
+caisă
+anghinare
+inimă de anghinare
+sparanghel
+vânătă
+avocado
+bacon
+covrig moale
+baghetă
+baclava
+banană
+chec cu banane
+orz
+busuioc
+fasole
+tocană de vită
+sfeclă roșie
+biscuit
+mură
+afină
+pâine
+brioșă
+broccoli
+brownie
+bruschetă
+burrito
+unt
+lapte bătut
+varză
+tort
+calzone
+pepene galben
+cappuccino
+caramel
+morcov
+caju
+conopidă
+țelină
+cereale
+ceviche
+cheddar
+brânză
+cheesecake
+cireașă
+castană
+pui
+supă de pui
+năut
+ardei iute
+chipsuri
+ciocolată
+chorizo
+chutney
+ciabatta
+scorțișoară
+supă de scoici
+clementină
+sandviș club
+desert cu fructe
+nucă de cocos
+cafea
+salată de varză
+fursec
+coriandru
+porumb
+fulgi de porumb
+vată de zahăr
+cuscus
+crab
+biscuit sărat
+merișor
+smântână
+clătită
+croissant
+crumble
+castravete
+brioșă cu cremă
+curry
+cremă de ouă
+curmală
+găluște
+ecler
+ou
+enchilada
+espresso
+falafel
+fenicul
+smochină
+pește cu cartofi
+baton de ovăz
+focaccia
+cartofi prăjiți
+frittata
+fudge
+usturoi
+gazpacho
+turtă dulce
+gnocchi
+gulaș
+granola
+strugure
+grepfrut
+sos de friptură
+guacamole
+gumbo
+șuncă
+hamburger
+alună de pădure
+miere
+hrean
+ciocolată caldă
+hot dog
+humus
+înghețată
+gem
+jambalaya
+jeleu
+kale
+kebab
+ketchup
+kimchi
+kiwi
+gulie
+cotlet de miel
+lasagna
+praz
+lămâie
+cremă de lămâie
+limonadă
+linte
+salată verde
+lemn dulce
+lime
+homar
+macaroane
+mango
+sirop de arțar
+margarină
+marmeladă
+bezea moale
+maioneză
+pepene
+bezea
+lapte
+mentă
+mozzarella
+musli
+negresă
+ciupercă
+muștar
+nachos
+nectarină
+tăiței
+nuga
+nucșoară
+fulgi de ovăz
+bame
+măslină
+omletă
+ceapă
+portocală
+suc de portocale
+oregano
+paella
+clătită americană
+papaya
+boia
+parmezan
+pătrunjel
+păstârnac
+paste
+patiserie
+pavlova
+piersică
+arahidă
+unt de arahide
+pară
+mazăre
+nucă pecan
+piper
+pepperoni
+pesto
+castravete murat
+plăcintă
+ananas
+fistic
+lipie
+pizza
+prună
+mămăligă
+rodie
+floricele
+terci
+cartof
+covrig
+prună uscată
+budincă
+dovleac
+quiche
+quinoa
+ridiche
+stafidă
+ramen
+zmeură
+ravioli
+rubarbă
+orez
+orez cu lapte
+ricotta
+risotto
+pâine de secară
+salată
+salam
+somon
+samosa
+sandviș
+varză murată
+cârnat
+scone
+omletă jumări
+fursec cu unt
+crevete
+smoothie
+sorbet
+sufleu
+supă
+pâine cu maia
+spaghete
+spanac
+rulou de primăvară
+tocană
+căpșună
+ștrudel
+zahăr
+sushi
+cartof dulce
+sirop
+tabbouleh
+taco
+mandarină
+tapas
+ceai
+teriyaki
+tiramisu
+pâine prăjită
+caramea
+tofu
+roșie
+tortilla
+desert cu straturi
+trufă
+ton
+nap
+vanilie
+oțet
+vafă
+nucă
+wasabi
+pepene verde
+wonton
+ignamă
+iaurt
+dovlecel

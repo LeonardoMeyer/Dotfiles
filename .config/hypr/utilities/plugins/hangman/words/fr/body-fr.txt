@@ -1,0 +1,146 @@
+# body, French. one word or phrase a line
+abdomen
+talon d’achille
+pomme d’adam
+végétations
+cheville
+appendice
+bras
+aisselle
+artère
+dos
+échine
+barbe
+ventre
+nombril
+biceps
+gros orteil
+vessie
+sang
+circulation sanguine
+os
+moelle osseuse
+cerveau
+souffle
+front
+fesse
+mollet
+canine
+cartilage
+cervelet
+joue
+pommette
+poitrine
+menton
+chromosome
+clavicule
+os du cou
+cornée
+cuticule
+diaphragme
+fossette
+tympan
+lobe de l’oreille
+coude
+œsophage
+sourcil
+cil
+paupière
+visage
+doigt
+ongle
+empreinte digitale
+poing
+pied
+front haut
+tache de rousseur
+petit juif
+vésicule biliaire
+glande
+gosier
+gencive
+cheveux
+ischio-jambier
+main
+tête
+cœur
+talon
+hanche
+os iliaque
+intestin
+iris
+mâchoire
+articulation
+rein
+genou
+rotule
+jointure
+larynx
+jambe
+ligament
+membre
+lèvre
+foie
+bas du dos
+poumon
+molaire
+grain de beauté
+bouche
+muscle
+ongle de pied
+nuque
+ombilic
+cou
+nerf
+système nerveux
+nez
+narine
+paume
+pancréas
+bassin
+pore
+prostate
+pouls
+pupille
+quadriceps
+rétine
+côte
+cage thoracique
+salive
+cuir chevelu
+tibia
+épaule
+sinus
+squelette
+peau
+crâne
+plante du pied
+colonne vertébrale
+rate
+sternum
+estomac
+sueur
+tempe
+tendon
+cuisse
+gorge
+pouce
+tissu
+orteil
+ongle d’orteil
+langue
+amygdale
+dent
+torse
+trachée
+triceps
+bedaine
+luette
+veine
+vertèbre
+cordes vocales
+taille
+conduit respiratoire
+dent de sagesse
+utérus
+poignet

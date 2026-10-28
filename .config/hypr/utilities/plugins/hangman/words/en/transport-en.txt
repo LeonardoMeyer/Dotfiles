@@ -1,0 +1,174 @@
+# transport, English. one word or phrase a line
+aeroplane
+airport
+airship
+ambulance
+anchor
+autopilot
+axle
+barge
+battleship
+bicycle
+biplane
+blimp
+boat
+bobsled
+brake
+bulldozer
+bumper
+bus
+bus stop
+cab
+cable car
+camper van
+canal boat
+canoe
+car
+caravan
+cargo
+carriage
+catamaran
+chairlift
+chopper
+coach
+coach station
+cockpit
+conductor
+convertible
+crane
+crossing
+crossroads
+cruise
+cruise ship
+cyclist
+dashboard
+delivery van
+diesel
+digger
+dinghy
+dock
+double decker
+driving licence
+dumper truck
+electric car
+engine
+escalator
+exhaust
+express train
+ferry
+ferryboat
+fire engine
+fire truck
+forklift
+freight
+freight train
+funicular
+garage
+gearbox
+glider
+go kart
+golf cart
+gondola
+gondola lift
+handlebar
+hatchback
+headlight
+helicopter
+highway
+horn
+hot air balloon
+hovercraft
+hydrofoil
+ice breaker
+jeep
+jet
+jetski
+junction
+kayak
+lifeboat
+limousine
+locomotive
+lorry
+metro
+minibus
+minivan
+monorail
+moped
+motorbike
+motorboat
+motorway
+mountain bike
+night bus
+oil tanker
+overpass
+paddle steamer
+parachute
+passenger
+pedal
+pedalo
+petrol
+pickup
+pilot
+platform
+police car
+raft
+rail
+railway
+rickshaw
+road
+rocket
+rowboat
+runway
+sailboat
+sailplane
+school bus
+scooter
+seaplane
+seatbelt
+sedan
+ship
+sidecar
+skateboard
+skidoo
+sled
+sleeper train
+sleigh
+snowmobile
+spaceship
+speed boat
+speedboat
+station
+steam train
+steamboat
+steering wheel
+streetcar
+submarine
+subway
+tandem
+tanker
+taxi
+toll road
+tollbooth
+towtruck
+tractor
+traffic
+traffic light
+trailer
+train
+tram
+tricycle
+trolley
+truck
+tugboat
+tunnel
+tyre
+underground
+unicycle
+van
+velodrome
+wagon
+warship
+wheel
+windscreen
+yacht
+zeppelin

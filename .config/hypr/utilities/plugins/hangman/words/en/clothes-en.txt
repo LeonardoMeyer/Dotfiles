@@ -1,0 +1,172 @@
+# clothes, English. one word or phrase a line
+anklet
+anorak
+apron
+ascot
+backpack
+balaclava
+ballgown
+bandana
+baseball cap
+bathrobe
+beanie
+belt
+beret
+bermuda shorts
+bikini
+blazer
+blouse
+blouson
+boater
+bodysuit
+bolero
+bomber jacket
+boots
+bow tie
+bowtie
+boxers
+bracelet
+braces
+brooch
+buckle
+button
+camisole
+cap
+cape
+capri pants
+cardigan
+cargo pants
+chinos
+cloak
+clogs
+coat
+collar
+corset
+costume
+cowboy boots
+crop top
+cufflinks
+culottes
+cummerbund
+denim
+dress
+duffle coat
+dungarees
+earmuffs
+earring
+espadrilles
+fedora
+flannel shirt
+flats
+fleece
+flipflops
+galoshes
+garter
+gilet
+gloves
+gown
+handbag
+headband
+headscarf
+helmet
+high heels
+hiking boots
+hood
+hoodie
+jacket
+jeans
+jersey
+jumper
+jumpsuit
+khakis
+kilt
+kimono
+kneepads
+lab coat
+leggings
+leotard
+loafers
+mackintosh
+miniskirt
+mittens
+moccasins
+necklace
+nightcap
+nightgown
+onesie
+overalls
+overcoat
+pajamas
+panama hat
+pantsuit
+parka
+peacoat
+petticoat
+pinafore
+polo shirt
+poncho
+puffer jacket
+pumps
+purse
+pyjamas
+rain boots
+raincoat
+robe
+rollneck
+sandals
+sari
+sash
+scarf
+shawl
+shirt
+shoelace
+shoes
+shorts
+skirt
+slip
+slippers
+sneakers
+socks
+sombrero
+spats
+stetson
+stilettos
+stockings
+suit
+sun hat
+sunglasses
+suspenders
+sweater
+sweatpants
+sweatshirt
+swimming cap
+swimsuit
+tailcoat
+tank top
+tiara
+tie
+tights
+toga
+top hat
+trainers
+trench coat
+trilby
+trousers
+tunic
+turban
+turtleneck
+tuxedo
+umbrella
+uniform
+veil
+vest
+waders
+waistcoat
+wallet
+watch
+wedding dress
+wellies
+windbreaker
+wristband
+wristwatch
+zip

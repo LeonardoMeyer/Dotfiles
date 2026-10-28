@@ -1,0 +1,207 @@
+# countries, Romanian. one word or phrase a line
+afganistan
+albania
+algeria
+andorra
+angola
+antigua
+antigua și barbuda
+argentina
+armenia
+australia
+austria
+azerbaidjan
+bahamas
+bahrain
+bangladesh
+barbados
+belarus
+belgia
+belize
+benin
+bhutan
+bolivia
+bosnia și herțegovina
+botswana
+brazilia
+brunei
+bulgaria
+burkina faso
+burundi
+cambodgia
+camerun
+canada
+capul verde
+republica centrafricană
+ciad
+chile
+china
+columbia
+comore
+congo
+costa rica
+croația
+cuba
+cipru
+cehia
+danemarca
+djibouti
+dominica
+republica dominicană
+timorul de est
+ecuador
+egipt
+el salvador
+anglia
+guineea ecuatorială
+eritreea
+estonia
+eswatini
+etiopia
+insulele feroe
+fiji
+finlanda
+franța
+guyana franceză
+gabon
+gambia
+georgia
+germania
+ghana
+gibraltar
+grecia
+groenlanda
+grenada
+guatemala
+guineea
+guyana
+haiti
+honduras
+hong kong
+ungaria
+islanda
+india
+indonezia
+iran
+irak
+irlanda
+israel
+italia
+coasta de fildeș
+jamaica
+japonia
+iordania
+kazahstan
+kenya
+kiribati
+kosovo
+kuweit
+kârgâzstan
+laos
+letonia
+liban
+lesotho
+liberia
+libia
+liechtenstein
+lituania
+luxemburg
+macao
+madagascar
+malawi
+malaezia
+maldive
+mali
+malta
+insulele marshall
+mauritania
+mauritius
+mexic
+micronezia
+moldova
+monaco
+mongolia
+muntenegru
+maroc
+mozambic
+myanmar
+namibia
+nauru
+nepal
+țările de jos
+noua caledonie
+noua zeelandă
+nicaragua
+niger
+nigeria
+coreea de nord
+macedonia de nord
+irlanda de nord
+norvegia
+oman
+pakistan
+palau
+panama
+papua noua guinee
+paraguay
+peru
+filipine
+polonia
+portugalia
+puerto rico
+qatar
+românia
+rusia
+rwanda
+saint kitts și nevis
+sfânta lucia
+samoa
+san marino
+arabia saudită
+scoția
+senegal
+serbia
+seychelles
+sierra leone
+singapore
+slovacia
+slovenia
+insulele solomon
+somalia
+africa de sud
+coreea de sud
+sudanul de sud
+spania
+sri lanka
+sudan
+surinam
+suedia
+elveția
+siria
+taiwan
+tadjikistan
+tanzania
+thailanda
+togo
+tonga
+trinidad și tobago
+tunisia
+turcia
+turkmenistan
+tuvalu
+uganda
+ucraina
+emiratele arabe unite
+regatul unit
+statele unite
+uruguay
+uzbekistan
+vanuatu
+vatican
+venezuela
+vietnam
+țara galilor
+sahara occidentală
+yemen
+zambia
+zimbabwe

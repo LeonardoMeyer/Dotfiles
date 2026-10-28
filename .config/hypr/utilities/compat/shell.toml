@@ -1,0 +1,4 @@
+# Hex: ajustes visuais dos plugins do Omarchy para combinar com o elifouts.
+# As cores base vêm do pywal; aqui só a transparência das bordas dos painéis.
+[popups]
+border-alpha = 0.55

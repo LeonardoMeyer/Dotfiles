@@ -1,0 +1,228 @@
+# tech, French. one word or phrase a line
+point d’accès
+adaptateur
+algorithme
+android
+antivirus
+appli
+archive
+saisie automatique
+avatar
+serveur dorsal
+sauvegarde
+bande passante
+code-barres
+banc d’essai
+binaire
+bit
+débit binaire
+blog
+bluetooth
+marque-page
+démarrage
+point d’arrêt
+haut débit
+navigateur
+tampon
+bogue
+octet
+câble
+cache
+caméra
+captcha
+chatbot
+case à cocher
+puce
+jeu de puces
+presse-papiers
+fréquence d’horloge
+nuage informatique
+code
+codec
+ligne de commande
+validation
+compilateur
+ordinateur
+conteneur
+cookie
+plantage
+curseur
+cybersécurité
+mode sombre
+centre de données
+base de données
+interblocage
+débogueur
+déploiement
+bureau
+répertoire
+domaine
+clé électronique
+téléchargement
+pilote
+liste déroulante
+livre numérique
+courriel
+émoji
+émulateur
+chiffrement
+point de terminaison
+ethernet
+extension
+favicon
+fibre optique
+système de fichiers
+pare-feu
+micrologiciel
+clé usb
+dossier
+police
+cadriciel
+interface frontale
+fonction
+gadget
+gigaoctet
+carte graphique
+pirate informatique
+disque dur
+matériel
+mot-dièse
+casque micro
+dissipateur
+page d’accueil
+point d’accès sans fil
+hyperlien
+icône
+boîte de réception
+entrée
+interface
+internet
+javascript
+manette
+noyau
+clavier
+raccourci clavier
+kilooctet
+ordinateur portable
+latence
+bibliothèque
+linux
+diffusion en direct
+chargement
+fichier journal
+connexion
+apprentissage automatique
+macro
+ordinateur central
+logiciel malveillant
+mégaoctet
+mémoire
+menu
+fusion
+métadonnées
+micropuce
+microphone
+modem
+moniteur
+carte mère
+souris
+multitâche
+nanoseconde
+réseau
+notification
+hors ligne
+mode hors ligne
+en ligne
+logiciel libre
+système d’exploitation
+surcadençage
+paquet
+pagination
+partition
+mot de passe
+correctif
+clé de stockage
+pixel
+liste de lecture
+module externe
+podcast
+fenêtre surgissante
+port
+alimentation
+imprimante
+processeur
+programme
+projecteur
+protocole
+python
+requête
+redémarrage
+actualisation
+dépôt
+résolution
+robotique
+routeur
+environnement d’exécution
+bac à sable
+scanner
+écran
+économiseur d’écran
+capture d’écran
+script
+défilement
+barre de défilement
+moteur de recherche
+égoportrait
+capteur
+serveur
+salle des serveurs
+raccourci
+barre latérale
+téléphone intelligent
+montre connectée
+instantané
+logiciel
+code source
+pourriel
+haut-parleur
+tableur
+jeune pousse
+stockage
+stylet
+abonnement
+syntaxe
+onglet
+tablette
+terminal
+éditeur de texte
+miniature
+gestionnaire de mosaïque
+chronologie
+jeton
+barre d’outils
+pavé tactile
+écran tactile
+boule de commande
+surface tactile
+cheval de troie
+tutoriel
+téléversement
+clé usb à brancher
+interface utilisateur
+nom d’utilisateur
+variable
+gestion de versions
+vidéo
+machine virtuelle
+virus informatique
+messagerie vocale
+fond d’écran
+webcam
+page web
+site web
+widget
+wifi
+fenêtre
+sans fil
+espace de travail
+fichier zip

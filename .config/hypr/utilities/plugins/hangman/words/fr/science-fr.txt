@@ -1,0 +1,189 @@
+# science, French. one word or phrase a line
+absorption
+accélération
+acide
+algorithme
+alliage
+amplitude
+anatomie
+anode
+anticorps
+antimatière
+astéroïde
+astronomie
+atmosphère
+atome
+bactérie
+bactériophage
+pile
+bécher
+big bang
+biologie
+biome
+trou noir
+botanique
+flottabilité
+calcul différentiel
+calorie
+capillaire
+carbone
+dioxyde de carbone
+catalyseur
+cathode
+cellule
+centrifugeuse
+chimie
+chlorophylle
+chromatographie
+chromosome
+circuit
+climat
+clonage
+coefficient
+combustion
+composé
+condensation
+conduction
+conducteur
+convection
+cortex
+cristal
+courant électrique
+décibel
+densité
+diffusion
+dinosaure
+écosystème
+électrode
+électron
+élément
+embryon
+énergie
+entropie
+enzyme
+épidémie
+équation
+équilibre
+érosion
+évaporation
+évolution
+expérience
+fermentation
+fission
+formule
+fossile
+friction
+champignon microscopique
+fusion
+galaxie
+rayon gamma
+gène
+génétique
+géologie
+géométrie
+glucose
+gravité
+habitat
+demi-vie
+hélium
+hérédité
+hormone
+hydraulique
+hydrogène
+hypothèse
+immunité
+inertie
+infrarouge
+insuline
+ion
+isotope
+énergie cinétique
+laboratoire
+laser
+lentille
+levier
+lithium
+aimant
+magnétisme
+masse
+matière
+méiose
+membrane
+métabolisme
+microbe
+microscope
+minéral
+mitose
+molécule
+quantité de mouvement
+mutation
+nanotechnologie
+sélection naturelle
+nébuleuse
+neurone
+neutron
+azote
+nucléotide
+noyau
+optique
+orbite
+organisme
+osmose
+oxygène
+ozone
+parasite
+particule
+pendule
+tableau périodique
+photon
+photosynthèse
+physique
+pipette
+plasma
+pollen
+polymère
+énergie potentielle
+prisme
+protéine
+proton
+poulie
+quantum
+radar
+rayonnement
+réaction
+réfraction
+ribosome
+robot
+sédiment
+semi-conducteur
+squelette
+sodium
+système solaire
+solution
+espèce
+spectre
+vitesse de la lumière
+électricité statique
+symbiose
+taxonomie
+plaque tectonique
+télescope
+température
+éprouvette
+théorie
+thermodynamique
+thermomètre
+tissu
+titrage
+ultraviolet
+vaccin
+vide
+vitesse
+vertébré
+virus
+viscosité
+tension
+onde
+longueur d’onde
+levure
+zoologie

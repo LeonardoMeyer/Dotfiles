@@ -6,6 +6,7 @@ import Quickshell.Networking
 import Quickshell.Services.Pipewire
 import Quickshell.Services.SystemTray
 import "../common"
+import qs.compat
 import Quickshell.Io
 
 Item {
@@ -46,7 +47,24 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         sourceComponent: ({ user: userC, workspaces: workspacesC, media: mediaC, date: dateC, constdate: constdateC, timer: timerC, clock: clockC,
             tray: trayC, updates: updatesC, network: networkC, audio: audioC, power: powerC,
-            "|": dividerC })[mod.name] ?? null
+            plugins: pluginsC, "|": dividerC })[mod.name] ?? null
+    }
+
+    // Hex: plugins do Omarchy (lista em ~/.config/hypr/utilities/compat/plugins.json)
+    Component {
+        id: pluginsC
+        Row {
+            spacing: 2
+            Repeater {
+                model: PluginHost.entries
+                delegate: PluginSlot {
+                    required property var modelData
+                    entry: modelData
+                    barSize: mod.pill.pillH
+                    anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+                }
+            }
+        }
     }
 
     component ChipText: Text {

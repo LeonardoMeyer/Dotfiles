@@ -1,0 +1,145 @@
+# space, English. one word or phrase a line
+alien
+andromeda
+aphelion
+apollo
+asteroid
+asteroid belt
+astrolabe
+astronaut
+astronomy
+astrophysics
+atmosphere
+aurora
+axis
+azimuth
+big dipper
+binary star
+black hole
+blazar
+brown dwarf
+callisto
+capsule
+celestial
+ceres
+charon
+chromosphere
+comet
+constellation
+corona
+cosmic ray
+cosmonaut
+cosmos
+countdown
+crater
+dark matter
+deep space
+docking
+dwarf planet
+eclipse
+equinox
+europa
+event horizon
+exoplanet
+exosphere
+galaxy
+ganymede
+gravity
+gravity assist
+halley
+heliosphere
+helmet
+horizon
+hubble
+interstellar
+io
+ion engine
+jupiter
+kuiper belt
+landing module
+launch
+launch pad
+light speed
+light year
+lunar
+lunar eclipse
+lunar module
+magnetar
+mare
+mars
+mercury
+meteor
+meteor shower
+meteorite
+milky way
+mission control
+moon
+moon landing
+moon rock
+moonlight
+nebula
+neptune
+neutron star
+north star
+nova
+observatory
+oort cloud
+orbit
+orbiter
+orion
+payload
+perihelion
+phobos
+planetarium
+pluto
+probe
+protostar
+pulsar
+quasar
+radar
+red dwarf
+red giant
+rocket
+rocket booster
+rover
+satellite
+saturn
+saturn rings
+shooting star
+shuttle
+sirius
+solar flare
+solar panel
+solar wind
+solstice
+space debris
+space probe
+space shuttle
+space station
+spacecraft
+spaceship
+spacesuit
+spacewalk
+spectrograph
+star cluster
+starlight
+starship
+stratosphere
+sun
+sunrise
+sunspot
+supernova
+telescope
+thrusters
+titan
+triton
+umbra
+universe
+uranus
+venus
+vortex
+white dwarf
+wormhole
+zenith
+zero gravity
+zodiac

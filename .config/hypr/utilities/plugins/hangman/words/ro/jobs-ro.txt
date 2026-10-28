@@ -1,0 +1,200 @@
+# jobs, Romanian. one word or phrase a line
+contabil
+acrobat
+actor
+agent
+ambasador
+analist
+antropolog
+arheolog
+arhitect
+arhivar
+artist
+astronaut
+astronom
+atlet
+licitator
+auditor
+autor
+babysitter
+brutar
+bancher
+frizer
+barista
+barman
+apicultor
+biolog
+fierar
+bodyguard
+contabil de registre
+botanist
+berar
+zidar
+broker
+constructor
+șofer de autobuz
+măcelar
+căpitan
+îngrijitor
+tâmplar
+cartograf
+casier
+furnizor de catering
+șofer
+bucătar-șef
+chimist
+coregraf
+om de serviciu
+clovn
+antrenor
+paza de coastă
+comentator
+compozitor
+consultant
+bucătar
+consilier
+curier
+critic
+crupier
+curator
+dansator
+analist de date
+decorator
+dentist
+designer
+detectiv
+dietetician
+diplomat
+director
+dispecer
+scafandru
+doctor
+șofer de camion
+ecolog
+economist
+redactor
+electrician
+inginer
+antreprenor
+agent imobiliar
+fermier
+muncitor agricol
+pompier
+pescar
+însoțitor de zbor
+florar
+pădurar
+designer de jocuri
+paznic de vânătoare
+grădinar
+geolog
+geamgiu
+designer grafic
+paznic
+ghid
+coafor
+hairstilist
+istoric
+menajeră
+vânător
+ilustrator
+inspector
+interpret
+investitor
+portar
+bijutier
+jurnalist
+judecător
+jongler
+proprietar
+avocat
+lector
+bibliotecar
+salvamar
+lingvist
+lăcătuș
+tăietor de lemne
+magician
+manager
+pietrar
+matematician
+primar
+mecanic
+negustor
+meteorolog
+moașă
+morar
+miner
+ministru
+model
+muzician
+bonă
+navigator
+asistentă medicală
+nutriționist
+oceanograf
+optician
+ortodont
+pictor
+paramedic
+pastor
+farmacist
+filozof
+fotograf
+fizician
+pianist
+pilot
+instalator
+poet
+polițist
+politician
+poștaș
+olar
+preot
+producător
+profesor universitar
+programator
+psiholog
+editor de carte
+radiolog
+ranger
+recepționer
+arbitru
+reporter
+cercetător
+acoperișar
+marinar
+vânzător
+om de știință
+sculptor
+secretar
+cioban
+cântăreț
+soldat
+somelier
+inginer de sunet
+cascador
+chirurg
+topograf
+croitor
+taximetrist
+profesor
+tehnician
+terapeut
+faianțar
+comerciant
+traducător
+meditator
+tapițer
+plasator
+veterinar
+medic veterinar
+ospătar
+țesător
+dezvoltator web
+sudor
+spălător de geamuri
+scriitor
+youtuber
+îngrijitor la zoo
+zoolog

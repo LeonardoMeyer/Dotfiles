@@ -1,0 +1,228 @@
+# tech, Romanian. one word or phrase a line
+punct de acces
+adaptor
+algoritm
+android
+antivirus
+aplicație
+arhivă
+completare automată
+avatar
+backend
+copie de rezervă
+lățime de bandă
+cod de bare
+test de performanță
+binar
+bit
+rată de biți
+blog
+bluetooth
+semn de carte
+pornire
+punct de oprire
+bandă largă
+browser
+memorie tampon
+eroare
+octet
+cablu
+memorie cache
+cameră
+captcha
+chatbot
+casetă de bifat
+cip
+chipset
+clipboard
+frecvență de ceas
+cloud
+cod
+codec
+linie de comandă
+commit
+compilator
+calculator
+container
+cookie
+blocare
+cursor
+securitate cibernetică
+mod întunecat
+centru de date
+bază de date
+interblocare
+depanator
+implementare
+desktop
+director
+domeniu
+dongle
+descărcare
+driver
+listă derulantă
+carte electronică
+email
+emoji
+emulator
+criptare
+punct final
+ethernet
+extensie
+favicon
+fibră optică
+sistem de fișiere
+firewall
+firmware
+unitate flash
+dosar
+font
+cadru de lucru
+frontend
+funcție
+gadget
+gigaoctet
+placă video
+hacker
+hard disk
+hardware
+hashtag
+căști cu microfon
+radiator
+pagină principală
+hotspot
+hiperlink
+pictogramă
+căsuță de mesaje
+intrare
+interfață
+internet
+javascript
+joystick
+nucleu
+tastatură
+scurtătură de tastatură
+kiloocteți
+laptop
+latență
+bibliotecă
+linux
+transmisiune live
+încărcare
+fișier jurnal
+autentificare
+învățare automată
+macro
+mainframe
+program malițios
+megaoctet
+memorie
+meniu
+îmbinare
+metadate
+microcip
+microfon
+modem
+monitor
+placă de bază
+mouse
+multitasking
+nanosecundă
+rețea
+notificare
+deconectat
+mod offline
+online
+sursă deschisă
+sistem de operare
+overclocking
+pachet
+paginare
+partiție
+parolă
+patch
+stick de memorie
+pixel
+listă de redare
+plugin
+podcast
+fereastră pop-up
+port
+sursă de alimentare
+imprimantă
+procesor
+program
+proiector
+protocol
+python
+interogare
+repornire
+reîmprospătare
+depozit
+rezoluție
+robotică
+router
+mediu de execuție
+mediu izolat
+scaner
+ecran
+economizor de ecran
+captură de ecran
+script
+derulare
+bară de derulare
+motor de căutare
+selfie
+senzor
+server
+cameră de servere
+scurtătură
+bară laterală
+telefon inteligent
+ceas inteligent
+instantaneu
+software
+cod sursă
+spam
+difuzor
+foaie de calcul
+companie nou-înființată
+stocare
+stilou digital
+abonament
+sintaxă
+filă
+tabletă
+terminal
+editor de text
+miniatură
+manager de ferestre în mozaic
+cronologie
+jeton
+bară de instrumente
+touchpad
+ecran tactil
+trackball
+trackpad
+cal troian
+tutorial
+încărcare pe server
+stick usb
+interfață cu utilizatorul
+nume de utilizator
+variabilă
+control al versiunilor
+video
+mașină virtuală
+virus informatic
+mesagerie vocală
+imagine de fundal
+cameră web
+pagină web
+site web
+widget
+wifi
+fereastră
+fără fir
+spațiu de lucru
+fișier zip

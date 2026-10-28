@@ -1,0 +1,211 @@
+# home, English. one word or phrase a line
+alarm
+alarm clock
+apron
+armchair
+armoire
+attic
+balcony
+basement
+basket
+bathmat
+bathroom
+bathtub
+bed
+bedroom
+bedside table
+bench
+bin
+blanket
+blender
+blinds
+bolster
+bookend
+bookshelf
+bottle
+bowl
+bread bin
+breadboard
+broom
+bucket
+bunk bed
+cabinet
+cake tin
+can opener
+candle
+carafe
+carpet
+ceiling
+cellar
+chair
+chandelier
+chimney
+chopping board
+clock
+closet
+clothes peg
+clothesline
+coaster
+coffee table
+colander
+comforter
+cookbook
+cooler
+corkscrew
+cot
+couch
+cradle
+crockery
+cup
+cupboard
+curtain
+cushion
+cutlery
+decanter
+desk
+dishwasher
+door
+door handle
+doorbell
+doormat
+doorstop
+drainpipe
+drawer
+dresser
+duster
+dustpan
+duvet
+egg cup
+extension cord
+fan
+faucet
+fence
+fireplace
+floor
+fork
+freezer
+fridge
+front door
+frying pan
+fuse box
+garage
+garden
+gate
+glass
+grater
+gutter
+hairdryer
+hallway
+hammock
+hanger
+hatch
+heater
+hinge
+hook
+hot water bottle
+iron
+ironing board
+jar
+jug
+junk drawer
+kettle
+key
+keyring
+kitchen
+knife
+ladder
+ladle
+lamp
+lampshade
+larder
+laundry
+lid
+light switch
+lightbulb
+living room
+lock
+loft
+mailbox
+mantelpiece
+mattress
+measuring cup
+microwave
+mirror
+mop
+mug
+napkin
+nightstand
+oven
+oven glove
+padlock
+pan
+pantry
+peeler
+pegboard
+pestle
+pillow
+pillowcase
+pitcher
+placemat
+plate
+plug
+plunger
+porch
+pot
+pot holder
+quilt
+radiator
+recliner
+rocking chair
+rolling pin
+rug
+salt shaker
+saucepan
+saucer
+scissors
+shelf
+shoe rack
+shower
+shutter
+sieve
+sink
+skylight
+smoke alarm
+soap dish
+sofa
+spatula
+sponge
+spoon
+staircase
+stairs
+stepladder
+stool
+stove
+table
+tablecloth
+tea towel
+teapot
+television
+thermostat
+thimble
+toaster
+toilet
+towel
+tray
+tumbler
+utility room
+vacuum
+vase
+wall
+wallpaper
+wardrobe
+washbasin
+washing machine
+wastebasket
+water heater
+welcome mat
+whisk
+window
+windowsill
+wine glass
+wok

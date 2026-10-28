@@ -1,0 +1,162 @@
+# sports, Romanian. one word or phrase a line
+coborâre în rapel
+aerobic
+aikido
+tir cu arcul
+atletism
+autocros
+badminton
+balet
+schi nautic desculț
+base jumping
+baseball
+baschet
+volei pe plajă
+biatlon
+bob
+bodyboarding
+bouldering
+bowling
+box
+breakdance
+bungee jumping
+canotaj
+capoeira
+speologie
+majorete
+șah
+cățărare
+crichet
+crochet
+cros
+crossfit
+curling
+ciclism
+ciclocros
+darts
+decatlon
+aruncarea discului
+sărituri în apă
+dodgeball
+coborâre
+curse de dragster
+echitație
+alergare montană
+scrimă
+hochei pe iarbă
+patinaj artistic
+pescuit
+pescuit la muscă
+fotbal
+footgolf
+formula unu
+frisbee
+zbor fără motor
+karting
+golf
+gimnastică
+aruncarea ciocanului
+handbal
+heptatlon
+săritura în înălțime
+drumeție
+hochei
+călărie
+garduri
+hurling
+escaladă pe gheață
+hochei pe gheață
+patinaj pe gheață
+aruncarea suliței
+jet ski
+jiu jitsu
+jogging
+judo
+karate
+carting
+caiac
+kendo
+kickbox
+kitesurfing
+kung fu
+lacrosse
+laser tag
+săritura în lungime
+sanie
+maraton
+arte marțiale
+minigolf
+motocros
+motorsport
+ciclism montan
+alpinism
+muay thai
+netball
+nordic walking
+orientare sportivă
+paddleboarding
+padel
+paintball
+parapantism
+parkour
+pentatlon
+pickleball
+pilates
+săritura cu prăjina
+polo
+powerlifting
+racquetball
+rafting
+raliu
+ștafetă
+gimnastică ritmică
+escaladă pe stâncă
+roller derby
+patinaj pe role
+oină
+canotaj academic
+rugby
+alergare
+navigație cu vele
+scufundări
+tir
+aruncarea greutății
+sărituri peste obstacole
+skateboarding
+patinaj
+skeleton
+sărituri cu schiurile
+schi
+parașutism
+slalom
+săniuș
+snooker
+snorkeling
+snowboard
+softball
+patinaj viteză
+spinning
+sprint
+squash
+sumo
+surfing
+înot
+înot sincron
+tenis de masă
+taekwondo
+tenis
+trambulină
+triatlon
+trasul frânghiei
+ultimate
+volei
+wakeboarding
+mers
+polo pe apă
+schi nautic
+haltere
+rafting pe ape repezi
+windsurfing
+lupte
+yoga
+zumba

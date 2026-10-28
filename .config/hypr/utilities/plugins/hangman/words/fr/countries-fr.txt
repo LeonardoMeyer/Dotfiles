@@ -1,0 +1,207 @@
+# countries, French. one word or phrase a line
+afghanistan
+albanie
+algérie
+andorre
+angola
+antigua
+antigua-et-barbuda
+argentine
+arménie
+australie
+autriche
+azerbaïdjan
+bahamas
+bahreïn
+bangladesh
+barbade
+biélorussie
+belgique
+belize
+bénin
+bhoutan
+bolivie
+bosnie-herzégovine
+botswana
+brésil
+brunei
+bulgarie
+burkina faso
+burundi
+cambodge
+cameroun
+canada
+cap-vert
+centrafrique
+tchad
+chili
+chine
+colombie
+comores
+congo
+costa rica
+croatie
+cuba
+chypre
+tchéquie
+danemark
+djibouti
+dominique
+république dominicaine
+timor oriental
+équateur
+égypte
+salvador
+angleterre
+guinée équatoriale
+érythrée
+estonie
+eswatini
+éthiopie
+îles féroé
+fidji
+finlande
+france
+guyane
+gabon
+gambie
+géorgie
+allemagne
+ghana
+gibraltar
+grèce
+groenland
+grenade
+guatemala
+guinée
+guyana
+haïti
+honduras
+hong kong
+hongrie
+islande
+inde
+indonésie
+iran
+irak
+irlande
+israël
+italie
+côte d’ivoire
+jamaïque
+japon
+jordanie
+kazakhstan
+kenya
+kiribati
+kosovo
+koweït
+kirghizistan
+laos
+lettonie
+liban
+lesotho
+libéria
+libye
+liechtenstein
+lituanie
+luxembourg
+macao
+madagascar
+malawi
+malaisie
+maldives
+mali
+malte
+îles marshall
+mauritanie
+maurice
+mexique
+micronésie
+moldavie
+monaco
+mongolie
+monténégro
+maroc
+mozambique
+birmanie
+namibie
+nauru
+népal
+pays-bas
+nouvelle-calédonie
+nouvelle-zélande
+nicaragua
+niger
+nigeria
+corée du nord
+macédoine du nord
+irlande du nord
+norvège
+oman
+pakistan
+palaos
+panama
+papouasie-nouvelle-guinée
+paraguay
+pérou
+philippines
+pologne
+portugal
+porto rico
+qatar
+roumanie
+russie
+rwanda
+saint-christophe-et-niévès
+sainte-lucie
+samoa
+saint-marin
+arabie saoudite
+écosse
+sénégal
+serbie
+seychelles
+sierra leone
+singapour
+slovaquie
+slovénie
+îles salomon
+somalie
+afrique du sud
+corée du sud
+soudan du sud
+espagne
+sri lanka
+soudan
+suriname
+suède
+suisse
+syrie
+taïwan
+tadjikistan
+tanzanie
+thaïlande
+togo
+tonga
+trinité-et-tobago
+tunisie
+turquie
+turkménistan
+tuvalu
+ouganda
+ukraine
+émirats arabes unis
+royaume-uni
+états-unis
+uruguay
+ouzbékistan
+vanuatu
+cité du vatican
+venezuela
+viêt nam
+pays de galles
+sahara occidental
+yémen
+zambie
+zimbabwe

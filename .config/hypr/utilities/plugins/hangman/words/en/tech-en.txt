@@ -1,0 +1,228 @@
+# tech, English. one word or phrase a line
+access point
+adapter
+algorithm
+android
+antivirus
+app
+archive
+autocomplete
+avatar
+backend
+backup
+bandwidth
+barcode
+benchmark
+binary
+bit
+bitrate
+blog
+bluetooth
+bookmark
+boot
+breakpoint
+broadband
+browser
+buffer
+bug
+byte
+cable
+cache
+camera
+captcha
+chatbot
+checkbox
+chip
+chipset
+clipboard
+clock speed
+cloud
+code
+codec
+command line
+commit
+compiler
+computer
+container
+cookie
+crash
+cursor
+cybersecurity
+dark mode
+data center
+database
+deadlock
+debugger
+deploy
+desktop
+directory
+domain
+dongle
+download
+driver
+dropdown
+ebook
+email
+emoji
+emulator
+encryption
+endpoint
+ethernet
+extension
+favicon
+fiber optic
+file system
+firewall
+firmware
+flash drive
+folder
+font
+framework
+frontend
+function
+gadget
+gigabyte
+graphics card
+hacker
+hard drive
+hardware
+hashtag
+headset
+heatsink
+homepage
+hotspot
+hyperlink
+icon
+inbox
+input
+interface
+internet
+javascript
+joystick
+kernel
+keyboard
+keyboard shortcut
+kilobyte
+laptop
+latency
+library
+linux
+livestream
+loading
+log file
+login
+machine learning
+macro
+mainframe
+malware
+megabyte
+memory
+menu
+merge
+metadata
+microchip
+microphone
+modem
+monitor
+motherboard
+mouse
+multitasking
+nanosecond
+network
+notification
+offline
+offline mode
+online
+open source
+operating system
+overclock
+packet
+pagination
+partition
+password
+patch
+pendrive
+pixel
+playlist
+plugin
+podcast
+popup
+port
+power supply
+printer
+processor
+program
+projector
+protocol
+python
+query
+reboot
+refresh
+repository
+resolution
+robotics
+router
+runtime
+sandbox
+scanner
+screen
+screensaver
+screenshot
+script
+scroll
+scrollbar
+search engine
+selfie
+sensor
+server
+server room
+shortcut
+sidebar
+smartphone
+smartwatch
+snapshot
+software
+source code
+spam
+speaker
+spreadsheet
+startup
+storage
+stylus
+subscription
+syntax
+tab
+tablet
+terminal
+text editor
+thumbnail
+tiling window manager
+timeline
+token
+toolbar
+touchpad
+touchscreen
+trackball
+trackpad
+trojan
+tutorial
+upload
+usb stick
+user interface
+username
+variable
+version control
+video
+virtual machine
+virus
+voicemail
+wallpaper
+webcam
+webpage
+website
+widget
+wifi
+window
+wireless
+workspace
+zip file

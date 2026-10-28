@@ -1,0 +1,173 @@
+# transport, French. one word or phrase a line
+avion
+aéroport
+dirigeable
+ambulance
+ancre
+pilote automatique
+essieu
+péniche
+cuirassé
+bicyclette
+biplan
+ballon dirigeable
+bateau
+bobsleigh
+frein
+bulldozer
+pare-chocs
+bus
+arrêt de bus
+taxi
+téléphérique
+camping-car
+bateau de canal
+canoë
+voiture
+caravane
+cargaison
+calèche
+catamaran
+télésiège
+hélico
+autocar
+gare routière
+cockpit
+contrôleur
+décapotable
+grue
+passage piéton
+carrefour
+croisière
+paquebot
+cycliste
+tableau de bord
+camionnette de livraison
+gazole
+pelleteuse
+canot
+quai
+bus à impériale
+permis de conduire
+tombereau
+voiture électrique
+moteur
+escalator
+pot d’échappement
+train express
+ferry
+bac
+camion de pompiers
+autopompe
+chariot élévateur
+fret
+train de marchandises
+funiculaire
+garage
+boîte de vitesses
+planeur
+kart
+voiturette de golf
+gondole
+télécabine
+guidon
+bicorps
+phare
+hélicoptère
+route nationale
+klaxon
+montgolfière
+aéroglisseur
+hydroptère
+brise-glace
+jeep
+avion à réaction
+scooter des mers
+croisement
+kayak
+canot de sauvetage
+limousine
+locomotive
+poids lourd
+métro
+minibus
+monospace
+monorail
+cyclomoteur
+moto
+bateau à moteur
+autoroute
+vélo tout terrain
+bus de nuit
+pétrolier
+pont routier
+bateau à aubes
+parachute
+passager
+pédale
+pédalo
+essence
+pick-up
+pilote
+quai de gare
+voiture de police
+radeau
+rail
+chemin de fer
+pousse-pousse
+route
+fusée
+barque
+piste
+voilier
+planeur de compétition
+bus scolaire
+scooter
+hydravion
+ceinture de sécurité
+berline
+navire
+side-car
+planche à roulettes
+motoneige
+traîneau
+train de nuit
+traîneau tiré
+scooter des neiges
+vaisseau spatial
+vedette
+hors-bord
+gare
+train à vapeur
+bateau à vapeur
+volant
+tramway
+sous-marin
+métro souterrain
+tandem
+camion-citerne
+route à péage
+péage
+dépanneuse
+tracteur
+circulation
+feu de circulation
+remorque
+train
+tram
+tricycle
+chariot
+camion
+remorqueur
+tunnel
+pneu
+métropolitain
+monocycle
+fourgonnette
+vélodrome
+wagon
+navire de guerre
+roue
+pare-brise
+yacht
+zeppelin

@@ -1,0 +1,162 @@
+# sports, English. one word or phrase a line
+abseiling
+aerobics
+aikido
+archery
+athletics
+autocross
+badminton
+ballet
+barefoot skiing
+base jumping
+baseball
+basketball
+beach volleyball
+biathlon
+bobsleigh
+bodyboarding
+bouldering
+bowling
+boxing
+breakdancing
+bungee jumping
+canoeing
+capoeira
+caving
+cheerleading
+chess
+climbing
+cricket
+croquet
+cross country
+crossfit
+curling
+cycling
+cyclocross
+darts
+decathlon
+discus
+diving
+dodgeball
+downhill
+drag racing
+equestrian
+fell running
+fencing
+field hockey
+figure skating
+fishing
+fly fishing
+football
+footgolf
+formula one
+frisbee
+gliding
+go karting
+golf
+gymnastics
+hammer throw
+handball
+heptathlon
+high jump
+hiking
+hockey
+horse riding
+hurdles
+hurling
+ice climbing
+ice hockey
+ice skating
+javelin
+jet skiing
+jiu jitsu
+jogging
+judo
+karate
+karting
+kayaking
+kendo
+kickboxing
+kitesurfing
+kung fu
+lacrosse
+laser tag
+long jump
+luge
+marathon
+martial arts
+mini golf
+motocross
+motorsport
+mountain biking
+mountaineering
+muay thai
+netball
+nordic walking
+orienteering
+paddleboarding
+padel
+paintball
+paragliding
+parkour
+pentathlon
+pickleball
+pilates
+pole vault
+polo
+powerlifting
+racquetball
+rafting
+rally
+relay
+rhythmic gymnastics
+rock climbing
+roller derby
+roller skating
+rounders
+rowing
+rugby
+running
+sailing
+scuba diving
+shooting
+shot put
+show jumping
+skateboarding
+skating
+skeleton
+ski jumping
+skiing
+skydiving
+slalom
+sledding
+snooker
+snorkeling
+snowboarding
+softball
+speed skating
+spinning
+sprint
+squash
+sumo
+surfing
+swimming
+synchronized swimming
+table tennis
+taekwondo
+tennis
+trampoline
+triathlon
+tug of war
+ultimate
+volleyball
+wakeboarding
+walking
+water polo
+water skiing
+weightlifting
+white water rafting
+windsurfing
+wrestling
+yoga
+zumba
