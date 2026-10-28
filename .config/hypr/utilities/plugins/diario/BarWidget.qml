@@ -176,6 +176,22 @@ BarWidget {
                 }
             }
 
+            // palavra e pergunta do dia
+            Value {
+                visible: !!root.latest.palavra
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: root.latest.palavra ? "󰗊  " + root.latest.palavra.palavra + ": " + root.latest.palavra.sentido : ""
+            }
+            Value {
+                visible: !!root.latest.pergunta
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                font.italic: true
+                color: root.accent
+                text: root.latest.pergunta ? "“" + root.latest.pergunta + "”" : ""
+            }
+
             // cotação do bitcoin e próximo evento de tecnologia em SP
             Value {
                 visible: !!root.latest.btc

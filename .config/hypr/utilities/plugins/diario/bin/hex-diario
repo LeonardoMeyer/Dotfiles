@@ -370,6 +370,48 @@ def events(url, days=14, limit=8):
     return sorted(out, key=lambda e: e["iso"])[:limit]
 
 
+# ------------------------------------------------------------ para hoje
+
+def dados():
+    try:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "dados.json")) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def pick(lista, day, salt=0):
+    return lista[(day.toordinal() * 7 + salt) % len(lista)] if lista else None
+
+
+def em_alta_github():
+    """Repositórios de segurança criados nos últimos 30 dias, mais estrelados: inspiração do que está em alta."""
+    desde = (dt.date.today() - dt.timedelta(days=30)).isoformat()
+    vistos, out = set(), []
+    for topico in ("cybersecurity", "security", "blue-team", "threat-detection"):
+        raw = run(["gh", "api", "-X", "GET", "search/repositories", "-f",
+                   "q=topic:%s created:>%s stars:>20" % (topico, desde), "-f", "sort=stars", "-f", "per_page=5"], timeout=20)
+        try:
+            items = json.loads(raw).get("items", [])
+        except ValueError:
+            continue
+        for r in items:
+            if r["full_name"] in vistos:
+                continue
+            vistos.add(r["full_name"])
+            out.append({"nome": r["full_name"], "url": r["html_url"], "estrelas": r["stargazers_count"],
+                        "descricao": (r.get("description") or "")[:160], "linguagem": r.get("language") or ""})
+    return sorted(out, key=lambda r: -r["estrelas"])[:4]
+
+
+def para_hoje(cfg, day):
+    d = dados()
+    ideias = cfg.get("projetos") or []  # suas próprias ideias, em ~/.config/hex-diario.json
+    return {"palavra": pick(d.get("palavras"), day), "termo": pick(d.get("termos"), day, 3),
+            "pergunta": pick(d.get("perguntas"), day, 5), "ideia": pick(ideias, day, 2),
+            "em_alta": em_alta_github()}
+
+
 # ------------------------------------------------------------ clima
 
 def weather(cfg, day):
@@ -492,6 +534,20 @@ def render(c):
     ) or "<li class=dim>Nenhum evento de tecnologia encontrado para as próximas 2 semanas.</li>"
     nw = c.get("news") or {}
 
+    h = c.get("hoje") or {}
+    pal, ter, perg, ideia = h.get("palavra"), h.get("termo"), h.get("pergunta"), h.get("ideia")
+    palavra_html = ("<div class=word><span class=big>%s</span> <i>%s</i><p class=dim>“%s”</p></div>" % (
+        e(pal["palavra"]), e(pal["sentido"]), e(pal["exemplo"]))) if pal else ""
+    termo_html = ("<div class=word><span class=big>%s</span> <i>%s</i></div>" % (e(ter["termo"]), e(ter["sentido"]))) if ter else ""
+    pergunta_html = ("<blockquote>%s</blockquote>" % e(perg)) if perg else ""
+    alta = h.get("em_alta") or []
+    alta_html = "".join("<li><a href='%s'>%s</a> <span class=meta>★ %d%s</span><p>%s</p></li>" % (
+        e(r["url"]), e(r["nome"]), r["estrelas"], (" · " + e(r["linguagem"])) if r["linguagem"] else "", e(r["descricao"]))
+        for r in alta) or "<li class=dim>Sem dados do GitHub hoje (o gh está logado?).</li>"
+    if ideia:
+        txt = ideia if isinstance(ideia, str) else ideia.get("titulo", "")
+        alta_html = "<li><b>Sua ideia do dia:</b> %s</li>" % e(txt) + alta_html
+
     lead = st[0]
     rest = "".join("<article><span class=kicker>%s</span><h3>%s</h3><p>%s</p></article>" % (e(s["kicker"]), e(s["title"]), e(s["body"])) for s in st[1:4])
     ear = w.get("hoje")
@@ -532,6 +588,9 @@ a:hover{color:var(--accent)}
 .meta{font:11px "CodeNewRoman Nerd Font Propo",monospace;color:var(--dim);margin-top:3px}
 .btc{margin-top:16px;padding-top:12px;border-top:1px solid color-mix(in srgb,var(--fg) 15%%,transparent)}
 .price{font-size:30px;font-weight:bold;margin:4px 0}.up{color:#6fcf8e}.down{color:#e07a7a}
+.word .big{font-size:24px;font-weight:bold;color:var(--accent)}.word i{margin-left:6px}
+blockquote{font-size:22px;font-style:italic;margin:10px 0;padding-left:14px;border-left:3px solid var(--accent)}
+.alta li{margin:8px 0}.alta p{margin:2px 0 0;font-size:14px;color:color-mix(in srgb,var(--fg) 80%%,transparent)}
 .events li{margin:8px 0}.events a{font-weight:bold}
 kbd{font:12px "CodeNewRoman Nerd Font Propo",monospace;border:1px solid var(--dim);border-radius:4px;padding:1px 6px}
 @media(max-width:760px){.sheet{margin:0;border-radius:0;padding:22px}.lead,.cols{grid-template-columns:1fr}}
@@ -553,6 +612,11 @@ kbd{font:12px "CodeNewRoman Nerd Font Propo",monospace;border:1px solid var(--di
 <section><h4>Tecnologia</h4>%(n_tec)s</section>
 <section><h4>Cyber</h4>%(n_cyber)s</section>
 </div>
+<div class=cols>
+<section><h4>Palavra do dia</h4>%(palavra)s<h4>Termo em inglês</h4>%(termo)s</section>
+<section style="grid-column:span 2"><h4>Pergunta para hoje</h4>%(pergunta)s</section>
+</div>
+<section><h4>Em alta em cyber no GitHub · inspiração para projetos</h4><ul class=alta>%(alta)s</ul></section>
 <section><h4>Eventos de tecnologia em São Paulo</h4><ul class=events>%(events)s</ul></section>
 <footer>Atalho do dia: <kbd>%(tip_k)s</kbd> %(tip_d)s · gerado %(gerado)s</footer>
 </div></body></html>""" % {
@@ -566,6 +630,7 @@ kbd{font:12px "CodeNewRoman Nerd Font Propo",monospace;border:1px solid var(--di
         "pend": ("%d atualizações esperando hoje." % pend) if pend else "Sistema em dia.",
         "loose": loose, "tip_k": e(tip[0]), "tip_d": e(tip[1]),
         "btc": btc_html, "events": events_html,
+        "palavra": palavra_html, "termo": termo_html, "pergunta": pergunta_html, "alta": alta_html,
         "n_btc": news(nw.get("bitcoin")), "n_tec": news(nw.get("tecnologia")), "n_cyber": news(nw.get("cyber")),
         "gerado": dt.datetime.now().strftime("%d/%m %H:%M"),
     }
@@ -588,7 +653,7 @@ def build(day):
         "pacman": pacman_day(day), "scan": sistema_scan(), "dirty": dirty_repos(repos),
         "weather": weather(cfg, day), "theme": theme(),
         "news": {k: news_section(v, start - dt.timedelta(hours=12)) for k, v in cfg["feeds"].items()},
-        "btc": bitcoin_price(), "events": events(cfg["eventos"]),
+        "btc": bitcoin_price(), "events": events(cfg["eventos"]), "hoje": para_hoje(cfg, day + dt.timedelta(days=1)),
         "edition": len(glob.glob(os.path.join(OUT, "????-??-??.html"))) + (0 if os.path.exists(os.path.join(OUT, day.isoformat() + ".html")) else 1),
     }
     c["stories"] = stories(c)
@@ -601,6 +666,8 @@ def build(day):
     summary = {"date": day.isoformat(), "path": path, "edition": c["edition"], "stories": c["stories"][:3],
                "today": w.get("hoje"), "city": c["city"], "built": int(dt.datetime.now().timestamp()),
                "btc": c["btc"], "events": c["events"][:3],
+               "palavra": c["hoje"]["palavra"], "pergunta": c["hoje"]["pergunta"],
+               "em_alta": c["hoje"]["em_alta"][:2],
                "headlines": {k: v[:2] for k, v in c["news"].items()}}
     with open(os.path.join(CACHE, "latest.json.tmp"), "w") as f:
         json.dump(summary, f)
