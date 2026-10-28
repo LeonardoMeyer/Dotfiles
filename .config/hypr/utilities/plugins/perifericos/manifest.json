@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "hex.perifericos",
+  "name": "Periféricos",
+  "version": "0.1.0",
+  "author": "Hex",
+  "license": "MIT",
+  "description": "Teclado Logitech PRO (cor pelo OpenRGB) e mouse G403 HERO (DPI, taxa, botões e luz pelo libratbag).",
+  "kinds": ["bar-widget"],
+  "entryPoints": { "barWidget": "BarWidget.qml" }
+}

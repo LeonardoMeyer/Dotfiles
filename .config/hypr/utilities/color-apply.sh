@@ -61,6 +61,9 @@ CAVA
 # USR1 reloads everything, USR2 colors only (i think)
 pkill -USR1 cava 2>/dev/null || true
 
+# Hex: teclado e mouse seguem a cor do wallpaper (se ligado no widget Periféricos)
+"$HOME/.config/hypr/utilities/plugins/perifericos/bin/hex-perifericos" theme >/dev/null 2>&1 &
+
 # Hex: ponte para o Matugen (GTK, rofi, Spotify e Vesktop seguem o wallpaper)
 if command -v matugen >/dev/null && [ -f "$HOME/.config/matugen/bridge.toml" ] && [ -f "$wallpaper" ]; then
     matugen image "$wallpaper" -c "$HOME/.config/matugen/bridge.toml" >/dev/null 2>&1 || true

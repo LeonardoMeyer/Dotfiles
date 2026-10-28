@@ -1,0 +1,250 @@
+#!/usr/bin/env python3
+"""hex-perifericos: teclado Logitech PRO (OpenRGB) e mouse G403 (libratbag).
+
+  hex-perifericos status                    estado do mouse e do teclado (JSON)
+  hex-perifericos kb MODO [COR]             teclado: static|breathing|cycle|off
+  hex-perifericos follow kb|mouse on|off    seguir a cor do wallpaper
+  hex-perifericos theme                     reaplica a cor do wallpaper (se ligado)
+  hex-perifericos restore                   reaplica o teclado salvo (início da sessão)
+  hex-perifericos dpi SLOT VALOR            mouse: DPI de um nível (100-25600)
+  hex-perifericos dpi-active SLOT           mouse: nível de DPI ativo
+  hex-perifericos rate HZ                   mouse: 125|250|500|1000
+  hex-perifericos button N ACAO             mouse: botões 2 a 5 (ver ACOES)
+  hex-perifericos led N MODO [COR]          mouse: on|breathing|cycle|off
+
+O mouse grava na memória dele (vale em qualquer PC). O teclado é aplicado
+pelo OpenRGB e reaplicado a cada sessão a partir de ~/.config/hex-perifericos.json.
+"""
+
+import fcntl
+import json
+import os
+import re
+import subprocess
+import sys
+
+HOME = os.path.expanduser("~")
+CONFIG = os.path.join(HOME, ".config", "hex-perifericos.json")
+LOCK = os.path.join(HOME, ".cache", "hex-perifericos.lock")
+KEYBOARD = "PRO Gaming Keyboard"
+MOUSE = "G403"
+
+KB_MODES = {"static": "Static", "breathing": "Breathing", "cycle": "Cycle", "off": "Off"}
+LED_MODES = {"on", "breathing", "cycle", "off"}
+RATES = {125, 250, 500, 1000}
+
+# ação -> argumentos do ratbagctl (botões 0 e 1, os cliques principais, ficam de fora)
+ACOES = {
+    "padrao": None,  # botão N volta a ser ele mesmo (button N+1)
+    "meio": ["button", "3"],
+    "voltar": ["button", "4"],
+    "avancar": ["button", "5"],
+    "copiar": ["macro", "+KEY_LEFTCTRL", "KEY_C", "-KEY_LEFTCTRL"],
+    "colar": ["macro", "+KEY_LEFTCTRL", "KEY_V", "-KEY_LEFTCTRL"],
+    "desfazer": ["macro", "+KEY_LEFTCTRL", "KEY_Z", "-KEY_LEFTCTRL"],
+    "dpi": ["special", "resolution-cycle-up"],
+    "desativado": ["disabled"],
+}
+EDITAVEIS = {2, 3, 4, 5}
+
+
+def die(msg):
+    print(json.dumps({"error": msg}))
+    sys.exit(1)
+
+
+def load_config():
+    try:
+        with open(CONFIG) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {"kb": {"mode": "static", "color": "ffffff"}, "follow": {"kb": False, "mouse": False}}
+
+
+def save_config(cfg):
+    tmp = CONFIG + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(cfg, f, indent=2)
+    os.replace(tmp, CONFIG)
+
+
+def color_ok(c):
+    c = (c or "").lstrip("#").lower()
+    if not re.fullmatch(r"[0-9a-f]{6}", c):
+        die("cor inválida: use RRGGBB")
+    return c
+
+
+def run(cmd, timeout=20):
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError:
+        die(cmd[0] + " não está instalado")
+    except subprocess.TimeoutExpired:
+        die(cmd[0] + " demorou demais")
+    if p.returncode != 0:
+        die((p.stderr or p.stdout).strip().splitlines()[-1] if (p.stderr or p.stdout).strip() else cmd[0] + " falhou")
+    return p.stdout
+
+
+def locked(fn):
+    os.makedirs(os.path.dirname(LOCK), exist_ok=True)
+    with open(LOCK, "w") as lk:
+        fcntl.flock(lk, fcntl.LOCK_EX)  # um comando por vez: OpenRGB e ratbag não gostam de concorrência
+        return fn()
+
+
+def theme_color():
+    try:
+        with open(os.path.join(HOME, ".cache", "wal", "colors.json")) as f:
+            # mesma cor de destaque que a barra do elifouts usa
+            return json.load(f)["colors"]["color9"].lstrip("#").lower()
+    except (OSError, ValueError, KeyError):
+        return None
+
+
+def mouse_info():
+    try:
+        out = subprocess.run(["ratbagctl", MOUSE, "info"], capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if not out.strip():
+        return None
+    info = {"rate": None, "resolutions": [], "buttons": [], "leds": []}
+    for line in out.splitlines():
+        s = line.strip()
+        m = re.match(r"Report Rate: (\d+)Hz", s)
+        if m:
+            info["rate"] = int(m.group(1))
+        m = re.match(r"(\d+): (\d+)dpi(.*)", s)
+        if m:
+            info["resolutions"].append({
+                "slot": int(m.group(1)), "dpi": int(m.group(2)),
+                "active": "(active)" in m.group(3), "disabled": "(disabled)" in m.group(3),
+            })
+        m = re.match(r"Button: (\d+) is mapped to (.*)", s)
+        if m:
+            n, raw = int(m.group(1)), m.group(2)
+            info["buttons"].append({"n": n, "raw": raw, "action": action_of(n, raw), "editable": n in EDITAVEIS})
+        m = re.match(r"LED: (\d+), depth: \w+, mode: (\w+)(?:, color: ([0-9a-fA-F]{6}))?", s)
+        if m:
+            info["leds"].append({"n": int(m.group(1)), "mode": m.group(2), "color": (m.group(3) or "").lower()})
+    return info
+
+
+def action_of(n, raw):
+    if raw.strip() == "none":
+        return "desativado"
+    m = re.match(r"'button (\d+)'", raw)
+    if m:
+        b = int(m.group(1))
+        if b == n + 1:
+            return "padrao"
+        return {3: "meio", 4: "voltar", 5: "avancar"}.get(b, "outro")
+    if "resolution-cycle-up" in raw:
+        return "dpi"
+    if raw.startswith("macro") and "LEFTCTRL" in raw:
+        for k, a in (("KEY_C", "copiar"), ("KEY_V", "colar"), ("KEY_Z", "desfazer")):
+            if k in raw:
+                return a
+    return "outro"
+
+
+def kb_apply(mode, color):
+    if mode not in KB_MODES:
+        die("modo inválido")
+    cmd = ["openrgb", "-d", KEYBOARD, "-m", KB_MODES[mode]]
+    if mode in ("static", "breathing"):
+        cmd += ["-c", color]
+    locked(lambda: run(cmd, timeout=30))
+
+
+def main(a):
+    cmd = a[0] if a else ""
+    cfg = load_config()
+
+    if cmd == "status":
+        print(json.dumps({"mouse": mouse_info(), "kb": cfg["kb"], "follow": cfg["follow"], "theme": theme_color()}))
+
+    elif cmd == "kb" and len(a) >= 2:
+        mode = a[1]
+        color = color_ok(a[2]) if len(a) > 2 else cfg["kb"].get("color", "ffffff")
+        kb_apply(mode, color)
+        cfg["kb"] = {"mode": mode, "color": color}
+        save_config(cfg)
+        print(json.dumps({"ok": True}))
+
+    elif cmd == "follow" and len(a) == 3 and a[1] in ("kb", "mouse") and a[2] in ("on", "off"):
+        cfg["follow"][a[1]] = a[2] == "on"
+        save_config(cfg)
+        if a[2] == "on":
+            main(["theme"])
+        else:
+            print(json.dumps({"ok": True}))
+
+    elif cmd == "theme":
+        c = theme_color()
+        if c and cfg["follow"].get("kb"):
+            mode = cfg["kb"]["mode"] if cfg["kb"]["mode"] in ("static", "breathing") else "static"
+            kb_apply(mode, c)
+            cfg["kb"] = {"mode": mode, "color": c}
+            save_config(cfg)
+        if c and cfg["follow"].get("mouse"):
+            info = mouse_info() or {"leds": []}
+            for led in info["leds"]:
+                locked(lambda n=led["n"]: run(["ratbagctl", MOUSE, "led", str(n), "set", "mode", "on"]))
+                locked(lambda n=led["n"]: run(["ratbagctl", MOUSE, "led", str(n), "set", "color", c]))
+        print(json.dumps({"ok": True}))
+
+    elif cmd == "restore":
+        if not os.path.exists(CONFIG):  # nunca configurado pelo widget: não mexe no teclado
+            print(json.dumps({"ok": True}))
+            return
+        kb = cfg["kb"]
+        kb_apply(kb.get("mode", "static"), kb.get("color", "ffffff"))
+        print(json.dumps({"ok": True}))
+
+    elif cmd == "dpi" and len(a) == 3:
+        slot, dpi = int(a[1]), int(a[2])
+        if not 100 <= dpi <= 25600:
+            die("DPI fora do limite (100 a 25600)")
+        locked(lambda: run(["ratbagctl", MOUSE, "resolution", str(slot), "dpi", "set", str(dpi)]))
+        print(json.dumps({"ok": True}))
+
+    elif cmd == "dpi-active" and len(a) == 2:
+        locked(lambda: run(["ratbagctl", MOUSE, "resolution", "active", "set", str(int(a[1]))]))
+        print(json.dumps({"ok": True}))
+
+    elif cmd == "rate" and len(a) == 2:
+        if int(a[1]) not in RATES:
+            die("taxa inválida")
+        locked(lambda: run(["ratbagctl", MOUSE, "rate", "set", str(int(a[1]))]))
+        print(json.dumps({"ok": True}))
+
+    elif cmd == "button" and len(a) == 3:
+        n, acao = int(a[1]), a[2]
+        if n not in EDITAVEIS:
+            die("os cliques esquerdo e direito não podem ser trocados por aqui")
+        if acao not in ACOES:
+            die("ação desconhecida")
+        alvo = ACOES[acao] if ACOES[acao] is not None else ["button", str(n + 1)]
+        locked(lambda: run(["ratbagctl", MOUSE, "button", str(n), "action", "set"] + alvo))
+        print(json.dumps({"ok": True}))
+
+    elif cmd == "led" and len(a) >= 3:
+        n, mode = int(a[1]), a[2]
+        if mode not in LED_MODES:
+            die("modo de LED inválido")
+        locked(lambda: run(["ratbagctl", MOUSE, "led", str(n), "set", "mode", mode]))
+        if len(a) > 3 and mode in ("on", "breathing"):
+            c = color_ok(a[3])
+            locked(lambda: run(["ratbagctl", MOUSE, "led", str(n), "set", "color", c]))
+        print(json.dumps({"ok": True}))
+
+    else:
+        print(__doc__, file=sys.stderr)
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

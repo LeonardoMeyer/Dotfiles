@@ -27,6 +27,8 @@ hl.on("hyprland.start", function()
     if boot.enabled ~= false then
         hl.exec_cmd("BOOT_BLACK_MS=" .. (boot.black_ms or defaults.boot.black_ms) .. " qs -p ~/.config/hypr/utilities/boot --daemonize")
     end
+    -- Hex: reaplica a cor do teclado salva no widget Periféricos
+    hl.exec_cmd("~/.config/hypr/utilities/plugins/perifericos/bin/hex-perifericos restore")
     hl.exec_cmd("hyprctl setcursor " .. (cursor.theme or defaults.cursor.theme) .. " " .. (cursor.size or defaults.cursor.size))
     -- portal doesn't survive a relog, restart it
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"

@@ -7,6 +7,13 @@
     "settings": {}
   },
   {
+    "id": "hex.perifericos",
+    "dir": "plugins/perifericos",
+    "barWidget": "BarWidget.qml",
+    "service": "",
+    "settings": {}
+  },
+  {
     "id": "io.github.qempexe.hangman",
     "dir": "plugins/hangman",
     "barWidget": "qml/BarWidget.qml",
