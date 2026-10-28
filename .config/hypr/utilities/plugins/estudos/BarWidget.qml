@@ -6,8 +6,7 @@ import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
 
-// Hex: plugin "Estudos" — GitHub (contribuições e commits recentes) e,
-// na próxima rodada, as entregas e aulas da FIAP.
+// Hex: plugin "Estudos" — GitHub (contribuições e commits recentes).
 BarWidget {
     id: root
     moduleName: "hex.estudos"
@@ -193,16 +192,6 @@ BarWidget {
                 }
             }
 
-            Rectangle { Layout.fillWidth: true; height: 1; color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.1) }
-
-            // ------------------------------------------------ FIAP
-            Caption { text: "FIAP" }
-            Value {
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                color: root.dim
-                text: "Entregas e aulas entram na próxima rodada."
-            }
         }
     }
 }

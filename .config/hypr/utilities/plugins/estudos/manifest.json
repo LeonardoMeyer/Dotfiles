@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "author": "Hex",
   "license": "MIT",
-  "description": "Contribuições e commits recentes do GitHub; entregas e aulas da FIAP.",
+  "description": "Contribuições e commits recentes do GitHub.",
   "kinds": ["bar-widget"],
   "entryPoints": { "barWidget": "BarWidget.qml" }
 }

@@ -55,7 +55,7 @@ Item {
         onLoaded: {
             var it = item
             if ("bar" in it) it.bar = api
-            if ("settings" in it) it.settings = slot.entry.settings || {}
+            if ("settings" in it) it.settings = PluginHost.settingsFor(slot.entry)
             if ("shell" in it) it.shell = PluginHost.shellApi
             if ("manifest" in it) it.manifest = PluginHost.manifestFor(slot.entry)
             if ("service" in it) it.service = PluginHost.services[slot.entry.id] || null

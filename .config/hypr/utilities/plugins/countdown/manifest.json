@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.liambateman.countdown",
+  "name": "Countdown",
+  "version": "1.0.1",
+  "author": "Liam Bateman",
+  "license": "MIT",
+  "description": "Count down to holidays, deadlines, launches, birthdays, and other important dates.",
+  "kinds": [
+    "service",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Countdown",
+    "description": "A local countdown with recurring dates and milestone notifications.",
+    "category": "Productivity",
+    "aliases": [
+      "countdown",
+      "deadline",
+      "holiday",
+      "birthday",
+      "date"
+    ],
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "notificationsEnabled": true
+    },
+    "schema": [
+      {
+        "key": "notificationsEnabled",
+        "type": "boolean",
+        "label": "Milestone notifications",
+        "description": "Notify when an enabled countdown milestone is reached.",
+        "defaultValue": true
+      }
+    ]
+  }
+}

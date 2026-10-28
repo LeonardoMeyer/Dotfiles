@@ -33,5 +33,41 @@
     "barWidget": "Panel.qml",
     "service": "",
     "settings": {}
+  },
+  {
+    "id": "io.github.liambateman.countdown",
+    "dir": "plugins/countdown",
+    "barWidget": "BarWidget.qml",
+    "service": "Service.qml",
+    "settings": {}
+  },
+  {
+    "id": "shaunhawk.nordvpn",
+    "dir": "plugins/nordvpn",
+    "barWidget": "Panel.qml",
+    "service": "",
+    "settings": {}
+  },
+  {
+    "id": "konochi.konobeat",
+    "dir": "plugins/konobeat",
+    "barWidget": "BarWidget.qml",
+    "service": "Service.qml",
+    "settings": {}
+  },
+  {
+    "id": "slylem0.locked-in",
+    "dir": "plugins/locked-in",
+    "barWidget": "BarWidget.qml",
+    "service": "Service.qml",
+    "settings": {}
+  },
+  {
+    "id": "raul.chess",
+    "dir": "plugins/chess",
+    "barWidget": "BarWidget.qml",
+    "panel": "Panel.qml",
+    "service": "",
+    "settings": {}
   }
 ]
