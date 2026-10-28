@@ -37,6 +37,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
     hl.exec_cmd("~/.config/hypr/utilities/shells.sh start")
     hl.exec_cmd("~/.config/hypr/utilities/bar.sh boot")
+    -- Hex: os utilitários sobem antes dos monitores ficarem prontos e o launcher
+    -- trava; um reinício 10 s depois (ainda na tela de bloqueio) resolve
+    hl.exec_cmd("sleep 10 && ~/.config/hypr/utilities/shells.sh restart")
     hl.exec_cmd("~/.config/hypr/utilities/pypr.sh")
     hl.exec_cmd("pactl set-sink-mute @DEFAULT_SINK@ 0")
     hl.exec_cmd("hypridle")
