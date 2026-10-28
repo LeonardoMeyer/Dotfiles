@@ -2,4 +2,4 @@
 # Hex: substituto do omarchy-shell. Repassa a chamada de IPC para o processo
 # de utilitários do elifouts, onde os plugins rodam:
 #   omarchy-shell <alvo> <função> [argumento]
-exec qs -p "$HOME/.config/hypr/utilities" ipc call "$@"
+exec qs -p "$(readlink -f "$HOME/.config/hypr/utilities")" ipc call "$@"
